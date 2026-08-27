@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interspecies — Seeed Studio | Open Hardware for Animal & Ecological Research</title>
+<meta name="description" content="Seeed Studio serves as the AI hardware and prototyping partner that turns research ideas into real-world systems for animal behavior, environmental signals, and human–non-human interaction.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        /* SDG-aligned palette: Seeed lime green brand, cool gray surfaces */
+        surface:        '#f8f8f8',
+        'surface-card': '#ffffff',
+        'surface-dim':  '#f1f1f1',
+        brand:          '#8FC31F',
+        'brand-dim':    '#6fa816',
+        'brand-deep':   '#00936d',
+        'brand-light':  '#f3f9e8',
+        ink:            '#32373c',
+        muted:          '#6d6f70',
+        'dark':         '#1a231a',
+        'dark-card':    '#212d21',
+        'dark-line':    '#364536',
+        line:           '#e0e0e0',
+      },
+      fontFamily: {
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        sans:    ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      boxShadow: {
+        card: '0 2px 8px rgba(0,0,0,.06)',
+        'card-hover': '0 4px 16px rgba(0,0,0,.10)',
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html{scroll-behavior:smooth}
+  body{-webkit-font-smoothing:antialiased}
+  .pill{border-radius:9999px}
+  /* nav scroll state — matches SDG page header style */
+  #nav.scrolled{background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  #nav.scrolled .nav-link{color:#6d6f70}
+  #nav.scrolled .nav-link:hover{color:#32373c}
+  #nav.scrolled .brand-text{color:#32373c}
+  #nav.scrolled .brand-text span{color:#8FC31F}
+  #nav.scrolled .nav-cta{border-color:#8FC31F;color:#8FC31F}
+  #nav.scrolled .nav-cta:hover{background:#8FC31F;color:#fff}
+  /* hero — light, bridging from SDG page */
+  .hero-bg{background:linear-gradient(170deg,#f3f9e8 0%,#f8f8f8 50%,#f1f1f1 100%)}
+  /* hero decorative circles */
+  .hero-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.15}
+  /* methodology connectors */
+  .conn{stroke:#d0d0d0;stroke-width:1.5;fill:none}
+  .conn-brand{stroke:#8FC31F;stroke-width:2;fill:none;stroke-dasharray:4 4}
+  /* world map */
+  .map-pin{cursor:pointer;transition:transform .2s}
+  .map-pin:hover{transform:scale(1.4)}
+  .pin-dot{fill:#8FC31F;stroke:#fff;stroke-width:1.5;transition:all .2s}
+  .pin-pulse{fill:#8FC31F;opacity:.3;animation:pulse 2s infinite}
+  @keyframes pulse{0%{transform:scale(1);opacity:.3}70%{transform:scale(2.5);opacity:0}100%{transform:scale(1);opacity:0}}
+  /* timeline */
+  .timeline-track{height:2px;background:linear-gradient(90deg,#8FC31F,#e0e0e0)}
+  .milestone-node{transition:all .2s}
+  .milestone-node:hover{transform:scale(1.15)}
+  /* progress bar */
+  .progress-fill{background:linear-gradient(90deg,#8FC31F,#00936d);transition:width 1s ease}
+  /* card hover — matches Elementor card-shadow-yes + hover-gradient */
+  .sdg-card{transition:box-shadow .25s,transform .25s}
+  .sdg-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  /* map tooltip */
+  #map-tooltip{position:absolute;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:10;max-width:200px}
+  #map-tooltip.show{opacity:1}
+</style>
+</head>
+<body class="bg-surface text-ink font-sans">
+
+<!-- ============ NAV ============ -->
+<nav id="nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 brand-text text-ink font-display font-bold text-lg tracking-tight">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+      Seeed<span>·</span>Interspecies
+    </a>
+    <div class="hidden md:flex items-center gap-7 text-sm">
+      <a href="#intro" class="nav-link text-muted hover:text-ink transition-colors">Introduction</a>
+      <a href="#study" class="nav-link text-muted hover:text-ink transition-colors">Animal Study</a>
+      <a href="#cases" class="nav-link text-muted hover:text-ink transition-colors">Cases</a>
+      <a href="#people" class="nav-link text-muted hover:text-ink transition-colors">People</a>
+      <a href="#future" class="nav-link text-muted hover:text-ink transition-colors">Future</a>
+      <a href="#contact" class="nav-link text-muted hover:text-ink transition-colors">Contact</a>
+    </div>
+    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand transition-colors">Get in touch</a>
+    <button class="md:hidden text-ink" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-surface-card border-b border-line px-6 py-4 space-y-3">
+    <a href="#intro" class="block text-sm text-muted">Introduction</a>
+    <a href="#study" class="block text-sm text-muted">Animal Study</a>
+    <a href="#cases" class="block text-sm text-muted">Cases</a>
+    <a href="#people" class="block text-sm text-muted">People</a>
+    <a href="#future" class="block text-sm text-muted">Future</a>
+    <a href="#contact" class="block text-sm text-muted">Contact</a>
+  </div>
+</nav>
+
+<!-- ============ HERO / INTRO ============ -->
+<section id="top" class="hero-bg min-h-screen flex items-center pt-24 pb-16 relative overflow-hidden">
+  <!-- decorative orbs -->
+  <div class="hero-orb w-96 h-96 bg-brand" style="top:-80px;right:-60px"></div>
+  <div class="hero-orb w-80 h-80 bg-brand-deep" style="bottom:-60px;left:-40px"></div>
+  <!-- subtle grid -->
+  <div class="absolute inset-0 opacity-[.03]" style="background-image:linear-gradient(rgba(0,0,0,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.4) 1px,transparent 1px);background-size:48px 48px"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <div class="max-w-3xl">
+      <div class="inline-flex items-center gap-2 pill border border-brand/40 bg-brand/10 px-4 py-1.5 text-xs font-medium text-brand-deep mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+        Open Datalogger for Interspecies Internet
+      </div>
+      <h1 class="font-display text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.05] mb-6">
+        Technology for<br>
+        <span class="text-brand-deep">Interspecies</span><br>
+        Understanding
+      </h1>
+      <p class="text-base md:text-lg text-muted mb-5 leading-relaxed max-w-2xl">
+        Seeed Studio serves as the AI hardware and prototyping partner that turns research ideas into real-world systems. By combining edge AI computing, sensing, wireless connectivity, open-source hardware, and rapid manufacturing capabilities, Seeed can help researchers and communities move from experimental concepts to field-ready prototypes.
+      </p>
+      <p class="text-base md:text-lg text-muted mb-8 leading-relaxed max-w-2xl">
+        Whether that means <span class="text-ink font-medium">detecting animal behavior</span>, <span class="text-ink font-medium">interpreting environmental signals</span>, or <span class="text-ink font-medium">enabling new forms of human–non-human interaction</span>. Beyond prototyping, Seeed's manufacturing and global developer ecosystem can provide a pathway to validate, iterate, and scale successful projects into deployable products, bridging the gap between scientific exploration and technologies that can operate in the wild.
+      </p>
+      <div class="flex flex-wrap gap-4 mb-10">
+        <a href="#cases" class="pill bg-brand text-white px-7 py-3.5 font-medium text-sm flex items-center gap-2 hover:bg-brand-dim transition-colors">
+          Explore Cases
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#future" class="pill border border-line bg-white text-ink px-7 py-3.5 font-medium text-sm hover:border-brand hover:text-brand-deep transition-colors shadow-card">
+          Join the Project
+        </a>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted">
+        <span>Backed by</span>
+        <span class="text-ink/80 font-medium">MIT Media Lab</span>
+        <span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Interspecies Internet</span>
+        <span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Fab Lab Network</span>
+        <span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Open Source · GitHub</span>
+      </div>
+    </div>
+  </div>
+  <a href="#study" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted/60 hover:text-brand-deep transition-colors">
+    <span class="text-[10px] tracking-[2px] uppercase">Scroll</span>
+    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  </a>
+</section>
+
+
+<!-- ============ HOW TECHNOLOGY IMPROVES ANIMAL STUDY ============ -->
+<section id="study" class="py-24 bg-surface">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">The Core Question</div>
+      <h2 class="font-display text-3xl md:text-5xl font-bold mb-4">How Technology Improves<br>Animal Study?</h2>
+      <p class="text-muted max-w-xl mx-auto">From traditional field methods to AI-powered sensing — the full landscape of animal research, and where open hardware changes what's possible.</p>
+    </div>
+
+    <!-- 01: METHODOLOGY DIAGRAM -->
+    <div class="mb-24 reveal">
+      <div class="flex items-baseline gap-3 mb-2">
+        <span class="text-2xl font-display font-bold text-brand/40">01</span>
+        <h3 class="font-display text-xl md:text-2xl font-bold">Research Methodology</h3>
+      </div>
+      <p class="text-sm text-muted mb-8 ml-10">A comprehensive map of how we study animals today — and where technology creates leverage.</p>
+
+      <div class="bg-surface-card border border-line rounded-2xl p-6 md:p-10 overflow-x-auto shadow-card">
+        <svg viewBox="0 0 900 520" class="w-full min-w-[700px]" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="450" cy="260" r="80" fill="#f3f9e8" stroke="#8FC31F" stroke-width="2"/>
+          <text x="450" y="250" text-anchor="middle" font-family="Space Grotesk" font-size="16" font-weight="700" fill="#00936d">Animal</text>
+          <text x="450" y="270" text-anchor="middle" font-family="Space Grotesk" font-size="16" font-weight="700" fill="#00936d">Research</text>
+          <text x="450" y="290" text-anchor="middle" font-family="Inter" font-size="10" fill="#6d6f70">Methods</text>
+
+          <line class="conn-brand" x1="450" y1="180" x2="450" y2="120"/>
+          <line class="conn-brand" x1="530" y1="260" x2="620" y2="260"/>
+          <line class="conn-brand" x1="450" y1="340" x2="450" y2="400"/>
+          <line class="conn-brand" x1="370" y1="260" x2="280" y2="260"/>
+          <line class="conn-brand" x1="394" y1="204" x2="320" y2="140"/>
+          <line class="conn-brand" x1="506" y1="204" x2="580" y2="140"/>
+          <line class="conn-brand" x1="394" y1="316" x2="320" y2="380"/>
+          <line class="conn-brand" x1="506" y1="316" x2="580" y2="380"/>
+
+          <g><rect x="360" y="60" width="180" height="56" rx="10" fill="#fff" stroke="#e0e0e0"/><text x="450" y="84" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#32373c">Individual Identification</text><text x="450" y="100" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Mark-recapture · Photo ID · GPS Collar</text></g>
+          <g><rect x="620" y="232" width="180" height="56" rx="10" fill="#fff" stroke="#e0e0e0"/><text x="710" y="256" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#32373c">Population Counting</text><text x="710" y="272" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Camera traps · SECR · Aerial survey</text></g>
+          <g><rect x="360" y="400" width="180" height="56" rx="10" fill="#fff" stroke="#e0e0e0"/><text x="450" y="424" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#32373c">Behavioral Observation</text><text x="450" y="440" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Ethogram coding · Focal sampling</text></g>
+          <g><rect x="100" y="232" width="180" height="56" rx="10" fill="#fff" stroke="#e0e0e0"/><text x="190" y="256" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#32373c">Acoustic Monitoring</text><text x="190" y="272" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">PAM · AudioMoth · Bioacoustics</text></g>
+          <g><rect x="200" y="84" width="180" height="56" rx="10" fill="#f3f9e8" stroke="#8FC31F" stroke-dasharray="3 3"/><text x="290" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#00936d">Habitat Assessment</text><text x="290" y="124" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Vegetation · Remote sensing · GIS</text></g>
+          <g><rect x="520" y="84" width="180" height="56" rx="10" fill="#f3f9e8" stroke="#8FC31F" stroke-dasharray="3 3"/><text x="610" y="108" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#00936d">Movement & Migration</text><text x="610" y="124" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Telemetry · GPS tracking · Geologger</text></g>
+          <g><rect x="200" y="380" width="180" height="56" rx="10" fill="#f3f9e8" stroke="#8FC31F" stroke-dasharray="3 3"/><text x="290" y="404" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#00936d">Physiological Sensing</text><text x="290" y="420" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Heart rate · Temp · Stress hormones</text></g>
+          <g><rect x="520" y="380" width="180" height="56" rx="10" fill="#f3f9e8" stroke="#8FC31F" stroke-dasharray="3 3"/><text x="610" y="404" text-anchor="middle" font-family="Space Grotesk" font-size="12" font-weight="600" fill="#00936d">Social & Communication</text><text x="610" y="420" text-anchor="middle" font-family="Inter" font-size="9" fill="#6d6f70">Proximity logging · Vocal analysis</text></g>
+        </svg>
+
+        <div class="flex flex-wrap items-center gap-6 mt-6 text-xs text-muted justify-center">
+          <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-line bg-white"></span> Traditional methods</span>
+          <span class="flex items-center gap-2"><span class="w-4 h-4 rounded border border-brand border-dashed bg-brand-light"></span> Tech-enhanced methods</span>
+          <span class="flex items-center gap-2"><svg class="w-6 h-2"><line x1="0" y1="4" x2="24" y2="4" class="conn-brand"/></svg> Seeed applies open hardware here</span>
+        </div>
+      </div>
+
+      <div class="mt-8 grid md:grid-cols-2 gap-3 text-sm">
+        <div class="bg-white border border-line rounded-xl p-5 shadow-card">
+          <div class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">Traditional Pain Point</div>
+          <p class="text-muted">Mark-recapture & photo ID are <b class="text-ink">invasive, expensive, labor-intensive</b>. Camera trap images need manual review. Acoustic data requires expert listening. Behavioral coding is short-duration and subjective.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-xl p-5 shadow-card">
+          <div class="text-xs font-semibold text-brand-deep uppercase tracking-wider mb-1">Seeed Open-Hardware Solution</div>
+          <p class="text-muted"><b class="text-ink">Edge AI automates</b> identification, counting, and coding. <b class="text-ink">LoRa/Mesh</b> enables long-range low-power data return. <b class="text-ink">Open Datalogger middleware</b> connects any sensor to any species question — no reinventing the wheel.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02: TECHNOLOGY TRENDS -->
+    <div class="mb-12 reveal">
+      <div class="flex items-baseline gap-3 mb-2">
+        <span class="text-2xl font-display font-bold text-brand/40">02</span>
+        <h3 class="font-display text-xl md:text-2xl font-bold">Technology Trends</h3>
+      </div>
+      <p class="text-sm text-muted mb-8 ml-10">The five AI capabilities reshaping what's possible at the edge — and how Seeed deploys them.</p>
+
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="sdg-card bg-surface-card border border-line rounded-xl p-5">
+          <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h4 class="font-display font-bold text-sm mb-1">CV</h4>
+          <p class="text-xs text-muted mb-3">Computer Vision</p>
+          <p class="text-xs text-muted/80 leading-relaxed">Species ID, individual recognition, counting, gait analysis — all on-device with reCamera.</p>
+        </div>
+        <div class="sdg-card bg-surface-card border border-line rounded-xl p-5">
+          <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19 12a4 4 0 0 0-2-3.5"/><path d="M22 12a8 8 0 0 0-4-7"/></svg>
+          </div>
+          <h4 class="font-display font-bold text-sm mb-1">TTS</h4>
+          <p class="text-xs text-muted mb-3">Text-to-Speech</p>
+          <p class="text-xs text-muted/80 leading-relaxed">Generate species-appropriate audio cues, translate research signals into audible feedback.</p>
+        </div>
+        <div class="sdg-card bg-surface-card border border-line rounded-xl p-5">
+          <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg>
+          </div>
+          <h4 class="font-display font-bold text-sm mb-1">LLM</h4>
+          <p class="text-xs text-muted mb-3">Large Language Model</p>
+          <p class="text-xs text-muted/80 leading-relaxed">Interpret field data, generate research summaries, answer natural-language queries about observations.</p>
+        </div>
+        <div class="sdg-card bg-surface-card border border-line rounded-xl p-5">
+          <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 15-4.5-3.5"/></svg>
+          </div>
+          <h4 class="font-display font-bold text-sm mb-1">VLM</h4>
+          <p class="text-xs text-muted mb-3">Vision-Language Model</p>
+          <p class="text-xs text-muted/80 leading-relaxed">Multimodal: see an image and describe behavior, emotion, anomaly in natural language.</p>
+        </div>
+        <div class="sdg-card bg-surface-card border border-line rounded-xl p-5">
+          <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v6m0 8v6M2 12h6m8 0h6"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h4 class="font-display font-bold text-sm mb-1">Tracker</h4>
+          <p class="text-xs text-muted mb-3">GPS / LoRa Tracking</p>
+          <p class="text-xs text-muted/80 leading-relaxed">Individual movement, migration routes, proximity logging — low-power long-range mesh.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ CASES (IN PROGRESS) ============ -->
+<section id="cases" class="py-24 bg-dark text-white relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[.02]" style="background-image:linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);background-size:48px 48px"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <div class="mb-16 reveal">
+      <div class="flex items-baseline gap-3 mb-2">
+        <span class="text-2xl font-display font-bold text-brand/50">03</span>
+        <h3 class="font-display text-xl md:text-2xl font-bold">Cases — In Progress</h3>
+      </div>
+      <p class="text-sm text-white/50 mb-8 ml-10">Real deployments, real partners, real challenges. From wetland restoration in Hong Kong to tiger monitoring in Bhutan.</p>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="mb-16 reveal">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm text-white/70 font-medium">Overall Project Progress</span>
+        <span class="text-sm text-brand font-semibold">35%</span>
+      </div>
+      <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div class="h-full progress-fill rounded-full" style="width:35%"></div>
+      </div>
+      <div class="flex justify-between mt-2 text-[10px] text-white/30 uppercase tracking-wider">
+        <span>Concept</span><span>Prototype</span><span>Pilot</span><span>Deploy</span><span>Scale</span>
+      </div>
+    </div>
+
+    <!-- MILESTONE TIMELINE -->
+    <div class="mb-16 reveal">
+      <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Milestone Timeline</h4>
+      <div class="relative overflow-x-auto pb-4">
+        <div class="min-w-[800px] relative">
+          <div class="timeline-track absolute top-6 left-0 right-0"></div>
+          <div class="flex justify-between items-start relative">
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-3 h-3 rounded-full bg-brand ring-4 ring-dark relative z-10"></div>
+              <span class="text-[10px] text-white/40 mt-2">2024 Q3</span>
+              <span class="text-xs text-white/80 font-medium mt-1">Project Conceived</span>
+              <span class="text-[10px] text-white/40 mt-1">Interspecies Internet × Seeed</span>
+            </div>
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-3 h-3 rounded-full bg-brand ring-4 ring-dark relative z-10"></div>
+              <span class="text-[10px] text-white/40 mt-2">2024 Q4</span>
+              <span class="text-xs text-white/80 font-medium mt-1">Mothbox Deployed</span>
+              <span class="text-[10px] text-white/40 mt-1">Panama FabLab</span>
+            </div>
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-3 h-3 rounded-full bg-brand ring-4 ring-dark relative z-10"></div>
+              <span class="text-[10px] text-white/40 mt-2">2025 Q1</span>
+              <span class="text-xs text-white/80 font-medium mt-1">TNC Phase 1</span>
+              <span class="text-[10px] text-white/40 mt-1">HK Wetland Live</span>
+            </div>
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-3 h-3 rounded-full bg-brand ring-4 ring-dark relative z-10"></div>
+              <span class="text-[10px] text-white/40 mt-2">2025 Q2</span>
+              <span class="text-xs text-white/80 font-medium mt-1">Dina Lab MoU</span>
+              <span class="text-[10px] text-white/40 mt-1">Open Datalogger</span>
+            </div>
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-4 h-4 rounded-full bg-brand ring-4 ring-dark relative z-10 animate-pulse"></div>
+              <span class="text-[10px] text-brand mt-2 font-semibold">2025 Q3 NOW</span>
+              <span class="text-xs text-white font-medium mt-1">Landing Page</span>
+              <span class="text-[10px] text-white/40 mt-1">Cases going live</span>
+            </div>
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-3 h-3 rounded-full bg-white/20 ring-4 ring-dark relative z-10 border border-white/30"></div>
+              <span class="text-[10px] text-white/40 mt-2">2025 Q4</span>
+              <span class="text-xs text-white/50 font-medium mt-1">Bhutan Framework</span>
+              <span class="text-[10px] text-white/30 mt-1">RiKAnet field</span>
+            </div>
+            <div class="flex flex-col items-center w-32 text-center">
+              <div class="milestone-node w-3 h-3 rounded-full bg-white/20 ring-4 ring-dark relative z-10 border border-white/30"></div>
+              <span class="text-[10px] text-white/40 mt-2">2026</span>
+              <span class="text-xs text-white/50 font-medium mt-1">Global Scale</span>
+              <span class="text-[10px] text-white/30 mt-1">10+ Fab Labs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHALLENGES FUNNEL -->
+    <div class="mb-16 reveal">
+      <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Challenges: Clue → Solution → Case</h4>
+      <div class="grid grid-cols-3 gap-4 mb-3 text-center">
+        <div class="text-xs font-semibold text-amber-400/80 uppercase tracking-wider">Clue — The Problem</div>
+        <div class="text-xs font-semibold text-brand uppercase tracking-wider">Solution — The Build</div>
+        <div class="text-xs font-semibold text-white/60 uppercase tracking-wider">Case — The Deployment</div>
+      </div>
+      <div class="space-y-3">
+        <!-- TNC -->
+        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+          <div class="p-5">
+            <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-brand/20 text-brand mb-2">Phase 1 Running</span>
+            <p class="text-sm text-white/90 font-medium mb-1">Wetland restoration validation</p>
+            <p class="text-xs text-white/50 leading-relaxed">Traditional sampling gives a snapshot every few weeks, but wetlands are dynamic — tidal exchange, rainfall, and monthly water changes reshape conditions daily. Are we actually restoring the ecosystem?</p>
+            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">HK</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Birds</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Water</span></div>
+          </div>
+          <div class="p-5 border-x border-dark-line">
+            <p class="text-sm text-white/90 font-medium mb-1">TNC × Seeed Continuous Monitoring</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">SenseCAP 4G Data Logger for continuous upload + S700-C weather station for environmental context + anti-corrosion water quality sensors (salinity, DO, turbidity, pH, temp).</p>
+            <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">SenseCAP 4G</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">S700-C</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Water sensors</span></div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-white/90 font-medium mb-1">Hong Kong · Deep Bay</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Phase 1 deployed and running. Team sees conditions evolve in real-time via dashboard, catches DO drops before they become critical. Phase 2: reCamera Pro bird diversity observation.</p>
+            <a href="#" class="text-xs text-brand hover:underline inline-flex items-center gap-1">Read blog →</a>
+          </div>
+        </div>
+        <!-- Bhutan -->
+        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+          <div class="p-5">
+            <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 mb-2">Framework Building</span>
+            <p class="text-sm text-white/90 font-medium mb-1">National-scale tiger monitoring</p>
+            <p class="text-xs text-white/50 leading-relaxed">Bhutan needs nationwide tiger population monitoring. Traditional GPS collars have limited range and high cost. Mountain terrain has no cellular coverage. Need long-range, low-power, wide-area coverage.</p>
+            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Bhutan</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Tiger</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Mesh</span></div>
+          </div>
+          <div class="p-5 border-x border-dark-line">
+            <p class="text-sm text-white/90 font-medium mb-1">RiKAnet × Seeed National Mesh</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Tracker for GPS individual positioning + LoRa/Mesh network backbone covering the country + reCamera CV for tiger stripe individual re-identification.</p>
+            <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Tracker</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">LoRa/Mesh</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera CV</span></div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-white/90 font-medium mb-1">Bhutan · Nationwide</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Framework under construction with Bhutan FabLab. No field results yet — mesh network infrastructure being planned across protected areas.</p>
+            <span class="text-[10px] text-white/30">Partner: RiKAnet / Bhutan FabLab</span>
+          </div>
+        </div>
+        <!-- Mothbox -->
+        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+          <div class="p-5">
+            <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-brand/20 text-brand mb-2">Deployed</span>
+            <p class="text-sm text-white/90 font-medium mb-1">Insect biodiversity monitoring</p>
+            <p class="text-xs text-white/50 leading-relaxed">Commercial camera traps are expensive and closed. Images need manual review. Researchers need a low-cost, replicable, open-source trap cam for moth and general insect biodiversity monitoring.</p>
+            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Panama</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Moths</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Open Source</span></div>
+          </div>
+          <div class="p-5 border-x border-dark-line">
+            <p class="text-sm text-white/90 font-medium mb-1">Mothbox × Seeed Open Trap Cam</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">reCamera for edge AI moth/insect identification and auto-counting (no manual review) + LoRa for wireless data return in remote field sites. Open-source, Fab Lab manufacturable.</p>
+            <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">LoRa</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Open Datalogger</span></div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-white/90 font-medium mb-1">Panama → Peru / Yellowstone</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Panama FabLab deployed and running. Open design replicable across global Fab Lab network. Extending to Peru and Yellowstone. Upgrading to Open Datalogger platform with Dina Lab.</p>
+            <a href="https://mothbox.org" target="_blank" class="text-xs text-brand hover:underline inline-flex items-center gap-1">mothbox.org →</a>
+          </div>
+        </div>
+        <!-- Anti-poaching -->
+        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+          <div class="p-5">
+            <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/50 mb-2">Open Lead</span>
+            <p class="text-sm text-white/90 font-medium mb-1">Anti-poaching real-time alert</p>
+            <p class="text-xs text-white/50 leading-relaxed">SD card = weeks later you find out. Researchers and rangers need immediate alert: 90 seconds from detection to warning. Bandwidth is extremely low — can't stream video.</p>
+            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">TBD</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Rhino</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Real-time</span></div>
+          </div>
+          <div class="p-5 border-x border-dark-line">
+            <p class="text-sm text-white/90 font-medium mb-1">Keyframe Alert System</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">reCamera edge AI filters for suspicious frames only + low-power mesh transmits just keyframes → 90-second alert. Allen's reCamera + P1 Pro demo as proof of concept.</p>
+            <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Keyframe</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Mesh</span></div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-white/90 font-medium mb-1">Awaiting Lighthouse Deployment</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Hero narrative established. Needs a named reference deployment — rhino keyframe alert or rainforest chainsaw detection. Allen demo in progress.</p>
+            <span class="text-[10px] text-white/30">Status: Open — seeking partner</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORLD MAP -->
+    <div class="reveal">
+      <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Deployment Map</h4>
+      <div class="relative bg-dark-card border border-dark-line rounded-2xl p-6">
+        <div id="map-tooltip"></div>
+        <svg viewBox="0 0 900 460" class="w-full" xmlns="http://www.w3.org/2000/svg">
+          <path d="M120 140 Q140 120 180 130 L260 110 Q310 115 330 140 L340 170 Q335 200 320 210 L290 215 Q260 210 240 220 L200 225 Q160 220 140 200 L125 175 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M90 150 Q100 135 130 140 L170 135 Q190 150 185 170 L175 185 Q160 195 145 190 L120 185 Q100 175 95 165 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M260 240 L290 235 Q310 250 315 280 L310 320 Q300 350 285 360 L270 355 Q255 340 255 310 L258 275 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M420 120 L470 115 Q490 125 485 140 L475 150 Q450 155 430 148 L420 135 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M430 165 L475 160 Q500 170 505 200 L500 250 Q490 280 470 285 L445 275 Q430 250 428 220 L430 190 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M490 110 L620 100 Q680 110 700 140 L710 180 Q700 210 670 215 L600 210 Q530 205 500 190 L490 160 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M560 200 L585 195 Q595 210 590 230 L575 240 Q565 235 562 220 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M620 220 L660 215 Q675 225 670 245 L650 250 Q630 245 622 235 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <path d="M680 290 L740 285 Q760 295 755 315 L735 325 Q700 320 685 310 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
+          <!-- pins -->
+          <g class="map-pin" data-name="Mothbox — Open Trap Cam" data-desc="reCamera+LoRa insect ID. Panama FabLab → Peru/Yellowstone." data-status="Deployed">
+            <circle class="pin-pulse" cx="275" cy="265" r="6"/><circle class="pin-dot" cx="275" cy="265" r="4"/>
+          </g>
+          <g class="map-pin" data-name="Olfactory Sensor — Robert Long" data-desc="Mass-production of mammalian olfactory sensors. Woodland Park." data-status="Open">
+            <circle class="pin-dot" cx="140" cy="160" r="4"/>
+          </g>
+          <g class="map-pin" data-name="CollarID — MIT Media Lab" data-desc="Open-source collar + LoRa + CV individual re-ID. Fusion small-batch manufacturing." data-status="Intent">
+            <circle class="pin-dot" cx="185" cy="160" r="4"/>
+          </g>
+          <g class="map-pin" data-name="TNC Wetland — Deep Bay HK" data-desc="SenseCAP 4G + S700-C + water quality. Phase 1 running, Phase 2 planned." data-status="Phase 1 Running">
+            <circle class="pin-pulse" cx="660" cy="215" r="6"/><circle class="pin-dot" cx="660" cy="215" r="4"/>
+          </g>
+          <g class="map-pin" data-name="RiKAnet — Bhutan Tiger Monitoring" data-desc="Tracker + LoRa/Mesh national network + reCamera CV. Framework building." data-status="Framework">
+            <circle class="pin-pulse" cx="645" cy="200" r="6"/><circle class="pin-dot" cx="645" cy="200" r="4"/>
+          </g>
+          <g class="map-pin" data-name="LifeScience Trust — Zoo Pilot" data-desc="Multi-species zoo monitoring + in-zoo FabLab. Pilot stage." data-status="Intent">
+            <circle class="pin-dot" cx="585" cy="225" r="4"/>
+          </g>
+          <g class="map-pin" data-name="Mothbox — Yellowstone" data-desc="Mothbox extension site. Planned." data-status="Planned">
+            <circle class="pin-dot" cx="165" cy="145" r="4"/>
+          </g>
+        </svg>
+        <div class="flex flex-wrap items-center gap-5 mt-4 text-xs text-white/50">
+          <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-brand"></span> Deployed / Running</span>
+          <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-white/30"></span> Planned / Intent</span>
+          <span class="text-white/30">Hover a pin to see case details</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ PEOPLE ============ -->
+<section id="people" class="py-24 bg-surface">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="mb-12 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Trust & Endorsement</div>
+      <h2 class="font-display text-3xl md:text-4xl font-bold mb-3">The People Behind It</h2>
+      <p class="text-muted max-w-xl">Researchers, makers, and institutions working at the frontier of interspecies understanding — backed by Seeed's open-hardware ecosystem.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="sdg-card bg-surface-card border border-line rounded-2xl p-6 text-center reveal">
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-base">Neil Gershenfeld</h3>
+        <p class="text-xs text-brand-deep font-medium mb-2">Director, MIT Center for Bits & Atoms</p>
+        <p class="text-xs text-muted leading-relaxed">Pioneering Fab Lab network and Interspecies Internet as MIT/Fab Lab's flagship future project. Seeed serves as the open-hardware reference platform.</p>
+        <div class="flex justify-center gap-2 mt-4">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">MIT Media Lab</span>
+        </div>
+      </div>
+      <div class="sdg-card bg-surface-card border border-line rounded-2xl p-6 text-center reveal">
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-base">Andy from Dina Lab</h3>
+        <p class="text-xs text-brand-deep font-medium mb-2">Creator of Mothbox · Open Datalogger</p>
+        <p class="text-xs text-muted leading-relaxed">Built the first open-source moth trap cam in Panama FabLab. Co-developing the Interspecies Open Datalogger middleware with Seeed — connecting any sensor to any species question.</p>
+        <div class="flex justify-center gap-2 mt-4">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">Dina Lab</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">Panama FabLab</span>
+        </div>
+      </div>
+      <div class="sdg-card bg-surface-card border border-line rounded-2xl p-6 text-center reveal">
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-base">TNC Hong Kong Team</h3>
+        <p class="text-xs text-brand-deep font-medium mb-2">The Nature Conservancy · Deep Bay</p>
+        <p class="text-xs text-muted leading-relaxed">Restoring traditional tidal shrimp ponds (gei wai) wetland. Deployed Seeed continuous monitoring to turn environmental data into conservation evidence — Phase 1 live, Phase 2 planned.</p>
+        <div class="flex justify-center gap-2 mt-4">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">TNC</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">Hong Kong</span>
+        </div>
+      </div>
+    </div>
+    <div class="mt-12 border-t border-line pt-8 reveal">
+      <p class="text-center text-xs text-muted/60 uppercase tracking-wider mb-6">Partners & Collaborators</p>
+      <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-muted/40 font-display font-bold text-sm">
+        <span>MIT Media Lab</span><span class="text-line">·</span>
+        <span>Interspecies Internet</span><span class="text-line">·</span>
+        <span>Fab Lab Network</span><span class="text-line">·</span>
+        <span>The Nature Conservancy</span><span class="text-line">·</span>
+        <span>RiKAnet</span><span class="text-line">·</span>
+        <span>Dina Lab</span><span class="text-line">·</span>
+        <span>FluentPet</span><span class="text-line">·</span>
+        <span>Woodland Park</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FUTURE PROJECTS ============ -->
+<section id="future" class="py-24 bg-dark text-white relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[.02]" style="background-image:linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);background-size:48px 48px"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <div class="mb-12 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand mb-3">What's Next</div>
+      <h2 class="font-display text-3xl md:text-4xl font-bold mb-3">Future Projects</h2>
+      <p class="text-white/50 max-w-xl">Tell us your story. We're seeking researchers, NGOs, Fab Labs, and makers to launch the next deployment.</p>
+    </div>
+    <div class="bg-dark-card border border-brand/30 rounded-2xl p-8 mb-10 reveal flex flex-col md:flex-row items-center gap-6">
+      <div class="flex-1">
+        <h3 class="font-display text-xl font-bold mb-2">Follow us & tell your story</h3>
+        <p class="text-sm text-white/50 leading-relaxed">Are you studying animal behavior, monitoring ecosystems, or building interspecies communication tools? We want to hear from you. Share your project — selected stories become featured cases on this page.</p>
+      </div>
+      <div class="flex gap-3 shrink-0">
+        <a href="https://www.facebook.com/seeedstudio" target="_blank" class="pill border border-white/20 px-6 py-3 text-sm font-medium text-white hover:bg-white/10 transition-colors flex items-center gap-2">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12a12 12 0 1 0-13.9 11.9v-8.4h-3v-3.5h3v-2.7c0-3 1.8-4.6 4.5-4.6 1.3 0 2.7.2 2.7.2v3h-1.5c-1.5 0-2 .9-2 1.9v2.2h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12Z"/></svg>
+          Facebook
+        </a>
+        <a href="#contact" class="pill bg-brand px-6 py-3 text-sm font-medium text-white hover:bg-brand-dim transition-colors flex items-center gap-2">
+          Tell your story
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="reveal">
+      <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">6 Project Categories</h4>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="group bg-dark-card border border-dark-line rounded-xl p-6 hover:border-brand/40 transition-colors cursor-pointer">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center text-brand text-sm font-bold">01</span>
+            <h5 class="font-display font-bold text-sm">Wildlife Conservation</h5>
+          </div>
+          <p class="text-xs text-white/50 leading-relaxed">Understand, study, and protect wild animals. Camera traps, acoustics, collars, anti-poaching. The hardest, most rigorous space — the reputation anchor.</p>
+        </div>
+        <div class="group bg-dark-card border border-dark-line rounded-xl p-6 hover:border-brand/40 transition-colors cursor-pointer">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center text-brand text-sm font-bold">02</span>
+            <h5 class="font-display font-bold text-sm">Human–Wildlife Conflict</h5>
+          </div>
+          <p class="text-xs text-white/50 leading-relaxed">Intrusion detection, real-time alerts, corridor monitoring. Resolve conflict proactively before damage occurs — not after.</p>
+        </div>
+        <div class="group bg-dark-card border border-dark-line rounded-xl p-6 hover:border-brand/40 transition-colors cursor-pointer">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center text-brand text-sm font-bold">03</span>
+            <h5 class="font-display font-bold text-sm">Organisms as Sensors</h5>
+          </div>
+          <p class="text-xs text-white/50 leading-relaxed">Olfaction, acoustics, fungi, insects — biological systems as information inputs. Ultra-long-range sound capture, wind-noise removal.</p>
+        </div>
+        <div class="group bg-dark-card border border-dark-line rounded-xl p-6 hover:border-brand/40 transition-colors cursor-pointer">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center text-brand text-sm font-bold">04</span>
+            <h5 class="font-display font-bold text-sm">Animal Husbandry & Smart Spaces</h5>
+          </div>
+          <p class="text-xs text-white/50 leading-relaxed">Livestock health, pet welfare × smart home automation. Animal behavior drives spatial response. Scale-up revenue engine candidate.</p>
+        </div>
+        <div class="group bg-dark-card border border-dark-line rounded-xl p-6 hover:border-brand/40 transition-colors cursor-pointer">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center text-brand text-sm font-bold">05</span>
+            <h5 class="font-display font-bold text-sm">Interspecies Communication</h5>
+          </div>
+          <p class="text-xs text-white/50 leading-relaxed">Cross-species interaction tools — reButton with mic+speaker, vocal analysis, bidirectional sound. Enabling new forms of human–non-human interaction.</p>
+        </div>
+        <div class="group bg-dark-card border border-dark-line rounded-xl p-6 hover:border-brand/40 transition-colors cursor-pointer">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="w-8 h-8 rounded-lg bg-brand/15 flex items-center justify-center text-brand text-sm font-bold">06</span>
+            <h5 class="font-display font-bold text-sm">Zoo & Conservation Education</h5>
+          </div>
+          <p class="text-xs text-white/50 leading-relaxed">Controlled, easy to verify, has budget. Zoo multi-species monitoring + in-zoo FabLab for local manufacturing. The ideal second stop after conservation field.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MEDIA CONTACT ============ -->
+<section id="contact" class="py-24 bg-surface">
+  <div class="max-w-3xl mx-auto px-6 text-center reveal">
+    <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Get in touch</div>
+    <h2 class="font-display text-3xl md:text-4xl font-bold mb-4">Media & Press Contact</h2>
+    <p class="text-muted max-w-lg mx-auto mb-10">For press inquiries, partnership proposals, or to share your interspecies research story — reach out directly. We route every inquiry to the right team.</p>
+    <div class="grid md:grid-cols-3 gap-4 mb-10">
+      <a href="mailto:solution@seeed.cc" class="sdg-card bg-surface-card border border-line rounded-xl p-6 text-left block">
+        <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <h4 class="font-display font-bold text-sm mb-1">Solution & Partnership</h4>
+        <p class="text-xs text-muted mb-2">Researchers, NGOs, Fab Labs — propose a deployment</p>
+        <span class="text-sm text-brand-deep font-medium">solution@seeed.cc</span>
+      </a>
+      <a href="mailto:press@seeed.cc" class="sdg-card bg-surface-card border border-line rounded-xl p-6 text-left block">
+        <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/></svg>
+        </div>
+        <h4 class="font-display font-bold text-sm mb-1">Media & Press</h4>
+        <p class="text-xs text-muted mb-2">Press kit, interviews, story features</p>
+        <span class="text-sm text-brand-deep font-medium">press@seeed.cc</span>
+      </a>
+      <a href="mailto:interspecies@seeed.cc" class="sdg-card bg-surface-card border border-line rounded-xl p-6 text-left block">
+        <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 7h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+        </div>
+        <h4 class="font-display font-bold text-sm mb-1">Open Datalogger</h4>
+        <p class="text-xs text-muted mb-2">GitHub, technical collaboration, Fab Lab replication</p>
+        <span class="text-sm text-brand-deep font-medium">interspecies@seeed.cc</span>
+      </a>
+    </div>
+    <a href="mailto:solution@seeed.cc?subject=Interspecies%20Project%20Inquiry" class="inline-flex items-center gap-2 pill bg-brand text-white px-8 py-4 text-sm font-medium hover:bg-brand-dim transition-colors">
+      Send us an email
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="bg-dark text-white py-16">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid md:grid-cols-4 gap-8 mb-8">
+      <div class="md:col-span-1">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+          <span class="font-display font-bold text-sm">Seeed · Interspecies</span>
+        </div>
+        <p class="text-xs text-white/40 leading-relaxed">Open hardware for animal and ecological research. Bridging scientific exploration and technologies that operate in the wild.</p>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Sections</h4>
+        <div class="space-y-2 text-sm">
+          <a href="#intro" class="block text-white/40 hover:text-white transition-colors">Introduction</a>
+          <a href="#study" class="block text-white/40 hover:text-white transition-colors">Animal Study</a>
+          <a href="#cases" class="block text-white/40 hover:text-white transition-colors">Cases</a>
+          <a href="#people" class="block text-white/40 hover:text-white transition-colors">People</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Resources</h4>
+        <div class="space-y-2 text-sm">
+          <a href="https://www.seeedstudio.com/blog/sdg/" target="_blank" class="block text-white/40 hover:text-white transition-colors">SDG Page</a>
+          <a href="https://github.com" target="_blank" class="block text-white/40 hover:text-white transition-colors">GitHub</a>
+          <a href="https://www.seeedstudio.com" target="_blank" class="block text-white/40 hover:text-white transition-colors">Seeed Studio</a>
+          <a href="https://interspecies.io" target="_blank" class="block text-white/40 hover:text-white transition-colors">Interspecies Internet</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Contact</h4>
+        <div class="space-y-2 text-sm text-white/40">
+          <a href="mailto:solution@seeed.cc" class="block hover:text-white transition-colors">solution@seeed.cc</a>
+          <a href="mailto:press@seeed.cc" class="block hover:text-white transition-colors">press@seeed.cc</a>
+          <a href="https://www.facebook.com/seeedstudio" target="_blank" class="block hover:text-white transition-colors">Facebook</a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-dark-line pt-8 text-center text-xs text-white/30">
+      <p>© 2025 Seeed Studio. Part of the Interspecies Internet initiative.</p>
+      <p class="mt-1">Open-source hardware · MIT License</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 80) { nav.classList.add('scrolled'); }
+  else { nav.classList.remove('scrolled'); }
+});
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+revealEls.forEach(el => observer.observe(el));
+const tooltip = document.getElementById('map-tooltip');
+const mapContainer = tooltip ? tooltip.parentElement : null;
+if (mapContainer) {
+  document.querySelectorAll('.map-pin').forEach(pin => {
+    pin.addEventListener('mouseenter', () => {
+      const name = pin.dataset.name;
+      const desc = pin.dataset.desc;
+      const status = pin.dataset.status;
+      const statusColor = (status === 'Deployed' || status.includes('Running')) ? '#8FC31F' : '#ffab00';
+      tooltip.innerHTML = '<div style="font-weight:600;color:#32373c;margin-bottom:2px">' + name + '</div><div style="color:#6d6f70;font-size:11px;line-height:1.4">' + desc + '</div><div style="margin-top:4px"><span style="font-size:9px;padding:1px 6px;border-radius:4px;background:' + statusColor + '22;color:' + statusColor + ';text-transform:uppercase;font-weight:600">' + status + '</span></div>';
+      tooltip.classList.add('show');
+    });
+    pin.addEventListener('mousemove', (e) => {
+      const rect = mapContainer.getBoundingClientRect();
+      const x = e.clientX - rect.left + 12;
+      const y = e.clientY - rect.top + 12;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    });
+    pin.addEventListener('mouseleave', () => { tooltip.classList.remove('show'); });
+    pin.addEventListener('click', () => {
+      document.getElementById('cases').scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+}
+const progressFill = document.querySelector('.progress-fill');
+if (progressFill) {
+  const progressObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.width = '35%';
+        progressObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  progressFill.style.width = '0%';
+  progressObserver.observe(progressFill);
+}
+document.querySelectorAll('#mobile-menu a').forEach(a => {
+  a.addEventListener('click', () => { document.getElementById('mobile-menu').classList.add('hidden'); });
+});
+</script>
+</body>
+</html>
