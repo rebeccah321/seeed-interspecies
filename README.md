@@ -49,9 +49,9 @@ Built with Tailwind CSS (Play CDN), Space Grotesk + Inter fonts.
 
 ## v0.3 Changelog (2026-08-31)
 
+- **Real-world interactive map** — replaced the hand-drawn SVG schematic with Leaflet + CARTO dark basemap. 8 projects pinned at real coordinates (HK Deep Bay, Bhutan, Panama, Peru, Yellowstone, Seattle, MIT, India) with enlarged pulsing markers; hovering/tapping a pin shows a right-side preview card (status, location, hardware stack, intro, case link). Pins are color-coded: active (lime) / open lead (amber) / planned (gray); scroll-wheel zoom disabled in-page, markers keyboard-accessible
 - Fixed the dead **Introduction** anchor — hero section id renamed `top` → `intro` so nav / mobile-menu / footer links jump correctly
 - Added lead-gen **CTAs on open challenge leads** (per content blueprint: every clue carries a proposal CTA): anti-poaching "Propose a deployment →" and BuzzCam "Are you the researcher? Get in touch →" (both route to solution@seeed.cc with prefilled subject)
-- **Deployment map fixes** — separated the overlapping Hong Kong / Bhutan pins (were ~15px apart), added SVG `<title>` accessible names to all 7 pins
 - Added descriptive `title` to the TNC Phase 1 blog link (*Turning Environmental Monitoring into Conservation Evidence*)
 - Milestone timeline shifted to 2026 (ESG/SDG launch NOW), added BuzzCam challenge story, challenge grid responsive on mobile (`lg:grid-cols-3`), OG/meta tags
 
