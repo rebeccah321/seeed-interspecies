@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interspecies — Seeed Studio | Open Hardware for Animal & Ecological Research</title>
 <meta name="description" content="Seeed Studio serves as the AI hardware and prototyping partner that turns research ideas into real-world systems for animal behavior, environmental signals, and human–non-human interaction.">
+<meta name="theme-color" content="#8FC31F">
+<meta property="og:title" content="Interspecies — Seeed Studio">
+<meta property="og:description" content="Open hardware for animal behavior research, environmental sensing, and human–non-human interaction.">
+<meta property="og:type" content="website">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
 tailwind.config = {
@@ -41,6 +45,7 @@ tailwind.config = {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   html{scroll-behavior:smooth}
   body{-webkit-font-smoothing:antialiased}
@@ -60,12 +65,20 @@ tailwind.config = {
   /* methodology connectors */
   .conn{stroke:#d0d0d0;stroke-width:1.5;fill:none}
   .conn-brand{stroke:#8FC31F;stroke-width:2;fill:none;stroke-dasharray:4 4}
-  /* world map */
-  .map-pin{cursor:pointer;transition:transform .2s}
-  .map-pin:hover{transform:scale(1.4)}
-  .pin-dot{fill:#8FC31F;stroke:#fff;stroke-width:1.5;transition:all .2s}
-  .pin-pulse{fill:#8FC31F;opacity:.3;animation:pulse 2s infinite}
-  @keyframes pulse{0%{transform:scale(1);opacity:.3}70%{transform:scale(2.5);opacity:0}100%{transform:scale(1);opacity:0}}
+  /* world map (Leaflet + CARTO dark basemap) */
+  #world-map{background:#161d16;height:430px;border-radius:1rem;font:inherit;z-index:0}
+  @media(max-width:767px){#world-map{height:340px}}
+  #world-map .leaflet-control-attribution{background:rgba(26,35,26,.85);color:rgba(255,255,255,.45);font-size:9px}
+  #world-map .leaflet-control-attribution a{color:rgba(255,255,255,.6)}
+  .pin-marker{position:relative;width:22px;height:22px}
+  .pin-marker .ring{position:absolute;inset:0;border-radius:50%;background:rgba(143,195,31,.35);animation:pulse 2s infinite}
+  .pin-marker .dot{position:absolute;inset:4px;border-radius:50%;background:#8FC31F;border:2.5px solid #fff;box-shadow:0 0 10px rgba(143,195,31,.9);transition:transform .15s}
+  .pin-marker:hover .dot{transform:scale(1.3)}
+  .pin-marker.open .dot{background:#ffab00;box-shadow:0 0 10px rgba(255,171,0,.9)}
+  .pin-marker.open .ring{background:rgba(255,171,0,.3)}
+  .pin-marker.planned .dot{background:#aab8ab;box-shadow:0 0 8px rgba(170,184,171,.7)}
+  .pin-marker.planned .ring{display:none}
+  @keyframes pulse{0%{transform:scale(1);opacity:.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
   /* timeline */
   .timeline-track{height:2px;background:linear-gradient(90deg,#8FC31F,#e0e0e0)}
   .milestone-node{transition:all .2s}
@@ -78,9 +91,9 @@ tailwind.config = {
   /* reveal */
   .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
   .reveal.visible{opacity:1;transform:translateY(0)}
-  /* map tooltip */
-  #map-tooltip{position:absolute;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:10;max-width:200px}
-  #map-tooltip.show{opacity:1}
+  /* map side preview card */
+  #map-card{transition:border-color .25s}
+  #map-card .card-status{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 </style>
 </head>
 <body class="bg-surface text-ink font-sans">
@@ -116,7 +129,7 @@ tailwind.config = {
 </nav>
 
 <!-- ============ HERO / INTRO ============ -->
-<section id="top" class="hero-bg min-h-screen flex items-center pt-24 pb-16 relative overflow-hidden">
+<section id="intro" class="hero-bg min-h-screen flex items-center pt-24 pb-16 relative overflow-hidden">
   <!-- decorative orbs -->
   <div class="hero-orb w-96 h-96 bg-brand" style="top:-80px;right:-60px"></div>
   <div class="hero-orb w-80 h-80 bg-brand-deep" style="bottom:-60px;left:-40px"></div>
@@ -343,19 +356,19 @@ tailwind.config = {
             </div>
             <div class="flex flex-col items-center w-32 text-center">
               <div class="milestone-node w-4 h-4 rounded-full bg-brand ring-4 ring-dark relative z-10 animate-pulse"></div>
-              <span class="text-[10px] text-brand mt-2 font-semibold">2025 Q3 NOW</span>
-              <span class="text-xs text-white font-medium mt-1">Landing Page</span>
+              <span class="text-[10px] text-brand mt-2 font-semibold">2026 Q3 NOW</span>
+              <span class="text-xs text-white font-medium mt-1">ESG/SDG Launch</span>
               <span class="text-[10px] text-white/40 mt-1">Cases going live</span>
             </div>
             <div class="flex flex-col items-center w-32 text-center">
               <div class="milestone-node w-3 h-3 rounded-full bg-white/20 ring-4 ring-dark relative z-10 border border-white/30"></div>
-              <span class="text-[10px] text-white/40 mt-2">2025 Q4</span>
-              <span class="text-xs text-white/50 font-medium mt-1">Bhutan Framework</span>
-              <span class="text-[10px] text-white/30 mt-1">RiKAnet field</span>
+              <span class="text-[10px] text-white/40 mt-2">2026 Q4</span>
+              <span class="text-xs text-white/50 font-medium mt-1">Field Validation</span>
+              <span class="text-[10px] text-white/30 mt-1">Bhutan · Dina Lab</span>
             </div>
             <div class="flex flex-col items-center w-32 text-center">
               <div class="milestone-node w-3 h-3 rounded-full bg-white/20 ring-4 ring-dark relative z-10 border border-white/30"></div>
-              <span class="text-[10px] text-white/40 mt-2">2026</span>
+              <span class="text-[10px] text-white/40 mt-2">2027+</span>
               <span class="text-xs text-white/50 font-medium mt-1">Global Scale</span>
               <span class="text-[10px] text-white/30 mt-1">10+ Fab Labs</span>
             </div>
@@ -367,21 +380,21 @@ tailwind.config = {
     <!-- CHALLENGES FUNNEL -->
     <div class="mb-16 reveal">
       <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Challenges: Clue → Solution → Case</h4>
-      <div class="grid grid-cols-3 gap-4 mb-3 text-center">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-3 text-center">
         <div class="text-xs font-semibold text-amber-400/80 uppercase tracking-wider">Clue — The Problem</div>
         <div class="text-xs font-semibold text-brand uppercase tracking-wider">Solution — The Build</div>
         <div class="text-xs font-semibold text-white/60 uppercase tracking-wider">Case — The Deployment</div>
       </div>
       <div class="space-y-3">
         <!-- TNC -->
-        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
           <div class="p-5">
             <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-brand/20 text-brand mb-2">Phase 1 Running</span>
             <p class="text-sm text-white/90 font-medium mb-1">Wetland restoration validation</p>
             <p class="text-xs text-white/50 leading-relaxed">Traditional sampling gives a snapshot every few weeks, but wetlands are dynamic — tidal exchange, rainfall, and monthly water changes reshape conditions daily. Are we actually restoring the ecosystem?</p>
             <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">HK</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Birds</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Water</span></div>
           </div>
-          <div class="p-5 border-x border-dark-line">
+          <div class="p-5 lg:border-x border-dark-line">
             <p class="text-sm text-white/90 font-medium mb-1">TNC × Seeed Continuous Monitoring</p>
             <p class="text-xs text-white/50 leading-relaxed mb-2">SenseCAP 4G Data Logger for continuous upload + S700-C weather station for environmental context + anti-corrosion water quality sensors (salinity, DO, turbidity, pH, temp).</p>
             <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">SenseCAP 4G</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">S700-C</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Water sensors</span></div>
@@ -389,18 +402,18 @@ tailwind.config = {
           <div class="p-5">
             <p class="text-sm text-white/90 font-medium mb-1">Hong Kong · Deep Bay</p>
             <p class="text-xs text-white/50 leading-relaxed mb-2">Phase 1 deployed and running. Team sees conditions evolve in real-time via dashboard, catches DO drops before they become critical. Phase 2: reCamera Pro bird diversity observation.</p>
-            <a href="#" class="text-xs text-brand hover:underline inline-flex items-center gap-1">Read blog →</a>
+            <a href="https://seeedstudio.feishu.cn/docx/ZxOadAzFZoSwOyxVEtQcuOzpnMe" target="_blank" rel="noopener" title="Turning Environmental Monitoring into Conservation Evidence — TNC Phase 1 blog" class="text-xs text-brand hover:underline inline-flex items-center gap-1">Read blog →</a>
           </div>
         </div>
         <!-- Bhutan -->
-        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
           <div class="p-5">
             <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 mb-2">Framework Building</span>
             <p class="text-sm text-white/90 font-medium mb-1">National-scale tiger monitoring</p>
             <p class="text-xs text-white/50 leading-relaxed">Bhutan needs nationwide tiger population monitoring. Traditional GPS collars have limited range and high cost. Mountain terrain has no cellular coverage. Need long-range, low-power, wide-area coverage.</p>
             <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Bhutan</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Tiger</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Mesh</span></div>
           </div>
-          <div class="p-5 border-x border-dark-line">
+          <div class="p-5 lg:border-x border-dark-line">
             <p class="text-sm text-white/90 font-medium mb-1">RiKAnet × Seeed National Mesh</p>
             <p class="text-xs text-white/50 leading-relaxed mb-2">Tracker for GPS individual positioning + LoRa/Mesh network backbone covering the country + reCamera CV for tiger stripe individual re-identification.</p>
             <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Tracker</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">LoRa/Mesh</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera CV</span></div>
@@ -411,15 +424,35 @@ tailwind.config = {
             <span class="text-[10px] text-white/30">Partner: RiKAnet / Bhutan FabLab</span>
           </div>
         </div>
+        <!-- BuzzCam -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+          <div class="p-5">
+            <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/50 mb-2">Seeking Researcher</span>
+            <p class="text-sm text-white/90 font-medium mb-1">Pollinator behavior monitoring</p>
+            <p class="text-xs text-white/50 leading-relaxed">Bumblebees are key ecological indicators, but most pollinator research remains difficult to replicate in the field. Communities need an open monitoring toolkit rather than one-off academic setups.</p>
+            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Pollinators</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Behavior</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Open source</span></div>
+          </div>
+          <div class="p-5 lg:border-x border-dark-line">
+            <p class="text-sm text-white/90 font-medium mb-1">BuzzCam × Seeed Replicable Toolkit</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Translate existing academic research into a field-ready, community-replicable design. Candidate stack: reCamera for edge AI insect detection plus a low-power wireless return module.</p>
+            <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera (proposed)</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Wireless return</span></div>
+          </div>
+          <div class="p-5">
+            <p class="text-sm text-white/90 font-medium mb-1">Researcher Match In Progress</p>
+            <p class="text-xs text-white/50 leading-relaxed mb-2">Prior academic results exist. Seeed is contacting the researcher to confirm scope, hardware requirements, field imagery, and deployment timeline before publication.</p>
+            <a href="mailto:solution@seeed.cc?subject=BuzzCam%20pollinator%20monitoring%20—%20researcher%20collaboration" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mb-2">Are you the researcher? Get in touch →</a>
+            <span class="text-[10px] text-white/30 block">Status: Open — awaiting collaboration confirmation</span>
+          </div>
+        </div>
         <!-- Mothbox -->
-        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
           <div class="p-5">
             <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-brand/20 text-brand mb-2">Deployed</span>
             <p class="text-sm text-white/90 font-medium mb-1">Insect biodiversity monitoring</p>
             <p class="text-xs text-white/50 leading-relaxed">Commercial camera traps are expensive and closed. Images need manual review. Researchers need a low-cost, replicable, open-source trap cam for moth and general insect biodiversity monitoring.</p>
             <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Panama</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Moths</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Open Source</span></div>
           </div>
-          <div class="p-5 border-x border-dark-line">
+          <div class="p-5 lg:border-x border-dark-line">
             <p class="text-sm text-white/90 font-medium mb-1">Mothbox × Seeed Open Trap Cam</p>
             <p class="text-xs text-white/50 leading-relaxed mb-2">reCamera for edge AI moth/insect identification and auto-counting (no manual review) + LoRa for wireless data return in remote field sites. Open-source, Fab Lab manufacturable.</p>
             <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">LoRa</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Open Datalogger</span></div>
@@ -431,14 +464,14 @@ tailwind.config = {
           </div>
         </div>
         <!-- Anti-poaching -->
-        <div class="grid grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 bg-dark-card border border-dark-line rounded-xl overflow-hidden">
           <div class="p-5">
             <span class="inline-block text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/50 mb-2">Open Lead</span>
             <p class="text-sm text-white/90 font-medium mb-1">Anti-poaching real-time alert</p>
             <p class="text-xs text-white/50 leading-relaxed">SD card = weeks later you find out. Researchers and rangers need immediate alert: 90 seconds from detection to warning. Bandwidth is extremely low — can't stream video.</p>
-            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">TBD</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Rhino</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Real-time</span></div>
+            <div class="flex gap-1 mt-3"><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Partner needed</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Rhino</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/60">Real-time</span></div>
           </div>
-          <div class="p-5 border-x border-dark-line">
+          <div class="p-5 lg:border-x border-dark-line">
             <p class="text-sm text-white/90 font-medium mb-1">Keyframe Alert System</p>
             <p class="text-xs text-white/50 leading-relaxed mb-2">reCamera edge AI filters for suspicious frames only + low-power mesh transmits just keyframes → 90-second alert. Allen's reCamera + P1 Pro demo as proof of concept.</p>
             <div class="flex flex-wrap gap-1"><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">reCamera</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Keyframe</span><span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">Mesh</span></div>
@@ -446,7 +479,8 @@ tailwind.config = {
           <div class="p-5">
             <p class="text-sm text-white/90 font-medium mb-1">Awaiting Lighthouse Deployment</p>
             <p class="text-xs text-white/50 leading-relaxed mb-2">Hero narrative established. Needs a named reference deployment — rhino keyframe alert or rainforest chainsaw detection. Allen demo in progress.</p>
-            <span class="text-[10px] text-white/30">Status: Open — seeking partner</span>
+            <a href="mailto:solution@seeed.cc?subject=Anti-poaching%20keyframe%20alert%20—%20deployment%20proposal" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mb-2">Propose a deployment →</a>
+            <span class="text-[10px] text-white/30 block">Status: Open — seeking partner</span>
           </div>
         </div>
       </div>
@@ -455,46 +489,23 @@ tailwind.config = {
     <!-- WORLD MAP -->
     <div class="reveal">
       <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Deployment Map</h4>
-      <div class="relative bg-dark-card border border-dark-line rounded-2xl p-6">
-        <div id="map-tooltip"></div>
-        <svg viewBox="0 0 900 460" class="w-full" xmlns="http://www.w3.org/2000/svg">
-          <path d="M120 140 Q140 120 180 130 L260 110 Q310 115 330 140 L340 170 Q335 200 320 210 L290 215 Q260 210 240 220 L200 225 Q160 220 140 200 L125 175 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M90 150 Q100 135 130 140 L170 135 Q190 150 185 170 L175 185 Q160 195 145 190 L120 185 Q100 175 95 165 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M260 240 L290 235 Q310 250 315 280 L310 320 Q300 350 285 360 L270 355 Q255 340 255 310 L258 275 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M420 120 L470 115 Q490 125 485 140 L475 150 Q450 155 430 148 L420 135 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M430 165 L475 160 Q500 170 505 200 L500 250 Q490 280 470 285 L445 275 Q430 250 428 220 L430 190 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M490 110 L620 100 Q680 110 700 140 L710 180 Q700 210 670 215 L600 210 Q530 205 500 190 L490 160 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M560 200 L585 195 Q595 210 590 230 L575 240 Q565 235 562 220 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M620 220 L660 215 Q675 225 670 245 L650 250 Q630 245 622 235 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <path d="M680 290 L740 285 Q760 295 755 315 L735 325 Q700 320 685 310 Z" fill="#212d21" stroke="#364536" stroke-width="1"/>
-          <!-- pins -->
-          <g class="map-pin" data-name="Mothbox — Open Trap Cam" data-desc="reCamera+LoRa insect ID. Panama FabLab → Peru/Yellowstone." data-status="Deployed">
-            <circle class="pin-pulse" cx="275" cy="265" r="6"/><circle class="pin-dot" cx="275" cy="265" r="4"/>
-          </g>
-          <g class="map-pin" data-name="Olfactory Sensor — Robert Long" data-desc="Mass-production of mammalian olfactory sensors. Woodland Park." data-status="Open">
-            <circle class="pin-dot" cx="140" cy="160" r="4"/>
-          </g>
-          <g class="map-pin" data-name="CollarID — MIT Media Lab" data-desc="Open-source collar + LoRa + CV individual re-ID. Fusion small-batch manufacturing." data-status="Intent">
-            <circle class="pin-dot" cx="185" cy="160" r="4"/>
-          </g>
-          <g class="map-pin" data-name="TNC Wetland — Deep Bay HK" data-desc="SenseCAP 4G + S700-C + water quality. Phase 1 running, Phase 2 planned." data-status="Phase 1 Running">
-            <circle class="pin-pulse" cx="660" cy="215" r="6"/><circle class="pin-dot" cx="660" cy="215" r="4"/>
-          </g>
-          <g class="map-pin" data-name="RiKAnet — Bhutan Tiger Monitoring" data-desc="Tracker + LoRa/Mesh national network + reCamera CV. Framework building." data-status="Framework">
-            <circle class="pin-pulse" cx="645" cy="200" r="6"/><circle class="pin-dot" cx="645" cy="200" r="4"/>
-          </g>
-          <g class="map-pin" data-name="LifeScience Trust — Zoo Pilot" data-desc="Multi-species zoo monitoring + in-zoo FabLab. Pilot stage." data-status="Intent">
-            <circle class="pin-dot" cx="585" cy="225" r="4"/>
-          </g>
-          <g class="map-pin" data-name="Mothbox — Yellowstone" data-desc="Mothbox extension site. Planned." data-status="Planned">
-            <circle class="pin-dot" cx="165" cy="145" r="4"/>
-          </g>
-        </svg>
-        <div class="flex flex-wrap items-center gap-5 mt-4 text-xs text-white/50">
-          <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-brand"></span> Deployed / Running</span>
-          <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-white/30"></span> Planned / Intent</span>
-          <span class="text-white/30">Hover a pin to see case details</span>
+      <div class="flex flex-col lg:flex-row gap-5 items-stretch">
+        <div id="world-map" class="w-full lg:flex-1 rounded-2xl border border-dark-line overflow-hidden"></div>
+        <div id="map-card" class="lg:w-80 shrink-0 bg-dark-card border border-dark-line rounded-2xl p-6 flex flex-col justify-center min-h-[200px]">
+          <div id="map-card-hint">
+            <div class="w-10 h-10 rounded-lg bg-brand/15 flex items-center justify-center mb-4">
+              <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <p class="text-sm text-white/70 font-medium mb-1">Explore live projects</p>
+            <p class="text-xs text-white/40 leading-relaxed">Hover or tap a map pin to preview the project — status, location, hardware stack, and where it stands today.</p>
+          </div>
+          <div id="map-card-body" class="hidden"></div>
         </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-5 mt-4 text-xs text-white/50">
+        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-brand"></span> Active — deployed / running</span>
+        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#ffab00]"></span> Open lead — seeking partner</span>
+        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-white/30"></span> Planned / intent</span>
       </div>
     </div>
   </div>
@@ -700,7 +711,7 @@ tailwind.config = {
         <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Resources</h4>
         <div class="space-y-2 text-sm">
           <a href="https://www.seeedstudio.com/blog/sdg/" target="_blank" class="block text-white/40 hover:text-white transition-colors">SDG Page</a>
-          <a href="https://github.com" target="_blank" class="block text-white/40 hover:text-white transition-colors">GitHub</a>
+          <a href="https://github.com/rebeccah321/seeed-interspecies" target="_blank" rel="noopener" class="block text-white/40 hover:text-white transition-colors">GitHub</a>
           <a href="https://www.seeedstudio.com" target="_blank" class="block text-white/40 hover:text-white transition-colors">Seeed Studio</a>
           <a href="https://interspecies.io" target="_blank" class="block text-white/40 hover:text-white transition-colors">Interspecies Internet</a>
         </div>
@@ -715,13 +726,14 @@ tailwind.config = {
       </div>
     </div>
     <div class="border-t border-dark-line pt-8 text-center text-xs text-white/30">
-      <p>© 2025 Seeed Studio. Part of the Interspecies Internet initiative.</p>
+      <p>© 2026 Seeed Studio. Part of the Interspecies Internet initiative.</p>
       <p class="mt-1">Open-source hardware · MIT License</p>
     </div>
   </div>
 </footer>
 
 <!-- ============ JAVASCRIPT ============ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
@@ -738,31 +750,81 @@ const observer = new IntersectionObserver((entries) => {
   });
 }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 revealEls.forEach(el => observer.observe(el));
-const tooltip = document.getElementById('map-tooltip');
-const mapContainer = tooltip ? tooltip.parentElement : null;
-if (mapContainer) {
-  document.querySelectorAll('.map-pin').forEach(pin => {
-    pin.addEventListener('mouseenter', () => {
-      const name = pin.dataset.name;
-      const desc = pin.dataset.desc;
-      const status = pin.dataset.status;
-      const statusColor = (status === 'Deployed' || status.includes('Running')) ? '#8FC31F' : '#ffab00';
-      tooltip.innerHTML = '<div style="font-weight:600;color:#32373c;margin-bottom:2px">' + name + '</div><div style="color:#6d6f70;font-size:11px;line-height:1.4">' + desc + '</div><div style="margin-top:4px"><span style="font-size:9px;padding:1px 6px;border-radius:4px;background:' + statusColor + '22;color:' + statusColor + ';text-transform:uppercase;font-weight:600">' + status + '</span></div>';
-      tooltip.classList.add('show');
-    });
-    pin.addEventListener('mousemove', (e) => {
-      const rect = mapContainer.getBoundingClientRect();
-      const x = e.clientX - rect.left + 12;
-      const y = e.clientY - rect.top + 12;
-      tooltip.style.left = x + 'px';
-      tooltip.style.top = y + 'px';
-    });
-    pin.addEventListener('mouseleave', () => { tooltip.classList.remove('show'); });
-    pin.addEventListener('click', () => {
-      document.getElementById('cases').scrollIntoView({ behavior: 'smooth' });
-    });
-  });
+// --- Deployment map: Leaflet + real-world project coordinates ---
+const PROJECTS = [
+  { id:'tnc', tone:'active', name:'TNC Wetland — Deep Bay, Hong Kong', status:'Phase 1 Running',
+    coords:[22.49,114.05], location:'Deep Bay gei wai wetland · TNC Hong Kong',
+    desc:'Continuous wetland-restoration monitoring: SenseCAP 4G Data Logger + S700-C weather station + anti-corrosion water-quality array (salinity, DO, turbidity, pH, temp). The team catches DO drops in real time; Phase 2 adds reCamera Pro bird diversity observation.',
+    tags:['SenseCAP 4G','S700-C','Water sensors'],
+    link:'https://seeedstudio.feishu.cn/docx/ZxOadAzFZoSwOyxVEtQcuOzpnMe', linkText:'Read blog →' },
+  { id:'bhutan', tone:'active', name:'RiKAnet — Bhutan Tiger Monitoring', status:'Framework Building',
+    coords:[27.51,90.43], location:'Nationwide · RiKAnet / Bhutan FabLab',
+    desc:'National-scale tiger monitoring: Tracker GPS individual positioning + LoRa/Mesh backbone covering protected areas + reCamera CV tiger-stripe re-identification. Framework under construction; field validation planned for 2026 Q4.',
+    tags:['Tracker','LoRa/Mesh','reCamera CV'] },
+  { id:'mothbox-panama', tone:'active', name:'Mothbox — Open Trap Cam', status:'Deployed',
+    coords:[8.98,-79.52], location:'Panama City · Panama FabLab',
+    desc:'Open-source insect biodiversity trap cam: reCamera runs edge-AI moth/insect ID with auto-counting (no manual image review), LoRa returns data from remote field sites. Deployed and running; the open design is replicated across the global Fab Lab network.',
+    tags:['reCamera','LoRa','Open Datalogger'],
+    link:'https://mothbox.org', linkText:'mothbox.org →' },
+  { id:'mothbox-peru', tone:'planned', name:'Mothbox — Peru Extension', status:'Planned',
+    coords:[-9.19,-75.02], location:'Peru · regional FabLab',
+    desc:'Next Mothbox replication site. The same open hardware stack, built locally by a regional Fab Lab for Neotropical insect biodiversity monitoring.',
+    tags:['reCamera','LoRa'] },
+  { id:'mothbox-yellowstone', tone:'planned', name:'Mothbox — Yellowstone Extension', status:'Planned',
+    coords:[44.6,-110.5], location:'Yellowstone, USA',
+    desc:'Mothbox extension site for North America. The open design lets local partners build, adapt, and maintain the trap cam with Fab Lab support.',
+    tags:['reCamera','LoRa'] },
+  { id:'olfactory', tone:'open', name:'Olfactory Sensor — Robert Long', status:'Open',
+    coords:[47.63,-122.33], location:'Woodland Park, Seattle · Seattle FabLab',
+    desc:'Mass-producing a lab-built mammalian olfactory sensor. Seeed Fusion bridges the prototype-to-production gap: PCB assembly, sourcing, testing, and the small-batch-to-volume transition.',
+    tags:['Seeed Fusion','Olfaction'] },
+  { id:'collarid', tone:'planned', name:'CollarID — MIT Media Lab', status:'Intent',
+    coords:[42.36,-71.09], location:'MIT Media Lab, Cambridge, MA',
+    desc:'Open-source multi-species tracking collar: Tracker GPS + Meshtastic low-power mesh return + reCamera CV individual re-identification. Seeed Fusion provides small-batch co-manufacturing of the MIT design.',
+    tags:['Tracker','Meshtastic','reCamera CV','Fusion'] },
+  { id:'lifescience', tone:'planned', name:'LifeScience Trust — Zoo Pilot', status:'Intent',
+    coords:[19.08,72.88], location:'India · LifeScience Trust / India FabLab',
+    desc:'Multi-species zoo monitoring as a turnkey program: needs-based product selection (reCamera / Tracker / weather / acoustics), procurement, and an in-zoo FabLab so the zoo can manufacture and iterate devices locally.',
+    tags:['Multi-product','In-zoo FabLab'] }
+];
+
+const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:false, worldCopyJump:true })
+  .setView([25, 20], 2);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains:'abcd', maxZoom:18
+}).addTo(worldMap);
+window.addEventListener('load', () => worldMap.invalidateSize());
+
+const toneColor = { active:'#8FC31F', open:'#ffab00', planned:'#aab8ab' };
+const cardEl = document.getElementById('map-card');
+const cardHint = document.getElementById('map-card-hint');
+const cardBody = document.getElementById('map-card-body');
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+function showProjectCard(p) {
+  const c = toneColor[p.tone];
+  cardHint.classList.add('hidden');
+  cardBody.classList.remove('hidden');
+  cardEl.style.borderColor = c + '66';
+  cardBody.innerHTML =
+    '<span class="card-status" style="background:' + c + '22;color:' + c + '">' + esc(p.status) + '</span>' +
+    '<h5 class="font-display font-bold text-white text-base mt-3 mb-1">' + esc(p.name) + '</h5>' +
+    '<p class="text-xs text-brand mb-3">' + esc(p.location) + '</p>' +
+    '<p class="text-xs text-white/50 leading-relaxed mb-4">' + esc(p.desc) + '</p>' +
+    '<div class="flex flex-wrap gap-1">' + p.tags.map(t => '<span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">' + esc(t) + '</span>').join('') + '</div>' +
+    (p.link ? '<a href="' + esc(p.link) + '" target="_blank" rel="noopener" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mt-3">' + esc(p.linkText || 'Learn more →') + '</a>' : '');
 }
+
+PROJECTS.forEach(p => {
+  const icon = L.divIcon({
+    className: '',
+    html: '<div class="pin-marker ' + p.tone + '"><div class="ring"></div><div class="dot"></div></div>',
+    iconSize: [22, 22], iconAnchor: [11, 11]
+  });
+  const marker = L.marker(p.coords, { icon, title: p.name, riseOnHover: true, keyboard: true }).addTo(worldMap);
+  marker.on('mouseover click', () => showProjectCard(p));
+});
 const progressFill = document.querySelector('.progress-fill');
 if (progressFill) {
   const progressObserver = new IntersectionObserver((entries) => {

@@ -41,11 +41,34 @@ Built with Tailwind CSS (Play CDN), Space Grotesk + Inter fonts.
 2. **How Technology Improves Animal Study?**
    - 01 Research Methodology — comprehensive SVG diagram of 8 research methods
    - 02 Technology Trends — CV, TTS, LLM, VLM, Tracker
-   - 03 Cases (in progress) — progress bar + milestone timeline + challenges funnel (Clue→Solution→Case) + interactive world map
+   - 03 Cases (in progress) — progress bar + milestone timeline + 5 challenge stories (Clue→Solution→Case) + interactive world map
 3. **People** — trust endorsement cards + partner strip
 4. **Future Projects** — Facebook follow CTA + 6 project categories
 5. **Media Contact** — routed email contacts
 6. **Footer**
+
+## v0.3 Changelog (2026-08-31)
+
+- Fixed the dead **Introduction** anchor — hero section id renamed `top` → `intro` so nav / mobile-menu / footer links jump correctly
+- Added lead-gen **CTAs on open challenge leads** (per content blueprint: every clue carries a proposal CTA): anti-poaching "Propose a deployment →" and BuzzCam "Are you the researcher? Get in touch →" (both route to solution@seeed.cc with prefilled subject)
+- **Deployment map fixes** — separated the overlapping Hong Kong / Bhutan pins (were ~15px apart), added SVG `<title>` accessible names to all 7 pins
+- Added descriptive `title` to the TNC Phase 1 blog link (*Turning Environmental Monitoring into Conservation Evidence*)
+- Milestone timeline shifted to 2026 (ESG/SDG launch NOW), added BuzzCam challenge story, challenge grid responsive on mobile (`lg:grid-cols-3`), OG/meta tags
+
+## Embedding in the ESG/SDG Page
+
+Use the landing page as an isolated module in the Seeed ESG/SDG page:
+
+```html
+<iframe
+  src="/interspecies/Interspecies-Landing-Page-v0.3.html"
+  title="Seeed Interspecies initiative"
+  loading="lazy"
+  style="width:100%;min-height:720px;border:0"
+></iframe>
+```
+
+Keep the iframe approach during integration. The current page uses Tailwind utility classes and global `body` styles, so directly injecting its markup into an existing Elementor/WordPress page could conflict with parent-page CSS.
 
 ## Key People
 - **Becca** (solution marketing) — landing page, scenarios, cases, challenges, contact routing
