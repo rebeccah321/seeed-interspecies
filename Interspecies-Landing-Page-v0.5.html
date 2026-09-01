@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interspecies — Seeed Studio | Open Hardware for Animal & Ecological Research</title>
+<meta name="description" content="Seeed Studio serves as the AI hardware and prototyping partner that turns research ideas into real-world systems for animal behavior, environmental signals.">
+<meta name="theme-color" content="#8FC31F">
+<meta property="og:title" content="Interspecies — Seeed">
+<meta property="og:description" content="Open hardware for animal behavior research, environmental sensing.">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        surface: '#f8f8f8', 'surface-card': '#ffffff', 'surface-dim': '#f1f1f1',
+        brand: '#8FC31F', 'brand-dim': '#6fa816', 'brand-deep': '#00936d',
+        'brand-light': '#f3f9e8', ink: '#32373c', muted: '#6d6f70',
+        line: '#e0e0e0',
+      },
+      fontFamily: { display: ['"Space Grotesk"','system-ui','sans-serif'], sans: ['Inter','system-ui','-apple-system','sans-serif'] },
+      boxShadow: { card: '0 2px 8px rgba(0,0,0,.06)', 'card-hover': '0 4px 16px rgba(0,0,0,.10)' }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  html{scroll-behavior:smooth} body{-webkit-font-smoothing:antialiased;background:#f8f8f8}
+  .pill{border-radius:9999px}
+  #nav.scrolled{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  #nav.scrolled .nav-link{color:#6d6f70}#nav.scrolled .nav-link:hover{color:#32373c}
+  #nav.scrolled .brand-text{color:#32373c}#nav.scrolled .brand-text span{color:#8FC31F}
+  #nav.scrolled .nav-cta{border-color:#8FC31F;color:#8FC31F}#nav.scrolled .nav-cta:hover{background:#8FC31F;color:#fff}
+  .hero-bg{background:linear-gradient(170deg,#f3f9e8 0%,#f8f8f8 50%,#f1f1f1 100%)}
+  .hero-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.12}
+  #world-map{background:#c8dce8;height:420px;border-radius:1rem;font:inherit;z-index:0}
+  @media(max-width:767px){#world-map{height:320px}}
+  #world-map .leaflet-control-attribution{background:rgba(255,255,255,.75);color:rgba(0,0,0,.45);font-size:9px;border-radius:4px}#world-map .leaflet-control-attribution a{color:rgba(0,0,0,.6)}
+  .map-ref-labels{filter:contrast(1.5) brightness(0.75) saturate(0.3);-webkit-filter:contrast(1.5) brightness(0.75) saturate(0.3)}
+  #world-map .leaflet-control-zoom{border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:8px;overflow:hidden}
+  #world-map .leaflet-control-zoom a{background:rgba(255,255,255,.88);color:#555;width:32px;height:32px;line-height:32px;font-size:16px;border-bottom:1px solid #eee}
+  #world-map .leaflet-control-zoom a:hover{background:#f0f5fa;color:#333}
+  .map-float-card{position:absolute;z-index:1000;pointer-events:none;max-width:300px;padding:18px 20px;border-radius:14px;background:rgba(255,255,255,.88);backdrop-filter:blur(18px) saturate(1.1);border:1px solid rgba(255,255,255,.6);box-shadow:0 8px 32px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04),inset 0 0 0 1px rgba(255,255,255,.5);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;font-family:Inter,system-ui,-apple-system,sans-serif}
+  .map-float-card.visible{opacity:1;transform:translateY(0)}
+  .map-float-card::before{content:'';position:absolute;inset:0;border-radius:14px;padding:1px;background:linear-gradient(135deg,rgba(143,195,31,.25),rgba(0,147,109,.15),rgba(143,195,31,.05),rgba(0,147,109,.25));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:cardShimmer 3s ease-in-out infinite;pointer-events:none}
+  @keyframes cardShimmer{0%,100%{opacity:.6}50%{opacity:1}}
+  .map-float-card .card-status{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .pin-marker{position:relative;width:40px;height:40px;cursor:pointer}
+  .pin-marker .wave-ring{position:absolute;inset:0;border-radius:50%;border:2px solid;opacity:0;animation:waveEmit 2.5s ease-out infinite}
+  .pin-marker .wave-ring:nth-child(1){animation-delay:0s}.pin-marker .wave-ring:nth-child(2){animation-delay:.8s}.pin-marker .wave-ring:nth-child(3){animation-delay:1.6s}
+  @keyframes waveEmit{0%{transform:scale(0.5);opacity:0.9}100%{transform:scale(3);opacity:0}}
+  .pin-marker .dot{position:absolute;inset:6px;border-radius:50%;backdrop-filter:blur(2px);border:2.5px solid rgba(255,255,255,.85);transition:transform .25s,box-shadow .25s;z-index:1}
+  .pin-marker.active .dot{background:rgba(143,195,31,.6);box-shadow:0 0 20px rgba(143,195,31,.6),inset 0 0 10px rgba(143,195,31,.25)}
+  .pin-marker.active .wave-ring{border-color:rgba(143,195,31,.5)}.pin-marker.open .dot{background:rgba(255,171,0,.55);box-shadow:0 0 18px rgba(255,171,0,.5),inset 0 0 8px rgba(255,171,0,.2)}.pin-marker.open .wave-ring{border-color:rgba(255,171,0,.45)}.pin-marker.planned .dot{background:rgba(170,184,171,.45);box-shadow:0 0 14px rgba(170,184,171,.35),inset 0 0 6px rgba(170,184,171,.15)}.pin-marker.planned .wave-ring{border-color:rgba(170,184,171,.35)}.pin-marker:hover .dot{transform:scale(1.35);box-shadow:0 0 28px rgba(143,195,31,.7),inset 0 0 14px rgba(143,195,31,.3)}
+  .sdg-card{transition:box-shadow .25s,transform .25s;position:relative;overflow:hidden}
+  .sdg-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}.reveal.visible{opacity:1;transform:translateY(0)}
+  .tech-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px;margin-right:4px;margin-bottom:4px}
+  .filter-btn{transition:all .2s;cursor:pointer}.filter-btn.active{background:#8FC31F;color:#fff;border-color:#8FC31F}
+  .sdg-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:"Space Grotesk",sans-serif;color:#fff;flex-shrink:0;margin:0 auto}
+  #hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+  .hero-bg .max-w-6xl{position:relative;z-index:1}
+  .hover-gloss{position:relative;overflow:hidden}.hover-gloss::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 25%,rgba(143,195,31,.06) 42%,rgba(143,195,31,.12) 48%,rgba(143,195,31,.06) 54%,transparent 75%);background-size:250% 100%;opacity:0;transition:opacity .4s;pointer-events:none}.hover-gloss:hover::after{opacity:1;animation:glossSweep 2.8s ease-in-out forwards}@keyframes glossSweep{0%{background-position:250% 0}100%{background-position:-250% 0}}
+  /* ===== Enter Overlay ===== */
+  .enter-overlay{position:fixed;inset:0;z-index:10000;background:#f5f7f0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .9s ease,visibility .9s ease}
+  .enter-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .enter-overlay .enter-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;cursor:none}
+  .enter-overlay .enter-content{position:relative;z-index:1;text-align:center;max-width:800px;width:100%;padding:2rem}
+  .enter-overlay .enter-title{font-family:"Space Grotesk",sans-serif;font-size:5rem;font-weight:700;color:#1a231a;line-height:1.05;margin-bottom:2.5rem;letter-spacing:-2px}
+  @media(max-width:640px){.enter-overlay .enter-title{font-size:3rem}}
+  .enter-overlay .enter-wave-row{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:2rem;position:relative}
+  .enter-overlay .enter-wave-row .left-text{text-align:right;font-size:.85rem;color:#6d6f70;max-width:200px;line-height:1.4;flex-shrink:0}
+  .enter-overlay .enter-wave-row .right-text{text-align:left;font-size:.85rem;color:#6d6f70;max-width:200px;line-height:1.4;flex-shrink:0}
+  .enter-overlay .enter-wave-row .wave-area{position:relative;width:200px;height:64px;flex-shrink:0}
+  .enter-overlay .enter-wave-row .wave-area canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .enter-overlay .enter-wave-row .wave-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;background:rgba(143,195,31,.12);border:1px solid rgba(143,195,31,.35);color:#1a231a;padding:.6rem 1.5rem;border-radius:9999px;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .enter-overlay .enter-wave-row .wave-btn:hover{background:rgba(143,195,31,.25);border-color:#8FC31F}
+  .enter-overlay .enter-wave-row .wave-btn svg{width:14px;height:14px}
+  .enter-overlay .enter-sub{position:absolute;bottom:2.5rem;color:#aab8ab;font-size:.75rem}
+  .honeyguide-cursor{position:fixed;pointer-events:none;z-index:10001;width:32px;height:28px;transform:translate(-50%,-50%);transition:opacity .3s;will-change:transform}.honeyguide-cursor.hidden{opacity:0}
+  .case-modal-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:1.5rem}.case-modal-overlay.open{display:flex}
+  .case-modal{background:#fff;border-radius:1.25rem;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.04);padding:2rem;position:relative;animation:modalIn .3s ease-out}@keyframes modalIn{0%{opacity:0;transform:translateY(20px) scale(.97)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  .case-modal-close{position:absolute;top:1rem;right:1rem;width:2rem;height:2rem;border-radius:50%;border:none;background:#f1f1f1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#666;transition:background .15s;z-index:1}.case-modal-close:hover{background:#e0e0e0}
+  .case-modal .modal-img{width:100%;height:200px;object-fit:cover;border-radius:.75rem;background:#f1f1f1;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:.8rem}
+  .case-modal .modal-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem}.case-modal .modal-tags span{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px;background:#f3f9e8;color:#00936d}
+  .case-modal h3{font-size:1.25rem;font-weight:700;font-family:"Space Grotesk",sans-serif;margin-bottom:.5rem;color:#32373c}.case-modal .modal-meta{font-size:.75rem;color:#6d6f70;margin-bottom:1rem}.case-modal .modal-desc{font-size:.875rem;color:#32373c;line-height:1.6;margin-bottom:1.25rem}
+  .case-modal .modal-stats{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}.case-modal .modal-stat{background:#f8f8f8;border-radius:.75rem;padding:.75rem}.case-modal .modal-stat .val{font-size:1.25rem;font-weight:700;font-family:"Space Grotesk",sans-serif;color:#00936d}.case-modal .modal-stat .lbl{font-size:.7rem;color:#6d6f70;margin-top:2px}
+  .case-modal .modal-cta{display:inline-flex;align-items:center;gap:6px;padding:.625rem 1.25rem;border-radius:9999px;background:#8FC31F;color:#fff;font-size:.8125rem;font-weight:600;border:none;cursor:pointer;transition:background .2s;text-decoration:none}.case-modal .modal-cta:hover{background:#6fa816}
+  .carousel-wrap{position:relative;margin-top:1rem;-webkit-user-select:none;user-select:none}
+  .carousel-row{position:relative;overflow:hidden;margin-bottom:0.5rem}.carousel-row .carousel-fade-left{position:absolute;top:0;left:0;bottom:0;width:60px;background:linear-gradient(90deg,var(--fade-from,rgba(255,255,255,1)),rgba(255,255,255,0));z-index:2;pointer-events:none}.carousel-row .carousel-fade-right{position:absolute;top:0;right:0;bottom:0;width:60px;background:linear-gradient(270deg,var(--fade-from,rgba(255,255,255,1)),rgba(255,255,255,0));z-index:2;pointer-events:none}
+  .carousel-track{display:flex;gap:0.75rem;width:max-content;will-change:transform}.carousel-track.auto-scroll{animation:scrollLeft 50s linear infinite}.carousel-track.auto-scroll-right{animation:scrollRight 50s linear infinite}.carousel-track.dragging{animation-play-state:paused!important;cursor:grabbing}
+  @keyframes scrollLeft{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}@keyframes scrollRight{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+  .carousel-card{flex-shrink:0;width:260px;background:#fff;border:1px solid #e0e0e0;border-radius:0.875rem;padding:0.875rem 1rem;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:.625rem}.carousel-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-2px);border-color:#8FC31F44}
+  .carousel-card .c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}.carousel-card .c-dot.active{background:#8FC31F;box-shadow:0 0 6px rgba(143,195,31,.5)}.carousel-card .c-dot.open{background:#ffab00;box-shadow:0 0 6px rgba(255,171,0,.4)}.carousel-card .c-dot.planned{background:#aab8ab}
+  .carousel-card .c-body{flex:1;min-width:0}.carousel-card .c-body h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:.75rem;color:#32373c;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.carousel-card .c-body p{font-size:.625rem;color:#6d6f70;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carousel-card .c-right{flex-shrink:0;display:flex;align-items:center;gap:3px}.carousel-card .c-right .c-label{font-size:7px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}.carousel-card .c-right .c-label.active{color:#8FC31F}.carousel-card .c-right .c-label.open{color:#ffab00}.carousel-card .c-right .c-label.planned{color:#aab8ab}.carousel-card .c-right .c-chev{color:#ccc;font-size:.65rem;transition:transform .2s}.carousel-card:hover .c-right .c-chev{transform:translateX(3px);color:#8FC31F}
+  #map-canvas-overlay{position:absolute;inset:0;z-index:500;pointer-events:none;border-radius:1rem;overflow:hidden}#map-connection-canvas{width:100%;height:100%;display:block}.map-wrapper{position:relative}
+  #sdg-ring-wrap{position:relative;width:100%;max-width:600px;margin:0 auto 1rem;padding:0 1rem}#sdg-ring-canvas{display:block;width:100%;height:auto;aspect-ratio:10/1;pointer-events:none}
+  .logo-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2rem 2.5rem}.logo-strip span{font-family:"Space Grotesk",sans-serif;font-size:.75rem;font-weight:600;color:#9a9a9a;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}.logo-strip .sep{color:#e0e0e0;font-size:.6rem}
+</style>
+</head>
+<body class="text-ink font-sans">
+
+<div class="honeyguide-cursor" id="honeyguide-cursor">
+  <svg viewBox="0 0 32 28" fill="none">
+    <path d="M2 16c1-2 3-4 5-5l2-1c1-2 3-5 5-6 1 0 2 1 2 2 0 1-1 3-2 4l3 2c2 1 3 2 3 3s-1 2-3 3l-3 2c1 1 2 3 2 4 0 1-1 2-2 2-2-1-4-4-5-6l-2-1c-2-1-4-3-5-5z" fill="#1a231a" opacity="0.7"/>
+    <path d="M12 14c2-1 5-2 7-2M12 15c2 1 5 2 7 2" stroke="#1a231a" stroke-width="0.8" opacity="0.3"/>
+    <circle cx="16" cy="12" r="1" fill="#fff" opacity="0.8"/>
+  </svg>
+</div>
+
+<!-- ============ ENTER OVERLAY ============ -->
+<div class="enter-overlay" id="enter-overlay">
+  <canvas class="enter-canvas" id="enter-canvas"></canvas>
+  <div class="enter-content">
+    <div class="enter-title">Interspecies</div>
+    <div class="enter-wave-row">
+      <div class="left-text">Life has been<br>sending signals<br>for 3.8 billion years.</div>
+      <div class="wave-area" id="wave-area">
+        <canvas id="enter-wave-canvas"></canvas>
+        <button class="wave-btn" id="enter-btn">
+          Enter the Network
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="right-text">We're building<br>the receivers.</div>
+    </div>
+  </div>
+  <div class="enter-sub">Seeed Studio · Interspecies Initiative</div>
+</div>
+
+<!-- ============ NAV ============ -->
+<nav id="nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 brand-text text-ink font-display font-bold text-lg tracking-tight">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+      Seeed<span>·</span>Interspecies
+    </a>
+    <div class="hidden md:flex items-center gap-7 text-sm">
+      <a href="#why" class="nav-link text-muted hover:text-ink">Why</a><a href="#what" class="nav-link text-muted hover:text-ink">What We Do</a>
+      <a href="#cases" class="nav-link text-muted hover:text-ink">Cases</a><a href="#people" class="nav-link text-muted hover:text-ink">People</a>
+      <a href="#sdg" class="nav-link text-muted hover:text-ink">SDG</a><a href="#join" class="nav-link text-muted hover:text-ink">Join</a>
+    </div>
+    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand">Get in touch</a>
+    <button class="md:hidden text-ink" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-line px-6 py-4 space-y-3">
+    <a href="#why" class="block text-sm text-muted">Why</a><a href="#what" class="block text-sm text-muted">What We Do</a>
+    <a href="#cases" class="block text-sm text-muted">Cases</a><a href="#people" class="block text-sm text-muted">People</a>
+    <a href="#sdg" class="block text-sm text-muted">SDG</a><a href="#join" class="block text-sm text-muted">Join</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section id="top" class="hero-bg min-h-screen flex items-center pt-24 pb-16 relative overflow-hidden">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-orb w-96 h-96 bg-brand" style="top:-80px;right:-60px"></div>
+  <div class="hero-orb w-80 h-80 bg-brand-deep" style="bottom:-60px;left:-40px"></div>
+  <div class="absolute inset-0 opacity-[.03]" style="background-image:linear-gradient(rgba(0,0,0,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.4) 1px,transparent 1px);background-size:48px 48px"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <div class="max-w-4xl">
+      <div class="inline-flex items-center gap-2 pill border border-brand/40 bg-brand/10 px-4 py-1.5 text-xs font-medium text-brand-deep mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+        Open Datalogger for Interspecies Internet
+      </div>
+      <h1 class="font-display text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-8">
+        Technology for<br><span class="text-brand-deep">Interspecies Understanding</span>
+      </h1>
+      <div class="bg-white/60 backdrop-blur-sm border border-line rounded-2xl p-6 md:p-8 mb-8 shadow-card">
+        <p class="text-base md:text-lg text-ink/80 leading-relaxed mb-4">
+          In Mozambique, a bird called the <strong>honeyguide</strong> does something remarkable. It flies to a person, calls, waits — then leads them, step by step, to a beehive. The human takes the honey and leaves the wax. <strong>Signaling, navigation, payment.</strong> A full collaboration protocol between two species — running for generations.
+        </p>
+        <p class="text-base md:text-lg text-ink/80 leading-relaxed">
+          <strong>Cross-species communication has always been productive.</strong> It was just handcrafted, one relationship at a time. We're here to build the open tools — sensors, networks, AI — that let every species and every ecosystem finally be heard.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-4 mb-10">
+        <a href="#what" class="pill bg-brand text-white px-7 py-3.5 font-medium text-sm flex items-center gap-2 hover:bg-brand-dim">See What We Do<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a href="#join" class="pill border border-line bg-white text-ink px-7 py-3.5 font-medium text-sm hover:border-brand hover:text-brand-deep shadow-card">Join the Project</a>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted">
+        <span>Backed by</span><span class="text-ink/80 font-medium">MIT Media Lab</span><span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Interspecies Internet</span><span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Fab Lab Network</span><span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Open Source · GitHub</span>
+      </div>
+    </div>
+  </div>
+  <a href="#why" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted/60 hover:text-brand-deep">
+    <span class="text-[10px] tracking-[2px] uppercase">Scroll</span>
+    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  </a>
+</section>
+
+<!-- ============ WHY ============ -->
+<section id="why" class="py-16" style="background:#f7f5f0">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-3 reveal"><div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Why Now</div></div>
+    <div class="space-y-5 max-w-4xl mx-auto reveal">
+      <div class="flex items-start gap-4"><span class="text-2xl shrink-0 mt-0.5">🤝</span><div><span class="font-display font-bold text-base">Cross-species collaboration is nothing new.</span><p class="text-muted mt-1 text-sm">The honeyguide leading humans to honey. Dolphins herd fish toward waiting fishermen in Brazil — a partnership passed down for generations.</p></div></div>
+      <div class="flex items-start gap-4"><span class="text-2xl shrink-0 mt-0.5">📡</span><div><span class="font-display font-bold text-base">Signals are everywhere. We've been missing most of them.</span><p class="text-muted mt-1 text-sm">A tiger's stripes are a barcode. Animals and ecosystems have been broadcasting data for millions of years.</p></div></div>
+      <div class="flex items-start gap-4"><span class="text-2xl shrink-0 mt-0.5">⚡</span><div><span class="font-display font-bold text-base">Now, for the first time, we can listen at scale.</span><p class="text-muted mt-1 text-sm">Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold.</p></div></div>
+      <div class="flex items-start gap-4"><span class="text-2xl shrink-0 mt-0.5">🔧</span><div><span class="font-display font-bold text-base">We build the tools that let them be heard.</span><p class="text-muted mt-1 text-sm">Seeed is an open-hardware platform turning signals from any species into something any Fab Lab can replicate.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT ============ -->
+<section id="what" class="py-16" style="background:#f3f7ec">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">What We Do</div>
+      <h2 class="font-display text-2xl md:text-4xl font-bold mb-3">Six Research Areas, One Platform</h2>
+      <p class="text-muted max-w-3xl mx-auto text-sm">From traditional field methods to AI-powered sensing — the full landscape of animal research, and where open hardware changes what's possible.</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="sdg-card hover-gloss bg-white border border-line rounded-xl p-5 reveal">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Individual Identification &amp; Lifecycle Tracking</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional</p><p class="text-xs text-ink/70">Mark-recapture, photo ID, GPS collars — invasive, expensive.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-powered</p><p class="text-xs text-ink/70">AI reads natural markings — tiger stripes, fin notches — like barcodes.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">Edge AI</span></div>
+      </div>
+      <div class="sdg-card hover-gloss bg-white border border-line rounded-xl p-5 reveal">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Population Counting &amp; Dynamics</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional</p><p class="text-xs text-ink/70">Camera traps + manual review. A single estimate takes weeks.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-powered</p><p class="text-xs text-ink/70">On-device AI identifies and counts species automatically.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span></div>
+      </div>
+      <div class="sdg-card hover-gloss bg-white border border-line rounded-xl p-5 reveal">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Cognitive Decline &amp; Aging Research</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional</p><p class="text-xs text-ink/70">Manual ethogram coding — short, subjective, expert-dependent.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-powered</p><p class="text-xs text-ink/70">24/7 gait and vocal monitoring. VLM detects changes early.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">VLM</span><span class="tech-tag bg-brand/15 text-brand-deep">STT</span></div>
+      </div>
+      <div class="sdg-card hover-gloss bg-white border border-line rounded-xl p-5 reveal">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19 12a4 4 0 0 0-2-3.5"/><path d="M22 12a8 8 0 0 0-4-7"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Acoustic Monitoring</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional</p><p class="text-xs text-ink/70">Record + send to experts. Expensive, slow.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-powered</p><p class="text-xs text-ink/70">Edge-based sound classification identifies species automatically.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">STT</span><span class="tech-tag bg-brand/15 text-brand-deep">Audio AI</span></div>
+      </div>
+      <div class="sdg-card hover-gloss bg-white border border-line rounded-xl p-5 reveal">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Social Behavior &amp; Group Dynamics</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional</p><p class="text-xs text-ink/70">Years of focal observation. Patterns take seasons to spot.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-powered</p><p class="text-xs text-ink/70">Multi-camera arrays map interactions in real time.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">Multi-modal</span></div>
+      </div>
+      <div class="sdg-card hover-gloss bg-white border border-line rounded-xl p-5 reveal">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 22V8l6-4 6 4v14"/><path d="M2 14h12"/><path d="M10 22V10"/><path d="M18 22V6l4-2v18"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Habitat &amp; Carrying Capacity Monitoring</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional</p><p class="text-xs text-ink/70">Periodic sampling + lab analysis. You miss almost everything.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-powered</p><p class="text-xs text-ink/70">Continuous sensors report daily. Restoration becomes watchable.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">Environmental Sensors</span><span class="tech-tag bg-brand/15 text-brand-deep">IoT</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EVIDENCE ============ -->
+<section id="cases" class="py-16 bg-surface-card border-b border-line">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Evidence</div>
+      <h2 class="font-display text-2xl md:text-4xl font-bold mb-3">Deployments in the Wild</h2>
+      <p class="text-muted max-w-2xl mx-auto text-sm">Every pin on this map is a real deployment — in the rainforest, the wetland, the mountain range.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-4 reveal" id="filter-bar">
+      <span class="text-xs text-muted mr-1">Filter:</span>
+      <button class="filter-btn active pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="all">All</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="CV">CV</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="LoRa">LoRa</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="STT">STT</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="VLM">VLM</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="Tracker">Tracker</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="Environmental">Environmental</button>
+    </div>
+    <div class="relative mb-4 reveal map-wrapper">
+      <div id="world-map"></div>
+      <div id="map-canvas-overlay"><canvas id="map-connection-canvas"></canvas></div>
+      <div id="map-float-card" class="map-float-card"><div id="map-float-card-body"></div></div>
+    </div>
+    <div class="carousel-wrap reveal">
+      <div class="carousel-row" id="carousel-row-1" style="--fade-from:rgba(255,255,255,1)"><div class="carousel-fade-left"></div><div class="carousel-fade-right"></div><div class="carousel-track auto-scroll" id="carousel-track-1"></div></div>
+      <div class="carousel-row" id="carousel-row-2" style="--fade-from:rgba(255,255,255,1)"><div class="carousel-fade-left"></div><div class="carousel-fade-right"></div><div class="carousel-track auto-scroll-right" id="carousel-track-2"></div></div>
+    </div>
+    <div class="case-modal-overlay" id="case-modal">
+      <div class="case-modal">
+        <button class="case-modal-close" onclick="closeCaseModal()">✕</button>
+        <div class="modal-img" id="modal-img"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="modal-tags" id="modal-tags"></div><h3 id="modal-title"></h3><p class="modal-meta" id="modal-meta"></p><p class="modal-desc" id="modal-desc"></p>
+        <div class="modal-stats" id="modal-stats"></div>
+        <a id="modal-cta" class="modal-cta" href="#" target="_blank" rel="noopener">View Full Case<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PEOPLE ============ -->
+<section id="people" class="py-16" style="background:#f7f5f0">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Who We Work With</div>
+      <h2 class="font-display text-2xl md:text-4xl font-bold mb-3">People &amp; Partners</h2>
+    </div>
+    <div class="grid md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white border border-line rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="w-14 h-14 rounded-full mx-auto mb-3 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center"><svg class="w-7 h-7 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg></div>
+        <h3 class="font-display font-bold text-sm">MIT Media Lab</h3>
+        <p class="text-xs text-muted mt-1">Pioneering the Fab Lab network and Interspecies Internet initiative.</p>
+      </div>
+      <div class="bg-white border border-line rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="w-14 h-14 rounded-full mx-auto mb-3 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center"><svg class="w-7 h-7 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg></div>
+        <h3 class="font-display font-bold text-sm">Interspecies Internet</h3>
+        <p class="text-xs text-muted mt-1">A flagship future project for cross-species communication.</p>
+      </div>
+      <div class="bg-white border border-line rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="w-14 h-14 rounded-full mx-auto mb-3 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center"><svg class="w-7 h-7 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg></div>
+        <h3 class="font-display font-bold text-sm">Fab Lab Network</h3>
+        <p class="text-xs text-muted mt-1">Global network of digital fabrication laboratories.</p>
+      </div>
+      <div class="bg-white border border-line rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="w-14 h-14 rounded-full mx-auto mb-3 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center"><svg class="w-7 h-7 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg></div>
+        <h3 class="font-display font-bold text-sm">Dina Lab</h3>
+        <p class="text-xs text-muted mt-1">Creator of the Mothbox open-source insect trap cam.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ SDG ============ -->
+<section id="sdg" class="py-12" style="background:#eef4f7">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-6 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-2">Why It Matters</div>
+      <h2 class="font-display text-xl md:text-2xl font-bold mb-2">8 Goals, One Network</h2>
+      <p class="text-muted max-w-xl mx-auto text-xs">Every signal we receive feeds into the UN Sustainable Development Goals.</p>
+    </div>
+    <div id="sdg-ring-wrap" class="reveal"><canvas id="sdg-ring-canvas"></canvas></div>
+    <div class="grid grid-cols-4 md:grid-cols-8 gap-4 reveal">
+      <div class="text-center"><div class="sdg-icon" style="background:#48773E;">13</div><p class="text-[10px] text-muted mt-1 leading-tight">Climate Action</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#007DBC;">14</div><p class="text-[10px] text-muted mt-1 leading-tight">Life Below Water</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#3EB049;">15</div><p class="text-[10px] text-muted mt-1 leading-tight">Life on Land</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#F26B2B;">9</div><p class="text-[10px] text-muted mt-1 leading-tight">Industry &amp; Infrastructure</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#F89D2A;">11</div><p class="text-[10px] text-muted mt-1 leading-tight">Sustainable Cities</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#C31F33;">4</div><p class="text-[10px] text-muted mt-1 leading-tight">Quality Education</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#C41F65;">10</div><p class="text-[10px] text-muted mt-1 leading-tight">Reduced Inequalities</p></div>
+      <div class="text-center"><div class="sdg-icon" style="background:#1D4E6F;">17</div><p class="text-[10px] text-muted mt-1 leading-tight">Partnerships</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOIN ============ -->
+<section id="join" class="py-12" style="background:#f3f7ec">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-6 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-2">Get Involved</div>
+      <h2 class="font-display text-xl md:text-2xl font-bold mb-2">Three Ways to Join</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4 mb-4 reveal">
+      <div class="bg-white border border-line rounded-xl p-5 hover:shadow-card-hover hover:border-brand/30 transition-all">
+        <div class="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center mb-3"><svg class="w-4 h-4 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1">Participate in Open Challenges</h3>
+        <p class="text-xs text-muted mb-3">Join an existing open-source challenge. Contribute to a build. Deploy a replicate kit in your local Fab Lab.</p>
+        <a href="https://github.com" target="_blank" class="inline-flex items-center gap-1 text-xs text-brand-deep font-medium hover:underline">Browse open challenges<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="bg-white border border-line rounded-xl p-5 hover:shadow-card-hover hover:border-brand/30 transition-all">
+        <div class="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center mb-3"><svg class="w-4 h-4 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1">Submit Your Research Needs</h3>
+        <p class="text-xs text-muted mb-3">Have a research question that needs a hardware answer? Submit your proposal and we'll help find the right tools.</p>
+        <a href="mailto:solution@seeed.cc" class="inline-flex items-center gap-1 text-xs text-brand-deep font-medium hover:underline">Submit your project<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="bg-white border border-line rounded-xl p-5 hover:shadow-card-hover hover:border-brand/30 transition-all">
+        <div class="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center mb-3"><svg class="w-4 h-4 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1">Follow Updates</h3>
+        <p class="text-xs text-muted mb-3">Follow us for the latest deployments, open-source tools, and interspecies research stories from the field.</p>
+        <a href="https://www.facebook.com/seeedstudio" target="_blank" class="inline-flex items-center gap-1 text-xs text-brand-deep font-medium hover:underline">Follow on Facebook<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="py-10 text-center text-xs text-muted border-t border-line" style="background:#f8f8f8" id="contact">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid md:grid-cols-3 gap-4 mb-6 text-left max-w-2xl mx-auto">
+      <a href="mailto:solution@seeed.cc" class="block"><span class="font-medium text-ink">Solution &amp; Partnership</span><br>solution@seeed.cc</a>
+      <a href="mailto:press@seeed.cc" class="block"><span class="font-medium text-ink">Media &amp; Press</span><br>press@seeed.cc</a>
+      <a href="mailto:interspecies@seeed.cc" class="block"><span class="font-medium text-ink">Open Datalogger</span><br>interspecies@seeed.cc</a>
+    </div>
+    <p>&copy; 2026 Seeed Studio. Part of the Interspecies Internet initiative. Open-source hardware · MIT License</p>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ====================================================================
+// 1. HERO CANVAS
+// ====================================================================
+(function initHeroCanvas() {
+  const canvas = document.getElementById('hero-canvas'); if (!canvas) return;
+  const ctx = canvas.getContext('2d'); let w = 0, h = 0, mouseX = -1000, mouseY = -1000, mt = 0, ct = 0;
+  const waves = [];
+  function resize() { const p = canvas.parentElement; if (!p) return; const r = p.getBoundingClientRect(), d = window.devicePixelRatio || 1; w = canvas.width = r.width * d; h = canvas.height = r.height * d; canvas.style.width = r.width + 'px'; canvas.style.height = r.height + 'px'; }
+  resize(); window.addEventListener('resize', resize);
+  canvas.parentElement.addEventListener('mousemove', function(e) { const r = canvas.getBoundingClientRect(); mouseX = (e.clientX - r.left) * (window.devicePixelRatio || 1); mouseY = (e.clientY - r.top) * (window.devicePixelRatio || 1); });
+  function sw(x, y, i) { i = i || 1; if (w === 0 || h === 0) return; for (let j = 0; j < 3; j++) { waves.push({ x, y, r: 1, maxR: (180 + Math.random() * 120) * i, speed: 1.0 + Math.random() * 0.5, opacity: (0.25 + Math.random() * 0.15) * i, delay: j * 0.3, age: 0 }); } if (waves.length > 45) waves.splice(0, waves.length - 45); }
+  function si() { if (w > 0 && h > 0) sw(w / 2, h / 2, 1.2); else setTimeout(si, 50); } si();
+  function draw() {
+    ctx.clearRect(0, 0, w, h); ct += 0.016; if (ct > 1.5) { ct = 0; sw(w / 2, h / 2, 0.8 + Math.random() * 0.4); }
+    if (mouseX > 0 && mouseY > 0 && mouseX < w && mouseY < h) { mt += 0.016; if (mt > 1.5) { mt = 0; sw(mouseX, mouseY, 0.6 + Math.random() * 0.3); } } else { mt = 0; }
+    for (let i = waves.length - 1; i >= 0; i--) { const wa = waves[i]; wa.age += 0.016; if (wa.age < wa.delay) continue; wa.r = Math.max(2, (wa.age - wa.delay) * wa.speed * 60); if (wa.r > wa.maxR) { waves.splice(i, 1); continue; } const p = wa.r / wa.maxR, f = wa.opacity * (1 - p) * (1 - p); ctx.beginPath(); ctx.arc(wa.x, wa.y, wa.r, 0, Math.PI * 2); ctx.strokeStyle = `rgba(57, 181, 255, ${f})`; ctx.lineWidth = Math.max(0.5, 2.5 * (1 - p * 0.6)); ctx.stroke(); if (wa.r > 4) { try { const g = ctx.createRadialGradient(wa.x, wa.y, wa.r * 0.2, wa.x, wa.y, wa.r); g.addColorStop(0, 'rgba(57, 181, 255, 0)'); g.addColorStop(0.4, `rgba(57, 181, 255, ${f * 0.25})`); g.addColorStop(1, 'rgba(57, 181, 255, 0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wa.x, wa.y, wa.r, 0, Math.PI * 2); ctx.fill(); } catch(e) {} } }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ====================================================================
+// 2. ENTER OVERLAY — ripples + wave track
+// ====================================================================
+(function initEnterCanvas() {
+  const canvas = document.getElementById('enter-canvas'); const ctx = canvas.getContext('2d');
+  let w, h, mx = -1000, my = -1000;
+  function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  canvas.addEventListener('mousemove', function(e) { const r = canvas.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; });
+  const dots = []; for (let i = 0; i < 80; i++) { dots.push({ x: Math.random()*w, y: Math.random()*h, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4-0.15, r: 1.5+Math.random()*2.5, opacity: 0.3+Math.random()*0.5, pulse: Math.random()*Math.PI*2 }); }
+  const ripples = []; let rt = 0, crt = 0;
+  function sr(x, y, i) { i = i || 1; ripples.push({ x, y, r: 0, maxR: (120+Math.random()*80)*i, speed: 2+Math.random()*1.2, opacity: (0.4+Math.random()*0.15)*i }); if (ripples.length > 30) ripples.shift(); }
+  window.__enterCanvas = { spawnRipple: sr };
+  function draw() {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#f5f7f0'; ctx.fillRect(0,0,w,h);
+    const g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.6);
+    g.addColorStop(0,'rgba(143,195,31,0.03)'); g.addColorStop(1,'rgba(143,195,31,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(143,195,31,0.03)'; ctx.lineWidth=1; for(let x=0;x<w;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();} for(let y=0;y<h;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;d.pulse+=0.025;if(d.x<-10)d.x=w+10;if(d.x>w+10)d.x=-10;if(d.y<-10)d.y=h+10;if(d.y>h+10)d.y=-10;const po=d.opacity*(0.6+0.4*Math.sin(d.pulse));const gl=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r*5);gl.addColorStop(0,`rgba(143,195,31,${po*0.5})`);gl.addColorStop(1,'rgba(143,195,31,0)');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(d.x,d.y,d.r*5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(143,195,31,${po})`;ctx.fill();});
+    crt+=0.016; if(crt>1.5){crt=0;sr(w/2,h/2,0.6+Math.random()*0.3);}
+    rt+=0.016; if(mx>0&&my>0&&mx<w&&my<h&&rt>0.12){rt=0;sr(mx+(Math.random()-0.5)*15,my+(Math.random()-0.5)*15,0.8+Math.random()*0.4);}
+    ripples.forEach((r,i)=>{r.r+=r.speed;if(r.r>r.maxR){ripples.splice(i,1);return;}const p=r.r/r.maxR,f=r.opacity*(1-p)*(1-p);ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);ctx.strokeStyle=`rgba(57,181,255,${f})`;ctx.lineWidth=2*(1-p*0.5);ctx.stroke();const gl=ctx.createRadialGradient(r.x,r.y,r.r*0.4,r.x,r.y,r.r);gl.addColorStop(0,'rgba(57,181,255,0)');gl.addColorStop(0.5,`rgba(57,181,255,${f*0.2})`);gl.addColorStop(1,'rgba(57,181,255,0)');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,Math.PI*2);ctx.fill();});
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// Enter wave track canvas
+(function initWaveTrack() {
+  const canvas = document.getElementById('enter-wave-canvas'); if (!canvas) return;
+  const ctx = canvas.getContext('2d'); let w, phase = 0;
+  function resize() { const r = canvas.parentElement.getBoundingClientRect(); w = canvas.width = r.width; canvas.height = r.height; }
+  resize(); window.addEventListener('resize', resize);
+  function draw() {
+    ctx.clearRect(0, 0, w, 64); phase += 0.025;
+    const cx = w / 2, cy = 32;
+    // Multiple signal arcs
+    for (let a = 0; a < 4; a++) {
+      const offset = a * 8 + 4 * Math.sin(phase * 0.5 + a * 0.6);
+      const opacity = 0.15 + 0.1 * Math.sin(phase + a * 1.5);
+      // Left-to-right arcs
+      ctx.beginPath();
+      ctx.moveTo(0, cy + offset);
+      ctx.quadraticCurveTo(cx * 0.3, cy - 18 - offset * 0.3 + 6 * Math.sin(phase + a * 0.8), cx * 0.5, cy + offset * 0.2);
+      ctx.quadraticCurveTo(cx * 0.7, cy + 18 + offset * 0.3 + 6 * Math.sin(phase * 0.7 + a * 0.5), cx, cy + offset * 0.1);
+      ctx.quadraticCurveTo(cx * 1.3, cy - 18 - offset * 0.3 + 6 * Math.sin(phase * 0.9 + a * 0.7), cx * 1.5, cy + offset * 0.2);
+      ctx.quadraticCurveTo(cx * 1.7, cy + 18 + offset * 0.3 + 6 * Math.sin(phase * 0.6 + a * 0.4), w, cy + offset);
+      ctx.strokeStyle = `rgba(57, 181, 255, ${opacity})`;
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
+    // Moving pulse dot
+    const dotX = (w * (0.5 + 0.5 * Math.sin(phase * 0.4)));
+    ctx.beginPath(); ctx.arc(dotX, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(57, 181, 255, 0.5)';
+    const dotGlow = ctx.createRadialGradient(dotX, cy, 0, dotX, cy, 12);
+    dotGlow.addColorStop(0, 'rgba(57, 181, 255, 0.3)'); dotGlow.addColorStop(1, 'rgba(57, 181, 255, 0)');
+    ctx.fillStyle = dotGlow; ctx.beginPath(); ctx.arc(dotX, cy, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(dotX, cy, 3, 0, Math.PI * 2); ctx.fillStyle = 'rgba(57, 181, 255, 0.6)'; ctx.fill();
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+(function(){const c=document.getElementById('honeyguide-cursor'),o=document.getElementById('enter-overlay');document.addEventListener('mousemove',e=>{if(!o.classList.contains('hidden')){c.style.display='block';c.style.left=e.clientX+'px';c.style.top=e.clientY+'px';}});document.addEventListener('mouseleave',()=>c.style.display='none');document.addEventListener('mouseenter',()=>{if(!o.classList.contains('hidden'))c.style.display='block';});})();
+document.getElementById('enter-btn').addEventListener('click',function(e){const o=document.getElementById('enter-overlay');const rect=document.getElementById('enter-canvas').getBoundingClientRect();if(window.__enterCanvas)window.__enterCanvas.spawnRipple(e.clientX-rect.left,e.clientY-rect.top,3.5);setTimeout(()=>{o.classList.add('hidden');document.body.style.cursor='default';document.getElementById('honeyguide-cursor').classList.add('hidden');window.dispatchEvent(new Event('resize'));},500);});
+
+// ====================================================================
+// 3. NAV + REVEAL
+// ====================================================================
+const nav=document.getElementById('nav'); window.addEventListener('scroll',()=>{if(window.scrollY>80)nav.classList.add('scrolled');else nav.classList.remove('scrolled');});
+const revealEls=document.querySelectorAll('.reveal'); const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:0.1,rootMargin:'0px 0px -40px 0px'}); revealEls.forEach(el=>obs.observe(el));
+
+// ====================================================================
+// 4. MAP
+// ====================================================================
+(function(){const c=document.getElementById('map-connection-canvas');if(!c)return;const ctx=c.getContext('2d');let w,h;const COORDS=[{id:'tnc',lat:22.49,lng:114.05},{id:'bhutan',lat:27.51,lng:90.43},{id:'mothbox-panama',lat:8.98,lng:-79.52},{id:'mothbox-peru',lat:-9.19,lng:-75.02},{id:'mothbox-yellowstone',lat:44.6,lng:-110.5},{id:'olfactory',lat:47.63,lng:-122.33},{id:'collarid',lat:42.36,lng:-71.09},{id:'lifescience',lat:19.08,lng:72.88}];function xy(lat,lng){return{x:((lng+180)/360)*w,y:((90-lat)/180)*h};}function resize(){const p=c.parentElement.getBoundingClientRect();w=c.width=p.width;h=c.height=p.height;c.style.width=p.width+'px';c.style.height=p.height+'px';}resize();window.addEventListener('resize',resize);const pairs=[['tnc','bhutan'],['bhutan','mothbox-panama'],['mothbox-panama','mothbox-peru'],['mothbox-panama','mothbox-yellowstone'],['mothbox-yellowstone','collarid'],['collarid','olfactory'],['bhutan','lifescience'],['collarid','tnc']];const conns=[];pairs.forEach(([a,b])=>{const pa=COORDS.find(p=>p.id===a),pb=COORDS.find(p=>p.id===b);if(pa&&pb)conns.push({from:pa,to:pb});});function draw(){ctx.clearRect(0,0,w,h);conns.forEach(c=>{const f=xy(c.from.lat,c.from.lng),t=xy(c.to.lat,c.to.lng);ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(143,195,31,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);});requestAnimationFrame(draw);}draw();})();
+(function(){const c=document.getElementById('sdg-ring-canvas');if(!c)return;const ctx=c.getContext('2d');let w,h;function resize(){const r=c.getBoundingClientRect();w=c.width=r.width*(window.devicePixelRatio||1);h=c.height=r.height*(window.devicePixelRatio||1);c.style.width=r.width+'px';c.style.height=r.height+'px';}resize();window.addEventListener('resize',resize);const cx=w/2,cy=h/2,rx=w*0.42,ry=h*0.3;let angle=0;function draw(){ctx.clearRect(0,0,w,h);angle+=0.008;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.strokeStyle='rgba(0,147,109,0.15)';ctx.lineWidth=1.5;ctx.setLineDash([3,6]);ctx.stroke();ctx.setLineDash([]);const dx=cx+rx*Math.cos(angle),dy=cy+ry*Math.sin(angle*0.7);const g=ctx.createRadialGradient(dx,dy,0,dx,dy,20);g.addColorStop(0,'rgba(0,147,109,0.4)');g.addColorStop(0.5,'rgba(0,147,109,0.15)');g.addColorStop(1,'rgba(0,147,109,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(dx,dy,20,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(dx,dy,3,0,Math.PI*2);ctx.fillStyle='#00936d';ctx.fill();for(let i=1;i<=12;i++){const t=angle-i*0.05,tx=cx+rx*Math.cos(t),ty=cy+ry*Math.sin(t*0.7),f=1-i/12;ctx.beginPath();ctx.arc(tx,ty,2*f,0,Math.PI*2);ctx.fillStyle=`rgba(0,147,109,${f*0.3})`;ctx.fill();}for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,px=cx+rx*0.92*Math.cos(a),py=cy+ry*0.92*Math.sin(a*0.7);ctx.beginPath();ctx.arc(px,py,1.5,0,Math.PI*2);ctx.fillStyle='rgba(0,147,109,0.2)';ctx.fill();}requestAnimationFrame(draw);}draw();})();
+
+const PROJECTS = [
+  { id:'tnc', tone:'active', name:'Wetland Restoration — Deep Bay', status:'Phase 1 Running', coords:[22.49,114.05], location:'Bay Area, Hong Kong', desc:'Continuous wetland restoration monitoring: SenseCAP 4G + weather station + water-quality array.', summary:'Wetland restoration monitoring in HK', tags:['SenseCAP 4G','S700-C','Water sensors'], stats:[{val:'Phase 1', lbl:'Status'},{val:'24/7', lbl:'Monitoring'}], link:'https://seeedstudio.feishu.cn/docx/ZxOadAzFZoSwOyxVEtQcuOzpnMe', linkText:'Read blog →' },
+  { id:'bhutan', tone:'active', name:'Bhutan Tiger', status:'Framework Building', coords:[27.51,90.43], location:'Bhutan FabLab', desc:'National tiger monitoring: Tracker GPS + LoRa/Mesh + reCamera CV.', summary:'National tiger tracking', tags:['Tracker','LoRa/Mesh','reCamera CV'], stats:[{val:'Nationwide', lbl:'Scope'},{val:'2026 Q4', lbl:'Validation'}], link:'' },
+  { id:'mothbox-panama', tone:'active', name:'Mothbox — Open Trap Cam', status:'Deployed', coords:[8.98,-79.52], location:'Panama City · Panama FabLab', desc:'Open-source insect trap cam: reCamera edge-AI + LoRa data return.', summary:'Open-source insect trap cam', tags:['reCamera','LoRa','Open Datalogger'], stats:[{val:'Deployed', lbl:'Status'},{val:'Edge AI', lbl:'On device'}], link:'https://mothbox.org', linkText:'mothbox.org →' },
+  { id:'mothbox-peru', tone:'planned', name:'Mothbox — Peru', status:'Planned', coords:[-9.19,-75.02], location:'Peru FabLab', desc:'Next Mothbox replication for Neotropical insect monitoring.', summary:'Mothbox replication in Peru', tags:['reCamera','LoRa'], stats:[{val:'Planned', lbl:'Status'}], link:'' },
+  { id:'mothbox-yellowstone', tone:'planned', name:'Mothbox — Yellowstone', status:'Planned', coords:[44.6,-110.5], location:'Yellowstone, USA', desc:'Mothbox extension for North America.', summary:'Mothbox in Yellowstone', tags:['reCamera','LoRa'], stats:[{val:'Planned', lbl:'Status'}], link:'' },
+  { id:'olfactory', tone:'open', name:'Olfactory Sensor', status:'Open', coords:[47.63,-122.33], location:'Seattle FabLab', desc:'Lab-built mammalian olfactory sensor via Seeed Fusion.', summary:'Mammalian olfactory sensor', tags:['Seeed Fusion','Olfaction'], stats:[{val:'Open', lbl:'Status'}], link:'' },
+  { id:'collarid', tone:'planned', name:'CollarID — MIT', status:'Intent', coords:[42.36,-71.09], location:'MIT Media Lab', desc:'Multi-species tracking collar: GPS + Meshtastic + CV.', summary:'Multi-species tracking collar', tags:['Tracker','Meshtastic','reCamera CV'], stats:[{val:'Intent', lbl:'Status'}], link:'' },
+  { id:'lifescience', tone:'planned', name:'LifeScience Zoo Pilot', status:'Intent', coords:[19.08,72.88], location:'India', desc:'Zoo monitoring with in-zoo FabLab.', summary:'Zoo monitoring pilot', tags:['Multi-product','In-zoo FabLab'], stats:[{val:'Intent', lbl:'Status'}], link:'' }
+];
+
+const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:true, worldCopyJump:true, minZoom:2, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
+window.addEventListener('load',()=>worldMap.invalidateSize());
+const toneColor={active:'#8FC31F',open:'#ffab00',planned:'#aab8ab'};
+const floatCard=document.getElementById('map-float-card'),floatCardBody=document.getElementById('map-float-card-body');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
+let activeMarker=null;
+function pfm(marker){const mc=worldMap.getContainer(),mr=mc.getBoundingClientRect(),p=worldMap.latLngToContainerPoint(marker.getLatLng());const cw=floatCard.offsetWidth||300,ch=floatCard.offsetHeight||160,m=18;let l=p.x+28,t=p.y-ch-20;if(t<m)t=p.y+28;if(l+cw>mr.width-m)l=p.x-cw-28;if(l<m)l=m;if(t<m)t=m;if(t+ch>mr.height-m)t=mr.height-ch-m;floatCard.style.left=l+'px';floatCard.style.top=t+'px';}
+function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<span class="card-status" style="background:'+c+'22;color:'+c+'">'+esc(p.status)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(p.name)+'</h5><p class="text-xs text-brand-deep mb-3">'+esc(p.location)+'</p><p class="text-xs text-muted leading-relaxed mb-4">'+esc(p.desc)+'</p><div class="flex flex-wrap gap-1">'+p.tags.map(t=>'<span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">'+esc(t)+'</span>').join('')+'</div>'+(p.link?'<a href="'+esc(p.link)+'" target="_blank" rel="noopener" style="pointer-events:auto" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mt-3">'+esc(p.linkText||'Learn more →')+'</a>':'');floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
+function hfc(){floatCard.classList.remove('visible');activeMarker=null;}
+function ocm(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;document.getElementById('modal-title').textContent=p.name;document.getElementById('modal-meta').textContent=p.location;document.getElementById('modal-desc').textContent=p.desc;document.getElementById('modal-tags').innerHTML=p.tags.map(t=>'<span>'+esc(t)+'</span>').join('');const se=document.getElementById('modal-stats');if(p.stats&&p.stats.length){se.style.display='grid';se.innerHTML=p.stats.map(s=>'<div class="modal-stat"><div class="val">'+esc(s.val)+'</div><div class="lbl">'+esc(s.lbl)+'</div></div>').join('');}else{se.style.display='none';}const cta=document.getElementById('modal-cta');if(p.link){cta.href=p.link;cta.style.display='inline-flex';cta.textContent=p.linkText||'View Full Case';}else{cta.style.display='none';}document.getElementById('case-modal').classList.add('open');document.body.style.overflow='hidden';}
+function ccm(){document.getElementById('case-modal').classList.remove('open');document.body.style.overflow='';}
+document.getElementById('case-modal').addEventListener('click',function(e){if(e.target===this)ccm();});document.addEventListener('keydown',function(e){if(e.key==='Escape')ccm();});
+const markers={};PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:p.name,riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id));});floatCard.addEventListener('mouseenter',()=>{if(activeMarker)floatCard.classList.add('visible');});floatCard.addEventListener('mouseleave',()=>hfc());worldMap.on('move zoom',()=>{if(activeMarker&&floatCard.classList.contains('visible'))pfm(activeMarker);});
+const filterBtns=document.querySelectorAll('.filter-btn');const tagMap={'tnc':['Environmental','IoT'],'bhutan':['CV','LoRa','Tracker'],'mothbox-panama':['CV','LoRa'],'mothbox-peru':['CV','LoRa'],'mothbox-yellowstone':['CV','LoRa'],'olfactory':['Environmental'],'collarid':['CV','LoRa','Tracker'],'lifescience':['CV','Environmental','LoRa']};
+filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;Object.keys(markers).forEach(k=>{const tags=tagMap[k]||[];if(f==='all'||tags.includes(f))worldMap.addLayer(markers[k]);else worldMap.removeLayer(markers[k]);});});});
+const esc2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
+function bcr(tid,projects){const track=document.getElementById(tid);track.innerHTML='';const items=[...projects,...projects];items.forEach(p=>{const card=document.createElement('div');card.className='carousel-card';card.innerHTML='<span class="c-dot '+p.tone+'"></span><div class="c-body"><h4>'+esc2(p.name)+'</h4><p>'+esc2(p.summary)+'</p></div><div class="c-right"><span class="c-label '+p.tone+'">'+esc2(p.status)+'</span><span class="c-chev">→</span></div>';card.addEventListener('click',()=>{const m=markers[p.id];if(m){worldMap.setView(m.getLatLng(),worldMap.getZoom()>=4?worldMap.getZoom():4,{animate:true});sfc(p,m);}ocm(p.id);});track.appendChild(card);});let drag=false,sx=0,sl=0;track.addEventListener('mousedown',function(e){drag=true;track.classList.add('dragging');sx=e.pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('mouseleave',function(){if(drag){drag=false;track.classList.remove('dragging');}});track.addEventListener('mouseup',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();const x=e.pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});track.addEventListener('touchstart',function(e){drag=true;track.classList.add('dragging');sx=e.touches[0].pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('touchend',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('touchmove',function(e){if(!drag)return;const x=e.touches[0].pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});}
+bcr('carousel-track-1',PROJECTS.filter(p=>p.tone==='active'));bcr('carousel-track-2',PROJECTS.filter(p=>p.tone!=='active'));
+document.querySelectorAll('#mobile-menu a').forEach(a=>{a.addEventListener('click',()=>document.getElementById('mobile-menu').classList.add('hidden'));});
+</script>
+</body>
+</html>
