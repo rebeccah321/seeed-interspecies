@@ -1,0 +1,219 @@
+---
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const base = import.meta.env.BASE_URL;
+// Language switcher: EN at the root, ZH under /zh/
+const switchHref = locale === 'zh' ? `${base}` : `${base}zh/`;
+const switchLabel = locale === 'zh' ? 'EN' : '中文';
+---
+
+<nav id="journal-nav" aria-label={ui.nav.chapters}>
+  <div class="nav-inner">
+    <a href="#prologue" class="wordmark">
+      <span class="wordmark-mono">Seeed ×</span>
+      <span class="wordmark-serif">Interspecies</span>
+    </a>
+    <div class="nav-links">
+      <a href="#prologue"><span class="n">01</span>{ui.nav.prologue}</a>
+      <a href="#field"><span class="n">02</span>{ui.nav.field}</a>
+      <a href="#pulse"><span class="n">03</span>{ui.nav.map}</a>
+      <a href="#manifesto"><span class="n">04</span>{ui.nav.manifesto}</a>
+    </div>
+    <div class="nav-right">
+      <a class="lang-switch" href={switchHref} hreflang={locale === 'zh' ? 'en' : 'zh'}>{switchLabel}</a>
+      <button id="nav-burger" aria-label={ui.nav.chapters} aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <span id="nav-progress" aria-hidden="true"></span>
+</nav>
+<div id="nav-menu" aria-hidden="true">
+  <a href="#prologue"><span class="n">01</span>{ui.nav.prologue}</a>
+  <a href="#field"><span class="n">02</span>{ui.nav.field}</a>
+  <a href="#pulse"><span class="n">03</span>{ui.nav.map}</a>
+  <a href="#manifesto"><span class="n">04</span>{ui.nav.manifesto}</a>
+  <a class="lang-switch" href={switchHref}>{switchLabel}</a>
+</div>
+
+<style>
+  #journal-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    transition: background 0.4s ease, border-color 0.4s ease;
+    border-bottom: 1px solid transparent;
+  }
+
+  #journal-nav.scrolled {
+    background: rgba(11, 15, 13, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom-color: var(--color-line);
+  }
+
+  .nav-inner {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .wordmark {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .wordmark-mono {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+
+  .wordmark-serif {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: var(--color-bone);
+    letter-spacing: -0.01em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-pith);
+    text-decoration: none;
+    transition: color 0.25s;
+  }
+
+  .nav-links a:hover { color: var(--color-bone); }
+
+  .nav-links .n,
+  #nav-menu .n {
+    color: var(--color-fog);
+    margin-right: 0.5em;
+  }
+
+  .nav-links a:hover .n { color: var(--color-lichen); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .lang-switch {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: var(--color-pith);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: color 0.25s, border-color 0.25s;
+    text-transform: uppercase;
+  }
+
+  .lang-switch:hover { color: var(--color-bone); border-color: var(--color-lichen); }
+
+  #nav-progress {
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    height: 1px;
+    width: 100%;
+    background: var(--color-lichen);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  #nav-burger {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  #nav-burger span {
+    display: block;
+    width: 22px;
+    height: 1.5px;
+    background: var(--color-bone);
+    transition: transform 0.3s ease;
+  }
+
+  #nav-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(11, 15, 13, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1.75rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  #nav-menu.open { opacity: 1; pointer-events: auto; }
+
+  #nav-menu a {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--color-bone);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 1rem;
+  }
+
+  #nav-menu a.lang-switch {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--color-lichen);
+    align-self: flex-start;
+    padding-bottom: 0.5rem;
+  }
+
+  #nav-menu .n {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-fog);
+    display: block;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    #nav-burger { display: flex; }
+  }
+</style>

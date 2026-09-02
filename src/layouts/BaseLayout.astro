@@ -1,25 +1,33 @@
 ---
 import '../styles/global.css';
-const { title, description } = Astro.props;
-const base = import.meta.env.BASE_URL;
+
+interface Props {
+  lang?: string;
+  title: string;
+  description: string;
+}
+
+const { lang = 'en', title, description } = Astro.props;
 ---
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang={lang}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{title}</title>
   <meta name="description" content={description}>
-  <meta name="theme-color" content="#8FC31F">
-  <meta property="og:title" content="Interspecies — Seeed">
-  <meta property="og:description" content="Open hardware for animal behavior research, environmental sensing.">
+  <meta name="theme-color" content="#0B0F0D">
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
   <meta property="og:type" content="website">
   <meta property="og:url" content={`${Astro.site}seeed-interspecies`}>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@200;300;400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
   <slot />
+  <div class="page-grain" aria-hidden="true"></div>
 </body>
 </html>

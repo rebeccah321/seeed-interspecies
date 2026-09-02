@@ -1,0 +1,249 @@
+---
+import { Image } from 'astro:assets';
+import { HERO_IMAGE } from '../data/images.js';
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const p = ui.prologue;
+---
+
+<!-- ============ 01 / PROLOGUE ============ -->
+<section id="prologue">
+  <div class="hero-frame field-photo-frame">
+    <Image
+      src={HERO_IMAGE}
+      alt={locale === 'zh' ? '暮色中的响蜜鴷' : 'A honeyguide bird perched in golden evening light'}
+      widths={[1080, 1920, 2560]}
+      sizes="100vw"
+      quality={70}
+      loading="eager"
+      fetchpriority="high"
+      data-parallax="hero"
+      class="hero-img"
+    />
+    <div class="grain" aria-hidden="true"></div>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="hero-content">
+      <p class="telemetry" data-rise><span class="dot"></span>{p.signal}</p>
+      <h1 data-rise>{p.title[0]}<br />{p.title[1]}</h1>
+      <p class="epigraph" data-rise>{p.epigraph}</p>
+      <canvas id="prologue-wave" data-rise aria-hidden="true"></canvas>
+    </div>
+    <a href="#essay" class="scroll-cue" aria-label={p.scroll}>
+      <span>{p.scroll}</span>
+      <span class="cue-line" aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div class="essay" id="essay">
+    <header class="essay-head reveal">
+      <p class="telemetry"><span class="dot"></span>{p.head}</p>
+    </header>
+
+    <div class="essay-story reveal">
+      <p class="lead">{p.leadBefore}<em>{p.honeyguide}</em>{p.leadAfter}</p>
+      <p>{p.s1}</p>
+      <p>{p.s2}</p>
+    </div>
+
+    <div class="beats">
+      {p.beats.map((b) => (
+        <div class="beat reveal">
+          <span class="beat-n">{b.n}</span>
+          <h3>{b.h}</h3>
+          <p>{b.p}</p>
+        </div>
+      ))}
+    </div>
+
+    <aside class="footnote reveal">
+      <p><span class="fn-n">1</span>{p.footnote}</p>
+    </aside>
+  </div>
+</section>
+
+<style>
+  .hero-frame {
+    position: relative;
+    height: 100dvh;
+    min-height: 560px;
+    border-radius: 0;
+    border: none;
+  }
+
+  @supports not (height: 100dvh) {
+    .hero-frame { height: 100vh; }
+  }
+
+  .hero-frame :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background:
+      linear-gradient(to top, rgba(11, 15, 13, 0.92) 0%, rgba(11, 15, 13, 0.35) 34%, rgba(11, 15, 13, 0.08) 60%, rgba(11, 15, 13, 0.3) 100%),
+      linear-gradient(to right, rgba(11, 15, 13, 0.55) 0%, transparent 55%);
+  }
+
+  .hero-content {
+    position: absolute;
+    z-index: 4;
+    left: 0;
+    right: 0;
+    bottom: 14vh;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .hero-content h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--color-bone);
+    margin: 1.1rem 0 1.2rem;
+  }
+
+  .epigraph {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+    line-height: 1.6;
+    color: var(--color-pith);
+    max-width: 34rem;
+  }
+
+  #prologue-wave {
+    display: block;
+    width: 320px;
+    max-width: 70vw;
+    height: 44px;
+    margin-top: 1.75rem;
+    opacity: 0.85;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    z-index: 4;
+    bottom: 4vh;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    transition: color 0.3s;
+  }
+
+  .scroll-cue:hover { color: var(--color-bone); }
+
+  .cue-line {
+    display: block;
+    width: 1px;
+    height: 34px;
+    background: linear-gradient(to bottom, var(--color-fog), transparent);
+  }
+
+  /* ---- Essay ---- */
+  .essay {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 9rem 1.5rem 4rem;
+  }
+
+  .essay-story .lead {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.65;
+    color: var(--color-bone);
+    margin-bottom: 1.75rem;
+  }
+
+  .essay-story .lead em { color: var(--color-lichen); }
+
+  .essay-story p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--color-pith);
+    margin-bottom: 1.25rem;
+  }
+
+  .essay-story sup {
+    font-family: var(--font-mono);
+    font-size: 0.65em;
+    color: var(--color-lichen);
+  }
+
+  .beats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 3.5rem;
+    margin-top: 5rem;
+    padding-top: 3.5rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .beat { padding: 1.5rem 0 2.25rem; border-bottom: 1px solid var(--color-line); }
+
+  .beat-n {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    color: var(--color-lichen);
+  }
+
+  .beat h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    line-height: 1.35;
+    color: var(--color-bone);
+    margin: 0.65rem 0 0.6rem;
+  }
+
+  .beat p {
+    font-size: 0.875rem;
+    line-height: 1.75;
+    color: var(--color-pith);
+  }
+
+  .footnote {
+    margin-top: 3.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .footnote p {
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: var(--color-fog);
+  }
+
+  .footnote .fn-n {
+    font-family: var(--font-mono);
+    color: var(--color-lichen);
+    margin-right: 0.6em;
+  }
+
+  @media (max-width: 768px) {
+    .beats { grid-template-columns: 1fr; gap: 0; }
+    .essay { padding-top: 6rem; }
+    .scroll-cue { right: 1.25rem; }
+  }
+</style>

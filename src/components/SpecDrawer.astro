@@ -1,0 +1,161 @@
+---
+import { getImage } from 'astro:assets';
+import { localizedProjects, statusLabel } from '../data/projects.js';
+import { CASE_IMAGES } from '../data/images.js';
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const d = ui.drawer;
+
+// Pre-optimize images through the build pipeline for runtime injection
+const drawers = await Promise.all(
+  localizedProjects(locale).map(async (p) => ({
+    id: p.id,
+    no: p.no,
+    name: p.name,
+    location: p.location,
+    desc: p.desc,
+    tone: p.tone,
+    status: statusLabel(p.tone, locale),
+    field: p.field,
+    telemetry: p.telemetry,
+    tags: p.tags,
+    specs: p.specs,
+    stats: p.stats,
+    link: p.link,
+    linkText: p.linkText,
+    img: p.img ? (await getImage({ src: CASE_IMAGES[p.id], width: 900, quality: 70 })).src : '',
+    t: { signalChain: d.signalChain, fieldData: d.fieldData, viewCase: d.viewCase },
+  }))
+);
+const drawersJson = JSON.stringify(drawers);
+---
+
+<div class="spec-backdrop" id="spec-backdrop" aria-hidden="true"></div>
+<aside class="spec-drawer" id="spec-drawer" role="dialog" aria-modal="true" aria-label={d.ariaLabel} aria-hidden="true">
+  <div class="spec-head">
+    <span class="spec-head-tag" id="spec-head-tag">{d.specSheet}</span>
+    <button class="spec-close" id="spec-close">{d.close}</button>
+  </div>
+  <div id="spec-content" class="spec-scroll"></div>
+</aside>
+
+<script type="application/json" id="spec-drawer-data" set:html={drawersJson} />
+
+<script>
+  const DATA = JSON.parse(document.getElementById('spec-drawer-data').textContent);
+  const drawer = document.getElementById('spec-drawer');
+  const backdrop = document.getElementById('spec-backdrop');
+  const content = document.getElementById('spec-content');
+  const headTag = document.getElementById('spec-head-tag');
+  const closeBtn = document.getElementById('spec-close');
+
+  let lastFocus = null;
+
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function build(d) {
+    content.replaceChildren();
+
+    if (d.img) {
+      const photo = el('div', 'spec-photo');
+      const img = el('img');
+      img.src = d.img;
+      img.alt = d.name;
+      img.loading = 'lazy';
+      photo.appendChild(img);
+      content.appendChild(photo);
+    }
+
+    const body = el('div', 'spec-body');
+
+    body.appendChild(el('h3', 'spec-title', d.name));
+    body.appendChild(el('p', 'spec-meta', d.field ? `${d.field} — ${d.location}` : d.location));
+
+    const status = el('span', `spec-status ${d.tone}`, d.status);
+    body.appendChild(status);
+
+    const desc = el('p', 'spec-desc', d.desc);
+    body.appendChild(desc);
+
+    if (d.specs && d.specs.length) {
+      body.appendChild(el('p', 'spec-sec-label', d.t.signalChain));
+      d.specs.forEach((s) => {
+        const row = el('div', 'spec-row');
+        row.appendChild(el('span', 'tag', s.tag));
+        const main = el('div');
+        main.appendChild(el('span', 'label', s.label));
+        main.appendChild(el('p', 'role', s.role));
+        row.appendChild(main);
+        body.appendChild(row);
+      });
+    }
+
+    if (d.stats && d.stats.length) {
+      body.appendChild(el('p', 'spec-sec-label', d.t.fieldData));
+      const stats = el('div', 'spec-stats');
+      d.stats.forEach((s) => {
+        const stat = el('div', 'spec-stat');
+        stat.appendChild(el('div', 'val', s.val));
+        stat.appendChild(el('div', 'lbl', s.lbl));
+        stats.appendChild(stat);
+      });
+      body.appendChild(stats);
+    }
+
+    if (d.link && d.linkText) {
+      const cta = el('a', 'spec-cta');
+      cta.href = d.link;
+      cta.target = '_blank';
+      cta.rel = 'noopener';
+      cta.textContent = d.linkText.replace(' →', '');
+      cta.appendChild(document.createTextNode(' '));
+      const arrow = el('span', null, '→');
+      arrow.setAttribute('aria-hidden', 'true');
+      cta.appendChild(arrow);
+      body.appendChild(cta);
+    }
+
+    content.appendChild(body);
+  }
+
+  function open(id) {
+    const d = DATA.find((x) => x.id === id);
+    if (!d) return;
+    build(d);
+    headTag.textContent = `${d.t.specSheet || ''} // ${d.field || d.no}`;
+    lastFocus = document.activeElement;
+    drawer.classList.add('open');
+    backdrop.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    backdrop.setAttribute('aria-hidden', 'false');
+    document.documentElement.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+
+  function close() {
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.documentElement.style.overflow = '';
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  }
+
+  closeBtn.addEventListener('click', close);
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer.classList.contains('open')) close();
+  });
+  document.addEventListener('openspec', (e) => open(e.detail?.id));
+</script>

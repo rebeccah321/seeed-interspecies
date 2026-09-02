@@ -1,0 +1,356 @@
+---
+import { Image } from 'astro:assets';
+import { localizedProjects, statusLabel } from '../data/projects.js';
+import { CASE_IMAGES } from '../data/images.js';
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const f = ui.field;
+
+const featured = localizedProjects(locale).filter((p) => p.featured);
+---
+
+<!-- ============ 02 / FIELD DISPATCHES ============ -->
+<section id="field">
+  <header class="chapter-head reveal">
+    <p class="telemetry"><span class="dot"></span>{f.head}</p>
+    <h2>{f.title}</h2>
+    <p class="chapter-lead">{f.lead}</p>
+  </header>
+
+  {featured.map((p) => (
+    <article class="story reveal">
+      <div class="story-media">
+        <div class="field-photo-frame" data-clip>
+          <Image
+            src={CASE_IMAGES[p.id]}
+            alt={p.name}
+            widths={[800, 1200, 1672]}
+            sizes="(min-width: 1024px) 58vw, 100vw"
+            quality={70}
+            loading="lazy"
+            data-parallax="story"
+          />
+          <div class="grain" aria-hidden="true"></div>
+        </div>
+        <p class="fig-cap">{f.fig} {p.no} — {p.name}</p>
+      </div>
+
+      <div class="story-text">
+        <p class="telemetry"><span class="dot"></span>{p.telemetry}</p>
+        <h3>{p.name}</h3>
+        <p class="story-loc">{p.location} · {p.status}</p>
+        <p class="story-body">{p.desc}</p>
+
+        <p class="chain-label">{f.chainLabel}</p>
+        <ul class="chain">
+          {p.specs.map((s) => (
+            <li>
+              <span class="tag">{s.tag}</span>
+              <div>
+                <span class="label">{s.label}</span>
+                <p class="role">{s.role}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <div class="story-actions">
+          {p.link && p.linkText && (
+            <a href={p.link} target="_blank" rel="noopener">{p.linkText.replace(' →', '')} <span aria-hidden="true">→</span></a>
+          )}
+          <button data-focus-node={p.id}>{f.locate} <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </article>
+  ))}
+
+  <div class="appendix reveal">
+    <header>
+      <p class="telemetry"><span class="dot"></span>{f.appendixHead}</p>
+      <p class="appendix-lead">{f.appendixLead}</p>
+    </header>
+    <div class="domains">
+      {f.domains.map((d) => (
+        <details>
+          <summary>
+            <span class="n">{d.no}</span>
+            <span class="name">{d.name}</span>
+            <span class="tags">{d.tags}</span>
+            <span class="chev" aria-hidden="true">+</span>
+          </summary>
+          <div class="domain-body">
+            <p><span class="k">{f.fieldwork}</span>{d.traditional}</p>
+            <p><span class="k">{f.openHW}</span>{d.open}</p>
+          </div>
+        </details>
+      ))}
+    </div>
+  </div>
+
+  <!-- index of non-featured nodes for status legend consistency -->
+  <script type="application/json" id="field-status-data" set:html={JSON.stringify(featured.map((p) => ({ id: p.id })))} />
+</section>
+
+<style>
+  .chapter-head {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 8rem 1.5rem 4.5rem;
+  }
+
+  .chapter-head h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--color-bone);
+    margin: 1rem 0 1.1rem;
+  }
+
+  .chapter-lead {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--color-pith);
+    max-width: 34rem;
+  }
+
+  /* ---- Story rows: asymmetric 7/5 grid, alternating ---- */
+  .story {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0 3rem;
+    align-items: center;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 4.5rem;
+  }
+
+  .story-media { grid-column: 1 / span 7; }
+
+  .story-text { grid-column: 8 / span 5; padding: 1.5rem 0; }
+
+  .story:nth-of-type(even) .story-media { grid-column: 6 / span 7; order: 2; }
+  .story:nth-of-type(even) .story-text { grid-column: 1 / span 5; order: 1; }
+
+  .story-media :global(.field-photo-frame) {
+    aspect-ratio: 16 / 10;
+    min-height: 340px;
+  }
+
+  .story-media :global(.field-photo-frame img) { height: 100%; }
+
+  .fig-cap {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    margin-top: 0.75rem;
+  }
+
+  .story-text h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.6rem;
+    line-height: 1.25;
+    color: var(--color-bone);
+    margin: 0.9rem 0 0.4rem;
+  }
+
+  .story-loc {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    margin-bottom: 1.25rem;
+  }
+
+  .story-body {
+    font-size: 0.925rem;
+    line-height: 1.8;
+    color: var(--color-pith);
+    margin-bottom: 1.75rem;
+  }
+
+  .chain-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    border-top: 1px solid var(--color-line);
+    padding-top: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .chain { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+
+  .chain li {
+    display: flex;
+    gap: 0.9rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .chain li:last-child { border-bottom: none; }
+
+  .chain .tag {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    color: var(--color-lichen);
+    padding-top: 2px;
+    min-width: 44px;
+  }
+
+  .chain .label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-bone);
+  }
+
+  .chain .role {
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--color-pith);
+    margin: 1px 0 0;
+  }
+
+  .story-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1.25rem;
+  }
+
+  .story-actions a,
+  .story-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    border-bottom: 1px solid rgba(123, 184, 66, 0.35);
+    padding: 0.15rem 0 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--color-lichen);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 0.25s, color 0.25s;
+  }
+
+  .story-actions a:hover,
+  .story-actions button:hover { border-color: var(--color-lichen); color: var(--color-bone); }
+
+  /* ---- Appendix ---- */
+  .appendix {
+    max-width: 54rem;
+    margin: 4rem auto 0;
+    padding: 4.5rem 1.5rem 9rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .appendix-lead {
+    font-size: 0.875rem;
+    line-height: 1.75;
+    color: var(--color-pith);
+    max-width: 32rem;
+    margin: 0.75rem 0 2.5rem;
+  }
+
+  details {
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  details:first-of-type { border-top: 1px solid var(--color-line); }
+
+  summary {
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+    padding: 1.1rem 0.25rem;
+    cursor: pointer;
+    list-style: none;
+    transition: background 0.2s;
+  }
+
+  summary::-webkit-details-marker { display: none; }
+
+  summary .n {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    color: var(--color-fog);
+    min-width: 24px;
+  }
+
+  summary .name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-bone);
+    flex: 1;
+  }
+
+  summary .tags {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    color: var(--color-fog);
+    display: none;
+  }
+
+  summary .chev {
+    font-family: var(--font-mono);
+    color: var(--color-lichen);
+    transition: transform 0.3s ease;
+  }
+
+  details[open] summary .chev { transform: rotate(45deg); }
+
+  .domain-body { padding: 0 0.25rem 1.5rem 3.35rem; }
+
+  .domain-body p {
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--color-pith);
+    margin-bottom: 0.5rem;
+  }
+
+  .domain-body .k {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    margin-right: 0.75rem;
+  }
+
+  .domain-body p:last-child .k { color: var(--color-lichen); }
+
+  @media (min-width: 768px) {
+    summary .tags { display: inline; }
+  }
+
+  @media (max-width: 1024px) {
+    .story { grid-template-columns: 1fr; gap: 1.5rem; }
+    .story-media,
+    .story:nth-of-type(even) .story-media { grid-column: 1; order: 1; }
+    .story-text,
+    .story:nth-of-type(even) .story-text { grid-column: 1; order: 2; padding: 0; }
+    .story-media :global(.field-photo-frame) { min-height: 260px; }
+  }
+</style>

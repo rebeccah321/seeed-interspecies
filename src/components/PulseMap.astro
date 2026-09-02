@@ -1,0 +1,276 @@
+---
+import { localizedProjects, statusLabel } from '../data/projects.js';
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const m = ui.pulse;
+
+const nodes = localizedProjects(locale).map((p) => ({
+  id: p.id,
+  no: p.no,
+  name: p.name,
+  location: p.location,
+  coords: p.coords,
+  tone: p.tone,
+  status: statusLabel(p.tone, locale),
+}));
+const nodesJson = JSON.stringify(nodes);
+---
+
+<!-- ============ 03 / THE PULSE ============ -->
+<section id="pulse">
+  <header class="chapter-head reveal">
+    <p class="telemetry"><span class="dot"></span>{m.head}</p>
+    <h2>{m.title}</h2>
+    <p class="chapter-lead">{m.lead}</p>
+  </header>
+
+  <div class="pulse-grid reveal">
+    <aside class="node-index" aria-label={m.index}>
+      {nodes.map((p) => (
+        <button data-node={p.id} data-tone={p.tone}>
+          <span class="idx-dot"></span>
+          <span class="idx-no">{p.no}</span>
+          <span class="idx-body">
+            <span class="idx-name">{p.name}</span>
+            <span class="idx-loc">{p.location}</span>
+          </span>
+          <span class="idx-status">{p.status}</span>
+        </button>
+      ))}
+      <div class="legend">
+        <span><i class="active"></i>{m.legend.active}</span>
+        <span><i class="open"></i>{m.legend.open}</span>
+        <span><i class="planned"></i>{m.legend.planned}</span>
+      </div>
+    </aside>
+
+    <div class="map-wrap">
+      <div id="pulse-map" role="application" aria-label={m.mapLabel}></div>
+    </div>
+  </div>
+
+  <script type="application/json" id="pulse-nodes" set:html={nodesJson} />
+
+  <script>
+    import L from 'leaflet';
+    import 'leaflet/dist/leaflet.css';
+
+    const nodes = JSON.parse(document.getElementById('pulse-nodes').textContent);
+    const mapEl = document.getElementById('pulse-map');
+    if (mapEl && nodes.length) {
+      const map = L.map(mapEl, {
+        scrollWheelZoom: false,
+        zoomControl: true,
+        worldCopyJump: true,
+        minZoom: 2,
+        maxZoom: 10,
+      }).setView([15, 10], 2);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 10,
+      }).addTo(map);
+
+      const markers = {};
+      nodes.forEach((n) => {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="pm-marker ${n.tone}" data-marker="${n.id}"><span class="pm-dot"></span><span class="pm-ring"></span></div>`,
+          iconSize: [34, 34],
+          iconAnchor: [17, 17],
+        });
+        const m = L.marker(n.coords, { icon, title: n.name }).addTo(map);
+        markers[n.id] = m;
+        m.on('click', () => {
+          setActive(n.id);
+          document.dispatchEvent(new CustomEvent('openspec', { detail: { id: n.id } }));
+        });
+      });
+
+      const indexBtns = Array.from(document.querySelectorAll('.node-index [data-node]'));
+
+      function setActive(id) {
+        indexBtns.forEach((b) => b.classList.toggle('active', b.dataset.node === id));
+        Object.entries(markers).forEach(([nid, m]) => {
+          const el = m.getElement()?.querySelector('.pm-marker');
+          if (el) el.classList.toggle('active', nid === id);
+        });
+      }
+
+      indexBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.node;
+          const node = nodes.find((n) => n.id === id);
+          if (!node) return;
+          setActive(id);
+          map.flyTo(node.coords, 5, { duration: 1.4 });
+          document.dispatchEvent(new CustomEvent('openspec', { detail: { id } }));
+        });
+      });
+
+      // "Locate on the map" buttons in Field Stories
+      document.addEventListener('focus-node', (e) => {
+        const node = nodes.find((n) => n.id === e.detail?.id);
+        if (!node) return;
+        setActive(node.id);
+        map.flyTo(node.coords, 5, { duration: 1.4 });
+      });
+
+      // Keep the map honest about its size without hacky fake resizes
+      if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(() => map.invalidateSize()).observe(mapEl);
+      }
+      window.addEventListener('load', () => map.invalidateSize());
+    }
+  </script>
+</section>
+
+<style>
+  .chapter-head {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 8rem 1.5rem 4rem;
+  }
+
+  .chapter-head h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--color-bone);
+    margin: 1rem 0 1.1rem;
+  }
+
+  .chapter-lead {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--color-pith);
+    max-width: 34rem;
+  }
+
+  .pulse-grid {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: 2.5rem;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 0 1.5rem 9rem;
+    align-items: start;
+  }
+
+  .node-index {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .node-index button {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--color-line);
+    padding: 0.8rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.25s;
+  }
+
+  .node-index button:hover { background: rgba(26, 34, 30, 0.6); }
+  .node-index button.active { background: var(--color-moss); }
+
+  .idx-dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-fog);
+  }
+
+  .node-index button[data-tone='active'] .idx-dot { background: var(--color-lichen); box-shadow: 0 0 8px rgba(123, 184, 66, 0.5); }
+  .node-index button[data-tone='open'] .idx-dot { background: var(--color-amber); box-shadow: 0 0 8px rgba(217, 130, 43, 0.45); }
+
+  .idx-no {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    color: var(--color-fog);
+    min-width: 22px;
+  }
+
+  .idx-body { flex: 1; min-width: 0; }
+
+  .idx-name {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-bone);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .idx-loc {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    margin-top: 1px;
+  }
+
+  .idx-status {
+    display: none;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    padding: 1rem 0.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+
+  .legend i {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 0.45em;
+    vertical-align: 1px;
+  }
+
+  .legend i.active { background: var(--color-lichen); }
+  .legend i.open { background: var(--color-amber); }
+  .legend i.planned { background: var(--color-fog); }
+
+  .map-wrap { position: relative; }
+
+  @media (min-width: 1280px) {
+    .idx-status { display: inline; }
+  }
+
+  @media (max-width: 1024px) {
+    .pulse-grid { grid-template-columns: 1fr; }
+  }
+</style>

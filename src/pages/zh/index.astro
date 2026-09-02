@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import JournalNav from '../../components/JournalNav.astro';
+import Prologue from '../../components/Prologue.astro';
+import FieldStories from '../../components/FieldStories.astro';
+import PulseMap from '../../components/PulseMap.astro';
+import Manifesto from '../../components/Manifesto.astro';
+import JournalFooter from '../../components/JournalFooter.astro';
+import SpecDrawer from '../../components/SpecDrawer.astro';
+import { getUI } from '../../i18n/ui.js';
+
+const locale = 'zh';
+const ui = getUI(locale);
+---
+
+<BaseLayout lang={locale} title={ui.meta.title} description={ui.meta.description}>
+  <JournalNav locale={locale} />
+  <main>
+    <Prologue locale={locale} />
+    <FieldStories locale={locale} />
+    <PulseMap locale={locale} />
+    <Manifesto locale={locale} />
+  </main>
+  <JournalFooter locale={locale} />
+  <SpecDrawer locale={locale} />
+</BaseLayout>
+
+<script>
+  import '../../scripts/journal';
+</script>

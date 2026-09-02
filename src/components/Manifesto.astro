@@ -1,0 +1,205 @@
+---
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const m = ui.manifesto;
+const base = import.meta.env.BASE_URL;
+
+const PARTNERS = [
+  { name: 'MIT Media Lab', logo: `${base}/partner-logos/mit-media-lab.svg`, alt: 'MIT Media Lab' },
+  { name: 'Interspecies Internet', logo: `${base}/partner-logos/interspecies-internet.png`, alt: 'Interspecies Internet' },
+  { name: 'Fab Lab Network', logo: `${base}/partner-logos/fab-lab-network.svg`, alt: 'Fab Lab Network' },
+  { name: 'Dina Lab', logo: `${base}/partner-logos/dina-lab.png`, alt: 'Dina Lab — creator of Mothbox' },
+];
+
+const PRINCIPLES = m.principles.map((p) => ({
+  ...p,
+  href:
+    p.cta === ui.manifesto.principles[0].cta
+      ? 'https://github.com/Allenkzl'
+      : p.cta === ui.manifesto.principles[1].cta
+        ? 'mailto:solution@seeed.cc'
+        : 'https://www.facebook.com/seeedstudio',
+}));
+---
+
+<!-- ============ 04 / MANIFESTO ============ -->
+<section id="manifesto">
+  <header class="chapter-head reveal">
+    <p class="telemetry"><span class="dot"></span>{m.head}</p>
+  </header>
+
+  <div class="statement reveal">
+    <h2>{m.title[0]}<br /><em>{m.title[1]}</em></h2>
+    <p class="statement-sub">{m.sub}</p>
+    <p class="statement-body">{m.body}</p>
+  </div>
+
+  <div class="principles">
+    {PRINCIPLES.map((p) => (
+      <a href={p.href} target={p.href.startsWith('mailto:') ? undefined : '_blank'} rel="noopener" class="principle reveal">
+        <span class="p-no">{p.no}</span>
+        <span class="p-body">
+          <span class="p-name">{p.name}</span>
+          <span class="p-text">{p.body}</span>
+          <span class="p-cta">{p.cta} <span aria-hidden="true">→</span></span>
+        </span>
+      </a>
+    ))}
+  </div>
+
+  <div class="partners reveal">
+    <p class="telemetry"><span class="dot"></span>{m.with}</p>
+    <div class="partner-row">
+      {PARTNERS.map((p) => (
+        <span class="partner-mark" title={p.name}>
+          <img src={p.logo} alt={p.alt} loading="lazy" width="96" height="40" />
+        </span>
+      ))}
+    </div>
+    <p class="sdg-line">{m.sdg}</p>
+  </div>
+</section>
+
+<style>
+  .chapter-head {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 8rem 1.5rem 0;
+  }
+
+  .statement {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 2rem;
+  }
+
+  .statement h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--color-bone);
+  }
+
+  .statement h2 em {
+    color: var(--color-lichen);
+  }
+
+  .statement-sub {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+    color: var(--color-pith);
+    margin: 1.25rem 0 1.75rem;
+  }
+
+  .statement-body {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--color-pith);
+    max-width: 36rem;
+  }
+
+  .principles {
+    max-width: 56rem;
+    margin: 4rem auto 0;
+    padding: 0 1.5rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .principle {
+    display: flex;
+    gap: 2rem;
+    padding: 2.25rem 0.5rem;
+    border-bottom: 1px solid var(--color-line);
+    text-decoration: none;
+    transition: background 0.25s;
+  }
+
+  .principle:hover { background: rgba(26, 34, 30, 0.45); }
+
+  .p-no {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    color: var(--color-lichen);
+    padding-top: 0.45rem;
+  }
+
+  .p-body { flex: 1; }
+
+  .p-name {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--color-bone);
+  }
+
+  .p-text {
+    display: block;
+    font-size: 0.875rem;
+    line-height: 1.75;
+    color: var(--color-pith);
+    margin: 0.5rem 0 0.9rem;
+    max-width: 30rem;
+  }
+
+  .p-cta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-lichen);
+    transition: color 0.25s;
+  }
+
+  .principle:hover .p-cta { color: var(--color-bone); }
+
+  .partners {
+    max-width: 56rem;
+    margin: 5rem auto 0;
+    padding: 0 1.5rem 9rem;
+  }
+
+  .partner-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2.75rem 3.5rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  /* Any partner mark becomes a quiet bone-white silhouette on the night field */
+  .partner-mark img {
+    height: 30px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    opacity: 0.65;
+    filter: brightness(0) invert(1);
+    transition: opacity 0.3s;
+  }
+
+  .partner-mark:hover img { opacity: 1; }
+
+  .sdg-line {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+
+  @media (max-width: 768px) {
+    .principle { gap: 1.25rem; padding: 1.75rem 0.25rem; }
+    .p-name { font-size: 1.2rem; }
+  }
+</style>

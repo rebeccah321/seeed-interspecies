@@ -1,0 +1,120 @@
+---
+import { getUI } from '../i18n/ui.js';
+
+interface Props {
+  locale?: string;
+}
+
+const { locale = 'en' } = Astro.props;
+const ui = getUI(locale);
+const ft = ui.footer;
+---
+
+<footer id="colophon">
+  <div class="colophon-inner">
+    <div class="col-mark">
+      <p class="telemetry"><span class="dot"></span>{ft.endOfJournal}</p>
+      <p class="col-word">Seeed <em>×</em> Interspecies</p>
+      <p class="col-line">{ft.tagline}</p>
+    </div>
+
+    <nav class="col-links" aria-label={ft.chapters}>
+      <div>
+        <p class="col-h">{ft.chapters}</p>
+        <a href="#prologue">01 {ui.nav.prologue}</a>
+        <a href="#field">02 {ui.nav.field}</a>
+        <a href="#pulse">03 {ui.nav.map}</a>
+        <a href="#manifesto">04 {ui.nav.manifesto}</a>
+      </div>
+      <div>
+        <p class="col-h">{ft.elsewhere}</p>
+        <a href="https://github.com/Allenkzl" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.seeedstudio.com" target="_blank" rel="noopener">Seeed Studio</a>
+        <a href="https://interspecies.io" target="_blank" rel="noopener">Interspecies Internet</a>
+      </div>
+      <div>
+        <p class="col-h">{ft.reach}</p>
+        <a href="mailto:solution@seeed.cc">solution@seeed.cc</a>
+        <a href="mailto:press@seeed.cc">press@seeed.cc</a>
+      </div>
+    </nav>
+  </div>
+  <p class="col-legal">{ft.legal}</p>
+</footer>
+
+<style>
+  footer {
+    border-top: 1px solid var(--color-line);
+    background: var(--color-bark);
+    padding: 5.5rem 1.5rem 2.5rem;
+  }
+
+  .colophon-inner {
+    max-width: 76rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: 4rem;
+  }
+
+  .col-word {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.75rem;
+    color: var(--color-bone);
+    margin: 1.1rem 0 0.9rem;
+  }
+
+  .col-word em { color: var(--color-lichen); font-style: normal; }
+
+  .col-line {
+    font-size: 0.875rem;
+    line-height: 1.75;
+    color: var(--color-pith);
+    max-width: 26rem;
+  }
+
+  .col-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .col-h {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    margin-bottom: 1rem;
+  }
+
+  .col-links a {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--color-pith);
+    text-decoration: none;
+    margin-bottom: 0.6rem;
+    transition: color 0.25s;
+  }
+
+  .col-links a:hover { color: var(--color-bone); }
+
+  .col-legal {
+    max-width: 76rem;
+    margin: 3.5rem auto 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-line);
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+  }
+
+  @media (max-width: 768px) {
+    .colophon-inner { grid-template-columns: 1fr; gap: 3rem; }
+    .col-links { grid-template-columns: 1fr; gap: 1.75rem; }
+  }
+</style>
