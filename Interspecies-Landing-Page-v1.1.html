@@ -158,12 +158,12 @@ tailwind.config = {
   .photo-hero .hero-photo{position:absolute;inset:0;background-image:url('images/honeyguide-hero.png');background-size:cover;background-position:center;transform:scale(1.02)}
   .photo-hero .hero-veil{position:absolute;inset:0;background:rgba(245,247,238,.32)}
   .photo-hero .hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 60% 45%,transparent 30%,rgba(20,28,18,.14) 100%)}.photo-hero .hero-text-shade{position:absolute;inset:0;background:linear-gradient(95deg,transparent 0%,transparent 35%,rgba(15,20,12,.28) 60%,rgba(15,20,12,.38) 100%);z-index:1}
-  .photo-hero .hero-inner{position:relative;z-index:2;width:100%;max-width:620px;margin:0 0 0 auto;padding:5rem 2.5rem 3rem;text-align:right;margin-right:8%}
-  @media(max-width:768px){.photo-hero .hero-inner{max-width:90%;margin:0 auto;padding:4rem 1.5rem 2.5rem;text-align:center}}
-  .photo-hero .hero-serif-title{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:clamp(1.7rem,4vw,3rem);line-height:1.1;color:#fff;text-shadow:0 2px 30px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);letter-spacing:-.5px;margin-bottom:.85rem}
-  .photo-hero .hero-body{font-family:'Poppins',system-ui,sans-serif;font-weight:300;font-size:clamp(.86rem,1.1vw,.98rem);line-height:1.55;color:#fff;text-shadow:0 1px 16px rgba(0,0,0,.5),0 0 3px rgba(0,0,0,.3);max-width:600px;margin-left:auto}.photo-hero .hero-body strong{font-weight:600;color:#fff}.hero-para{display:block;margin-bottom:.5rem}.hero-para:last-child{margin-bottom:0}
+  .photo-hero .hero-inner{position:relative;z-index:2;width:100%;max-width:620px;margin:0 0 0 auto;padding:3.5rem 2.5rem 2.5rem;text-align:right;margin-right:8%}
+  @media(max-width:768px){.photo-hero .hero-inner{max-width:90%;margin:0 auto;padding:3rem 1.5rem 2rem;text-align:center}}
+  .photo-hero .hero-serif-title{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:clamp(1.6rem,3.2vw,2.5rem);line-height:1.1;color:#fff;text-shadow:0 2px 30px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);letter-spacing:-.5px;margin-bottom:.7rem}
+  .photo-hero .hero-body{font-family:'Poppins',system-ui,sans-serif;font-weight:300;font-size:clamp(.78rem,.95vw,.88rem);line-height:1.55;color:#fff;text-shadow:0 1px 16px rgba(0,0,0,.5),0 0 3px rgba(0,0,0,.3);max-width:580px;margin-left:auto}.photo-hero .hero-body strong{font-weight:600;color:#fff}
   @media(max-width:768px){.photo-hero .hero-body{margin:0 auto}}
-  .photo-hero .hero-scroll{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:.5rem;color:rgba(255,255,255,.6);transition:color .3s}
+  .photo-hero .hero-scroll{position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:.5rem;color:rgba(255,255,255,.6);transition:color .3s}
   .photo-hero .hero-scroll:hover{color:#fff}
   .photo-hero .hero-scroll span{font-size:10px;letter-spacing:2px;text-transform:uppercase}
 
@@ -266,11 +266,11 @@ tailwind.config = {
   <div class="hero-inner">
     <h1 class="hero-serif-title">Technology for<br>Interspecies Understanding</h1>
     <p class="hero-body">
-      <span class="hero-para">In Mozambique, the <strong>honeyguide</strong> recruits humans to beehives — they call, follow, and share the honey. A partnership across species that never learned each other's language, but built a protocol anyway.</span>
-      <span class="hero-para"><strong>This isn't a fairytale — it's documented biology.</strong> Cross-species communication has always worked, but was handcrafted, one relationship at a time.</span>
-      <span class="hero-para"><strong>That's what changes now.</strong> We build the receivers — sensors, networks, AI — open tools that let every species and ecosystem finally be heard.</span>
+      In Mozambique, a bird called the <strong>honeyguide</strong> recruits humans to beehives. It calls, they follow, and they share the honey. A partnership that has worked for generations — between two species that never learned each other's language, but developed a protocol anyway.<br>
+      <strong>This isn't a fairytale. It's a documented biological partnership.</strong> Cross-species communication has always been productive — it was just handcrafted, one relationship at a time, hard to scale.<br>
+      <strong>That's what changes now.</strong> We're not talking to animals in their language. We're here to build the receivers — sensors, networks, AI — the open tools that let every species and every ecosystem finally be heard.
     </p>
-    <div class="flex flex-wrap gap-3 mt-4 justify-end" style="margin-left:auto">
+    <div class="flex flex-wrap gap-3 mt-3 justify-end" style="margin-left:auto">
       <a href="#cases" class="hero-cta-outline">Explore Cases
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </a>
