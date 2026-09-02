@@ -28,11 +28,16 @@ const p = ui.prologue;
     />
     <div class="grain" aria-hidden="true"></div>
     <div class="hero-scrim" aria-hidden="true"></div>
-    <div class="hero-content">
-      <p class="telemetry" data-rise><span class="dot"></span>{p.signal}</p>
-      <h1 data-rise>{p.title[0]}<br />{p.title[1]}</h1>
-      <p class="epigraph" data-rise>{p.epigraph}</p>
-      <canvas id="prologue-wave" data-rise aria-hidden="true"></canvas>
+    <div class="hero-grid-wrap">
+      <div class="hero-content">
+        <div class="telemetry-pill" data-rise>
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="telemetry-text">{p.signal}</span>
+        </div>
+        <h1 data-rise>{p.title[0]}<br />{p.title[1]}</h1>
+        <p class="epigraph" data-rise>{p.epigraph}</p>
+        <canvas id="prologue-wave" data-rise aria-hidden="true"></canvas>
+      </div>
     </div>
     <a href="#essay" class="scroll-cue" aria-label={p.scroll}>
       <span>{p.scroll}</span>
@@ -90,38 +95,80 @@ const p = ui.prologue;
     inset: 0;
     z-index: 2;
     background:
-      linear-gradient(to top, rgba(11, 15, 13, 0.92) 0%, rgba(11, 15, 13, 0.35) 34%, rgba(11, 15, 13, 0.08) 60%, rgba(11, 15, 13, 0.3) 100%),
-      linear-gradient(to right, rgba(11, 15, 13, 0.55) 0%, transparent 55%);
+      linear-gradient(to top, rgba(12, 19, 16, 0.92) 0%, rgba(12, 19, 16, 0.25) 35%, transparent 65%, rgba(12, 19, 16, 0.25) 100%),
+      linear-gradient(to left, rgba(12, 19, 16, 0.82) 0%, rgba(12, 19, 16, 0.38) 46%, transparent 76%);
+  }
+
+  .hero-grid-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    pointer-events: none;
   }
 
   .hero-content {
-    position: absolute;
-    z-index: 4;
-    left: 0;
-    right: 0;
-    bottom: 14vh;
-    max-width: 40rem;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    max-width: 38rem;
+    width: 100%;
+    pointer-events: auto;
+    margin-top: -6vh;
+  }
+
+  .telemetry-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(12, 19, 16, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(130, 195, 65, 0.32);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    margin-bottom: 0.75rem;
+  }
+
+  .telemetry-pill .pulse-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-seeed);
+    box-shadow: 0 0 10px rgba(130, 195, 65, 0.9);
+  }
+
+  .telemetry-pill .telemetry-text {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-bone);
+    font-weight: 500;
   }
 
   .hero-content h1 {
     font-family: var(--font-display);
-    font-weight: 400;
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
-    line-height: 1.08;
-    letter-spacing: -0.03em;
+    font-weight: 600;
+    font-size: clamp(2.4rem, 4.4vw, 4.1rem);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
     color: var(--color-bone);
-    margin: 1.1rem 0 1.2rem;
+    margin: 0.75rem 0 1.25rem;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6);
   }
 
   .epigraph {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: clamp(1.05rem, 1.4vw, 1.25rem);
-    line-height: 1.6;
+    font-family: var(--font-sans);
+    font-size: clamp(1rem, 1.25vw, 1.15rem);
+    line-height: 1.65;
     color: var(--color-pith);
     max-width: 34rem;
+    text-shadow: 0 1px 16px rgba(0, 0, 0, 0.6);
   }
 
   #prologue-wave {
@@ -242,6 +289,10 @@ const p = ui.prologue;
   }
 
   @media (max-width: 768px) {
+    .hero-grid-wrap {
+      justify-content: flex-start;
+      padding-bottom: 9vh;
+    }
     .beats { grid-template-columns: 1fr; gap: 0; }
     .essay { padding-top: 6rem; }
     .scroll-cue { right: 1.25rem; }

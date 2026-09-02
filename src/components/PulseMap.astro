@@ -32,21 +32,31 @@ const nodesJson = JSON.stringify(nodes);
 
   <div class="pulse-grid reveal">
     <aside class="node-index" aria-label={m.index}>
-      {nodes.map((p) => (
-        <button data-node={p.id} data-tone={p.tone}>
-          <span class="idx-dot"></span>
-          <span class="idx-no">{p.no}</span>
-          <span class="idx-body">
-            <span class="idx-name">{p.name}</span>
-            <span class="idx-loc">{p.location}</span>
-          </span>
-          <span class="idx-status">{p.status}</span>
+      <div class="legend-filter" role="tablist" aria-label="Filter nodes by status">
+        <button class="filter-btn active" data-filter="all" role="tab" aria-selected="true">{m.legend.all || 'All'}</button>
+        <button class="filter-btn" data-filter="active" role="tab" aria-selected="false">
+          <i class="active"></i>{m.legend.active}
         </button>
-      ))}
-      <div class="legend">
-        <span><i class="active"></i>{m.legend.active}</span>
-        <span><i class="open"></i>{m.legend.open}</span>
-        <span><i class="planned"></i>{m.legend.planned}</span>
+        <button class="filter-btn" data-filter="open" role="tab" aria-selected="false">
+          <i class="open"></i>{m.legend.open}
+        </button>
+        <button class="filter-btn" data-filter="planned" role="tab" aria-selected="false">
+          <i class="planned"></i>{m.legend.planned}
+        </button>
+      </div>
+
+      <div class="node-list">
+        {nodes.map((p) => (
+          <button data-node={p.id} data-tone={p.tone}>
+            <span class="idx-dot"></span>
+            <span class="idx-no">{p.no}</span>
+            <span class="idx-body">
+              <span class="idx-name">{p.name}</span>
+              <span class="idx-loc">{p.location}</span>
+            </span>
+            <span class="idx-status">{p.status}</span>
+          </button>
+        ))}
       </div>
     </aside>
 
@@ -93,7 +103,8 @@ const nodesJson = JSON.stringify(nodes);
         });
       });
 
-      const indexBtns = Array.from(document.querySelectorAll('.node-index [data-node]'));
+      const indexBtns = Array.from(document.querySelectorAll('.node-list [data-node]'));
+      const filterBtns = Array.from(document.querySelectorAll('.legend-filter [data-filter]'));
 
       function setActive(id) {
         indexBtns.forEach((b) => b.classList.toggle('active', b.dataset.node === id));
@@ -114,10 +125,43 @@ const nodesJson = JSON.stringify(nodes);
         });
       });
 
+      // Filter nodes by tone
+      filterBtns.forEach((fbtn) => {
+        fbtn.addEventListener('click', () => {
+          const filter = fbtn.dataset.filter;
+          filterBtns.forEach((b) => {
+            const isSel = b === fbtn;
+            b.classList.toggle('active', isSel);
+            b.setAttribute('aria-selected', String(isSel));
+          });
+
+          indexBtns.forEach((btn) => {
+            const match = filter === 'all' || btn.dataset.tone === filter;
+            btn.style.display = match ? 'flex' : 'none';
+          });
+
+          nodes.forEach((n) => {
+            const m = markers[n.id];
+            if (!m) return;
+            const el = m.getElement();
+            if (el) {
+              const match = filter === 'all' || n.tone === filter;
+              el.style.opacity = match ? '1' : '0.18';
+              el.style.pointerEvents = match ? 'auto' : 'none';
+            }
+          });
+        });
+      });
+
       // "Locate on the map" buttons in Field Stories
       document.addEventListener('focus-node', (e) => {
         const node = nodes.find((n) => n.id === e.detail?.id);
         if (!node) return;
+        // reset filter to all if focused node was hidden
+        const allBtn = document.querySelector('.legend-filter [data-filter="all"]');
+        if (allBtn && !allBtn.classList.contains('active')) {
+          (allBtn as HTMLButtonElement).click();
+        }
         setActive(node.id);
         map.flyTo(node.coords, 5, { duration: 1.4 });
       });
@@ -166,10 +210,61 @@ const nodesJson = JSON.stringify(nodes);
   }
 
   .node-index {
+    border-top: none;
+  }
+
+  .legend-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0 0 1.25rem 0;
+  }
+
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(18, 24, 21, 0.6);
+    border: 1px solid var(--color-line);
+    border-radius: 9999px;
+    padding: 0.35rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-fog);
+    cursor: pointer;
+    transition: background 0.25s, color 0.25s, border-color 0.25s;
+  }
+
+  .filter-btn:hover {
+    color: var(--color-bone);
+    border-color: rgba(232, 230, 223, 0.2);
+  }
+
+  .filter-btn.active {
+    background: var(--color-moss);
+    color: var(--color-bone);
+    border-color: rgba(123, 184, 66, 0.5);
+    box-shadow: 0 0 10px rgba(123, 184, 66, 0.15);
+  }
+
+  .filter-btn i {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .filter-btn i.active { background: var(--color-lichen); box-shadow: 0 0 6px var(--color-lichen); }
+  .filter-btn i.open { background: var(--color-amber); box-shadow: 0 0 6px var(--color-amber); }
+  .filter-btn i.planned { background: var(--color-fog); }
+
+  .node-list {
     border-top: 1px solid var(--color-line);
   }
 
-  .node-index button {
+  .node-list button {
     display: flex;
     align-items: center;
     gap: 0.9rem;
@@ -183,8 +278,8 @@ const nodesJson = JSON.stringify(nodes);
     transition: background 0.25s;
   }
 
-  .node-index button:hover { background: rgba(26, 34, 30, 0.6); }
-  .node-index button.active { background: var(--color-moss); }
+  .node-list button:hover { background: rgba(26, 34, 30, 0.6); }
+  .node-list button.active { background: var(--color-moss); }
 
   .idx-dot {
     flex-shrink: 0;
@@ -194,8 +289,8 @@ const nodesJson = JSON.stringify(nodes);
     background: var(--color-fog);
   }
 
-  .node-index button[data-tone='active'] .idx-dot { background: var(--color-lichen); box-shadow: 0 0 8px rgba(123, 184, 66, 0.5); }
-  .node-index button[data-tone='open'] .idx-dot { background: var(--color-amber); box-shadow: 0 0 8px rgba(217, 130, 43, 0.45); }
+  .node-list button[data-tone='active'] .idx-dot { background: var(--color-lichen); box-shadow: 0 0 8px rgba(123, 184, 66, 0.5); }
+  .node-list button[data-tone='open'] .idx-dot { background: var(--color-amber); box-shadow: 0 0 8px rgba(217, 130, 43, 0.45); }
 
   .idx-no {
     flex-shrink: 0;
@@ -238,31 +333,6 @@ const nodesJson = JSON.stringify(nodes);
     text-transform: uppercase;
     color: var(--color-fog);
   }
-
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.25rem;
-    padding: 1rem 0.5rem 0;
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-fog);
-  }
-
-  .legend i {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    margin-right: 0.45em;
-    vertical-align: 1px;
-  }
-
-  .legend i.active { background: var(--color-lichen); }
-  .legend i.open { background: var(--color-amber); }
-  .legend i.planned { background: var(--color-fog); }
 
   .map-wrap { position: relative; }
 

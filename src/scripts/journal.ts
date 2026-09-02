@@ -11,30 +11,52 @@ gsap.registerPlugin(ScrollTrigger);
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// ---------- Masthead: scrolled state + reading progress ----------
+// ---------- Masthead: scrolled state + reading progress + ScrollSpy ----------
 (function nav() {
   const nav = document.getElementById('journal-nav');
   const progress = document.getElementById('nav-progress');
   const burger = document.getElementById('nav-burger');
   const menu = document.getElementById('nav-menu');
+  const navLinks = document.querySelectorAll<HTMLElement>('[data-nav]');
+  const sections = Array.from(document.querySelectorAll<HTMLElement>('section[id]'));
   if (!nav) return;
 
   let ticking = false;
+  function updateNav() {
+    const y = window.scrollY;
+    nav.classList.toggle('scrolled', y > 60);
+    if (progress) {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`;
+    }
+
+    // ScrollSpy: identify active section
+    const scrollMid = y + window.innerHeight * 0.35;
+    let currentId = '';
+    for (let i = sections.length - 1; i >= 0; i--) {
+      const sec = sections[i];
+      if (sec.offsetTop <= scrollMid) {
+        currentId = sec.id;
+        break;
+      }
+    }
+    if (!currentId && sections.length) currentId = sections[0].id;
+
+    navLinks.forEach((link) => {
+      link.classList.toggle('active', link.getAttribute('data-nav') === currentId);
+    });
+  }
+
   function onScroll() {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
-      const y = window.scrollY;
-      nav.classList.toggle('scrolled', y > 60);
-      if (progress) {
-        const max = document.documentElement.scrollHeight - window.innerHeight;
-        progress.style.transform = `scaleX(${max > 0 ? Math.min(1, y / max) : 0})`;
-      }
+      updateNav();
       ticking = false;
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  updateNav();
 
   if (burger && menu) {
     burger.addEventListener('click', () => {
@@ -59,6 +81,10 @@ document.addEventListener('click', (e) => {
   const btn = (e.target as HTMLElement).closest?.('[data-focus-node]');
   if (!btn) return;
   const id = btn.getAttribute('data-focus-node');
+  const mapSection = document.getElementById('pulse');
+  if (mapSection) {
+    mapSection.scrollIntoView({ behavior: 'smooth' });
+  }
   document.dispatchEvent(new CustomEvent('focus-node', { detail: { id } }));
 });
 
@@ -95,6 +121,8 @@ document.addEventListener('click', (e) => {
   let phase = 0;
   let running = false;
   let rafId = 0;
+  let hoverAmp = 1;
+  let targetAmp = 1;
 
   function resize() {
     const r = canvas.getBoundingClientRect();
@@ -103,10 +131,14 @@ document.addEventListener('click', (e) => {
     h = canvas.height = Math.round(r.height * d);
   }
 
+  canvas.addEventListener('mouseenter', () => { targetAmp = 1.6; });
+  canvas.addEventListener('mouseleave', () => { targetAmp = 1.0; });
+
   function draw() {
     if (!running) return;
     ctx.clearRect(0, 0, w, h);
-    phase += 0.018;
+    phase += 0.02 * targetAmp;
+    hoverAmp += (targetAmp - hoverAmp) * 0.1;
     const cy = h / 2;
     for (let k = 0; k < 2; k++) {
       ctx.beginPath();
@@ -115,21 +147,24 @@ document.addEventListener('click', (e) => {
         const y =
           cy +
           (k === 0 ? -5 : 5) +
-          Math.sin(t * Math.PI * 4 + phase * 1.3 + k * 1.7) * Math.sin(t * Math.PI) * 12;
+          Math.sin(t * Math.PI * 4 + phase * 1.3 + k * 1.7) * Math.sin(t * Math.PI) * (12 * hoverAmp);
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
-      ctx.strokeStyle = k === 0 ? 'rgba(62, 184, 168, 0.55)' : 'rgba(123, 184, 66, 0.45)';
-      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = k === 0 ? 'rgba(46, 196, 182, 0.75)' : 'rgba(130, 195, 65, 0.85)';
+      ctx.lineWidth = 1.6;
       ctx.stroke();
     }
     // signal pulse traveling along the trace
     const px = ((phase * 0.22) % 1) * w;
-    const py = cy + Math.sin((px / w) * Math.PI * 4 + phase * 1.3) * Math.sin((px / w) * Math.PI) * 12;
+    const py = cy + Math.sin((px / w) * Math.PI * 4 + phase * 1.3) * Math.sin((px / w) * Math.PI) * (12 * hoverAmp);
     ctx.beginPath();
-    ctx.arc(px, py, 2.6, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(232, 230, 223, 0.85)';
+    ctx.arc(px, py, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#82C341';
+    ctx.shadowColor = '#82C341';
+    ctx.shadowBlur = 8;
     ctx.fill();
+    ctx.shadowBlur = 0;
     rafId = requestAnimationFrame(draw);
   }
 

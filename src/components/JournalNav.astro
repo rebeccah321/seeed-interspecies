@@ -7,23 +7,33 @@ interface Props {
 
 const { locale = 'en' } = Astro.props;
 const ui = getUI(locale);
-const base = import.meta.env.BASE_URL;
+const rawBase = import.meta.env.BASE_URL || '/';
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 // Language switcher: EN at the root, ZH under /zh/
-const switchHref = locale === 'zh' ? `${base}` : `${base}zh/`;
+const switchHref = locale === 'zh' ? base : `${base}zh/`;
 const switchLabel = locale === 'zh' ? 'EN' : '中文';
 ---
 
 <nav id="journal-nav" aria-label={ui.nav.chapters}>
   <div class="nav-inner">
-    <a href="#prologue" class="wordmark">
-      <span class="wordmark-mono">Seeed ×</span>
+    <a href="#prologue" class="wordmark" aria-label="Seeed Studio × Interspecies Home">
+      <span class="seeed-brand">
+        <svg class="seeed-sprout" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 21V11" stroke="var(--color-lichen)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 11C12 6.2 16.5 3.5 20.5 4C21 8 18.5 12.8 12 12.8" fill="var(--color-lichen)"/>
+          <path d="M12 13.5C12 9.2 8 7 4.2 7.5C3.8 11 6 15 12 15" fill="var(--color-lichen)" fill-opacity="0.65"/>
+          <circle cx="12" cy="21" r="1.8" fill="var(--color-lichen)"/>
+        </svg>
+        <span class="seeed-text">seeed</span>
+      </span>
+      <span class="wordmark-x">×</span>
       <span class="wordmark-serif">Interspecies</span>
     </a>
     <div class="nav-links">
-      <a href="#prologue"><span class="n">01</span>{ui.nav.prologue}</a>
-      <a href="#field"><span class="n">02</span>{ui.nav.field}</a>
-      <a href="#pulse"><span class="n">03</span>{ui.nav.map}</a>
-      <a href="#manifesto"><span class="n">04</span>{ui.nav.manifesto}</a>
+      <a href="#prologue" class="nav-link" data-nav="prologue"><span class="n">01</span>{ui.nav.prologue}</a>
+      <a href="#field" class="nav-link" data-nav="field"><span class="n">02</span>{ui.nav.field}</a>
+      <a href="#pulse" class="nav-link" data-nav="pulse"><span class="n">03</span>{ui.nav.map}</a>
+      <a href="#manifesto" class="nav-link" data-nav="manifesto"><span class="n">04</span>{ui.nav.manifesto}</a>
     </div>
     <div class="nav-right">
       <a class="lang-switch" href={switchHref} hreflang={locale === 'zh' ? 'en' : 'zh'}>{switchLabel}</a>
@@ -35,10 +45,10 @@ const switchLabel = locale === 'zh' ? 'EN' : '中文';
   <span id="nav-progress" aria-hidden="true"></span>
 </nav>
 <div id="nav-menu" aria-hidden="true">
-  <a href="#prologue"><span class="n">01</span>{ui.nav.prologue}</a>
-  <a href="#field"><span class="n">02</span>{ui.nav.field}</a>
-  <a href="#pulse"><span class="n">03</span>{ui.nav.map}</a>
-  <a href="#manifesto"><span class="n">04</span>{ui.nav.manifesto}</a>
+  <a href="#prologue" class="menu-link" data-nav="prologue"><span class="n">01</span>{ui.nav.prologue}</a>
+  <a href="#field" class="menu-link" data-nav="field"><span class="n">02</span>{ui.nav.field}</a>
+  <a href="#pulse" class="menu-link" data-nav="pulse"><span class="n">03</span>{ui.nav.map}</a>
+  <a href="#manifesto" class="menu-link" data-nav="manifesto"><span class="n">04</span>{ui.nav.manifesto}</a>
   <a class="lang-switch" href={switchHref}>{switchLabel}</a>
 </div>
 
@@ -70,27 +80,56 @@ const switchLabel = locale === 'zh' ? 'EN' : '中文';
   }
 
   .wordmark {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     text-decoration: none;
+    transition: opacity 0.25s;
   }
 
-  .wordmark-mono {
+  .wordmark:hover {
+    opacity: 0.9;
+  }
+
+  .seeed-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .seeed-sprout {
+    width: 20px;
+    height: 20px;
+    display: block;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 6px rgba(130, 195, 65, 0.6));
+  }
+
+  .seeed-text {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.03em;
+    color: var(--color-bone);
+    text-transform: lowercase;
+    line-height: 1;
+  }
+
+  .wordmark-x {
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-size: 0.75rem;
     color: var(--color-fog);
+    margin: 0 0.1rem;
+    line-height: 1;
   }
 
   .wordmark-serif {
     font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 1.15rem;
     color: var(--color-bone);
     letter-spacing: -0.01em;
+    line-height: 1;
   }
 
   .nav-links {
@@ -99,24 +138,45 @@ const switchLabel = locale === 'zh' ? 'EN' : '中文';
   }
 
   .nav-links a {
+    position: relative;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-pith);
     text-decoration: none;
+    padding: 0.25rem 0;
     transition: color 0.25s;
   }
 
-  .nav-links a:hover { color: var(--color-bone); }
+  .nav-links a:hover,
+  .nav-links a.active {
+    color: var(--color-bone);
+  }
 
   .nav-links .n,
   #nav-menu .n {
     color: var(--color-fog);
     margin-right: 0.5em;
+    transition: color 0.25s, text-shadow 0.25s;
   }
 
-  .nav-links a:hover .n { color: var(--color-lichen); }
+  .nav-links a:hover .n,
+  .nav-links a.active .n {
+    color: var(--color-lichen);
+    text-shadow: 0 0 8px rgba(123, 184, 66, 0.6);
+  }
+
+  .nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 1.5px;
+    background: var(--color-lichen);
+    box-shadow: 0 0 8px rgba(123, 184, 66, 0.7);
+  }
 
   .nav-right {
     display: flex;

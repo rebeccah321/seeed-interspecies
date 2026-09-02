@@ -6,23 +6,24 @@
    ============================================================ */
 
 @theme {
-  /* Ground — earth darks, deep to shallow */
-  --color-night: #0B0F0D;  /* page base: forest-night ink */
-  --color-bark: #121815;   /* section bands, cards */
-  --color-moss: #1A221E;   /* elevated surfaces: drawer, chips */
-  --color-line: rgba(232, 230, 223, 0.08); /* hairline dividers */
+  /* Ground — living forest darks */
+  --color-night: #0C1310;  /* page base: deep forest earth */
+  --color-bark: #131E18;   /* section bands, cards */
+  --color-moss: #1A2922;   /* elevated surfaces: drawer, chips */
+  --color-line: rgba(244, 243, 238, 0.08); /* hairline dividers */
 
-  /* Signal — nature accents */
-  --color-lichen: #7BB842; /* primary: moss lichen — active nodes, links */
-  --color-amber: #D9822B;  /* secondary: night-vision amber — in-progress */
-  --color-sensor: #3EB8A8; /* tertiary: sensor teal — waveforms, links */
+  /* Signal — Seeed brand green & nature accents */
+  --color-seeed: #82C341;  /* primary: official vibrant Seeed Green */
+  --color-lichen: #82C341; /* active nodes, telemetry, links */
+  --color-amber: #E58E26;  /* secondary: warm savanna gold / sun amber */
+  --color-sensor: #2EC4B6; /* tertiary: clean river cyan / sensor teal */
 
-  /* Ink — text */
-  --color-bone: #E8E6DF;   /* primary text: bone white */
-  --color-pith: #A3A89E;   /* secondary text: pith grey */
-  --color-fog: #636D61;    /* metadata, footnotes, telemetry */
+  /* Ink — clear, readable text */
+  --color-bone: #F5F4EE;   /* primary text: warm clean ivory */
+  --color-pith: #B4BCB0;   /* secondary text: crisp readable sage grey */
+  --color-fog: #7D887B;    /* metadata, footnotes, telemetry */
 
-  --font-display: "Newsreader", Georgia, serif;
+  --font-display: "Inter", system-ui, -apple-system, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -39,12 +40,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-::selection { background: var(--color-lichen); color: var(--color-night); }
+::selection { background: var(--color-seeed); color: var(--color-night); }
 
 /* ---------- Shared primitives (used across components) ---------- */
 
-/* Film grain — page-level ambient + inside photo frames.
-   feTurbulence noise binds mid/low-res imagery into one filmic tone. */
+/* Film grain — page-level ambient + inside photo frames */
 .page-grain,
 .grain {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -55,7 +55,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 90;
-  opacity: 0.04;
+  opacity: 0.03;
   mix-blend-mode: overlay;
 }
 
@@ -63,17 +63,15 @@ body {
   position: absolute;
   inset: 0;
   z-index: 3;
-  opacity: 0.05;
+  opacity: 0.04;
   mix-blend-mode: overlay;
 }
 
-/* Field photo frame — the journal's image treatment:
-   darkened, desaturated, vignetted so any source photo
-   sits inside the night palette. */
+/* Field photo frame — natural, vivid photography with clean frame */
 .field-photo-frame {
   position: relative;
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: 8px;
   background: var(--color-bark);
   border: 1px solid var(--color-line);
 }
@@ -83,12 +81,12 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: brightness(0.82) contrast(1.12) saturate(0.68);
-  transition: filter 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s ease-out;
+  filter: brightness(0.96) contrast(1.04) saturate(1.02);
+  transition: filter 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .field-photo-frame:hover img {
-  filter: brightness(0.92) contrast(1.08) saturate(0.85);
+  filter: brightness(1.02) contrast(1.05) saturate(1.08);
   transform: scale(1.02);
 }
 
@@ -99,8 +97,8 @@ body {
   pointer-events: none;
   z-index: 1;
   background:
-    radial-gradient(ellipse at center, rgba(11, 15, 13, 0) 45%, rgba(11, 15, 13, 0.75) 100%),
-    linear-gradient(to bottom, rgba(11, 15, 13, 0.25) 0%, transparent 20%, transparent 78%, rgba(11, 15, 13, 0.85) 100%);
+    radial-gradient(ellipse at center, transparent 65%, rgba(12, 19, 16, 0.45) 100%),
+    linear-gradient(to bottom, transparent 75%, rgba(12, 19, 16, 0.7) 100%);
 }
 
 /* Scroll reveal (progressively enhanced by journal.js) */
