@@ -1,35 +1,31 @@
 ---
 ---
 
-<!-- ============ WHY — Breathing Section ============ -->
+<!-- ============ WHY — Signal Wave Section ============ -->
 <section id="why" class="why-section">
+  <canvas id="why-wave-canvas" aria-hidden="true"></canvas>
   <div class="why-top-label"><span>Why Now</span></div>
-  <div class="why-line-track"><div class="why-line-fill" id="why-line-fill"></div></div>
   <div class="why-spine">
     <div class="why-items" id="why-items">
       <div class="why-item why-left" data-why-idx="0">
-        <div class="why-dot"></div>
         <div class="why-content">
           <h3>Cross-species collaboration is nothing new.</h3>
           <p>The honeyguide leads humans to honey. Dolphins herd fish toward waiting fishermen in Brazil. These partnerships have run for centuries — but always one relationship at a time, master to apprentice, impossible to scale.</p>
         </div>
       </div>
       <div class="why-item why-right" data-why-idx="1">
-        <div class="why-dot"></div>
         <div class="why-content">
           <h3>Signals are everywhere. We've been missing most of them.</h3>
           <p>Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting data for millions of years. Until now, we could receive only a tiny fraction.</p>
         </div>
       </div>
       <div class="why-item why-left" data-why-idx="2">
-        <div class="why-dot"></div>
         <div class="why-content">
           <h3>Now, for the first time, we can listen at scale.</h3>
           <p>Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, listening at scale is possible.</p>
         </div>
       </div>
       <div class="why-item why-right" data-why-idx="3">
-        <div class="why-dot"></div>
         <div class="why-content">
           <h3>We don't speak for animals. We build the tools that let them be heard.</h3>
           <p>Seeed is not a lab that speaks for animals. We build the open-source hardware that lets any species, any ecosystem, finally be heard.</p>
@@ -58,37 +54,247 @@
 </div>
 
 <script>
-// ===== WHY section scroll animation =====
-(function initWhyScroll(){
-  var whySec=document.getElementById('why');if(!whySec)return;
-  var fill=document.getElementById('why-line-fill');if(!fill)return;
-  var items=document.querySelectorAll('.why-item');
-  var dots=document.querySelectorAll('.why-dot');
-  var contents=document.querySelectorAll('.why-content');
-  var rafId=null;
-  function updateWhy(){
-    rafId=null;
-    var rect=whySec.getBoundingClientRect();
-    var winH=window.innerHeight;
-    var total=rect.height+winH*0.3;
-    var passed=winH*0.5-rect.top;
-    var progress=Math.max(0,Math.min(1,passed/total));
-    fill.style.height=(progress*100)+'%';
-    var itemStep=1/(items.length+0.5);
-    for(var i=0;i<items.length;i++){
-      var threshold=(i+0.5)*itemStep;
-      if(progress>=threshold){
-        if(!dots[i].classList.contains('active')){dots[i].classList.add('active');}
-        if(!contents[i].classList.contains('active')){contents[i].classList.add('active');}
+// ===== WHY section — canvas signal-wave propagation =====
+(function initWhyWave(){
+  var sec = document.getElementById('why');
+  var canvas = document.getElementById('why-wave-canvas');
+  if(!sec || !canvas) return;
+  var ctx = canvas.getContext('2d');
+  var dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  var items = document.querySelectorAll('.why-content');
+  var W = 0, H = 0;
+  var anchors = [];      // {x,y} measured edges of the 4 blocks (in CSS px)
+  var path = [];         // sampled main wave points [{x,y}]
+  var segLens = [];      // cumulative segment lengths for arc-length travel
+  var totalLen = 0;
+  var anchorS = [];      // arc-length fraction 0..1 for each anchor
+  var lit = [false,false,false,false];
+  var started = false;
+  var startTime = 0;
+  var cycleSec = 6.0;    // seconds for one light point to traverse full path
+  var rafId = null;
+
+  // Catmull-Rom spline sampler through a list of points
+  function catmullRom(pts, samplesPerSeg){
+    var out = [];
+    var n = pts.length;
+    for(var i=0;i<n-1;i++){
+      var p0 = pts[i-1] || pts[i];
+      var p1 = pts[i];
+      var p2 = pts[i+1];
+      var p3 = pts[i+2] || pts[i+1];
+      for(var j=0;j<samplesPerSeg;j++){
+        var t = j/samplesPerSeg;
+        var t2 = t*t, t3 = t2*t;
+        var x = 0.5*((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
+        var y = 0.5*((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3);
+        out.push({x:x, y:y});
       }
     }
+    out.push({x:pts[n-1].x, y:pts[n-1].y});
+    return out;
   }
-  function onScroll(){
-    if(rafId)return;
-    rafId=requestAnimationFrame(updateWhy);
+
+  function measure(){
+    var rect = sec.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    var cx = W/2;
+    // anchor edges: left blocks -> left edge, right blocks -> right edge
+    anchors = [];
+    for(var i=0;i<items.length;i++){
+      var r = items[i].getBoundingClientRect();
+      var left = items[i].classList.contains('why-left');
+      var ay = r.top - rect.top + r.height/2;
+      var ax = left ? (r.left - rect.left) : (r.right - rect.left);
+      if(left) ax -= 14; else ax += 14;
+      anchors.push({x:ax, y:ay});
+    }
+
+    var pts = [{x:cx, y:0}];
+    pts = pts.concat(anchors);
+    pts.push({x:cx, y:H});
+
+    path = catmullRom(pts, 60);
+
+    // arc-length param
+    segLens = [0];
+    totalLen = 0;
+    for(var k=1;k<path.length;k++){
+      var dx = path[k].x - path[k-1].x;
+      var dy = path[k].y - path[k-1].y;
+      totalLen += Math.sqrt(dx*dx + dy*dy);
+      segLens.push(totalLen);
+    }
+    // find closest path index per anchor
+    anchorS = [];
+    for(var a=0;a<anchors.length;a++){
+      var best=0, bd=1e9;
+      for(var p=0;p<path.length;p++){
+        var ddx = path[p].x - anchors[a].x;
+        var ddy = path[p].y - anchors[a].y;
+        var d = ddx*ddx + ddy*ddy;
+        if(d<bd){bd=d;best=p;}
+      }
+      anchorS.push(segLens[best]/totalLen);
+    }
   }
-  window.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('resize',onScroll,{passive:true});
-  setTimeout(updateWhy,100);
+
+  function pointAt(s){
+    if(s>=1) return path[path.length-1];
+    if(s<=0) return path[0];
+    var target = s * totalLen;
+    // binary search
+    var lo=0, hi=segLens.length-1;
+    while(lo<hi-1){
+      var mid=(lo+hi)>>1;
+      if(segLens[mid]<target) lo=mid; else hi=mid;
+    }
+    var segStart = segLens[lo], segEnd = segLens[hi];
+    var f = segEnd>segStart ? (target-segStart)/(segEnd-segStart) : 0;
+    return {
+      x: path[lo].x + (path[hi].x - path[lo].x)*f,
+      y: path[lo].y + (path[hi].y - path[lo].y)*f
+    };
+  }
+
+  function drawEcho(scale, phase, alpha, lw, color){
+    // echo wave: same shape scaled toward center, with gentle time wobble
+    ctx.beginPath();
+    for(var i=0;i<path.length;i++){
+      var cx = W/2;
+      var px = cx + (path[i].x - cx) * scale;
+      var py = path[i].y + Math.sin(phase + i*0.08) * 2.4;
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // trail history per light point
+  var lights = [
+    {off:0.00, color:[143,195,31], trail:[]},   // green
+    {off:0.33, color:[40,200,210], trail:[]},   // cyan
+    {off:0.66, color:[60,140,230], trail:[]}    // blue
+  ];
+
+  function activate(idx){
+    if(lit[idx]) return;
+    lit[idx] = true;
+    var el = items[idx];
+    if(el && !el.classList.contains('active')) el.classList.add('active');
+  }
+
+  function frame(now){
+    var t = started ? ((now - startTime)/1000) : 0;
+    ctx.clearRect(0,0,W,H);
+
+    // echo waves (subtle live undulation)
+    var ph = t*2.2;
+    drawEcho(0.72, ph,        0.30, 1.4, 'rgba(143,195,31,1)');
+    drawEcho(0.46, ph+1.6,    0.22, 1.1, 'rgba(40,170,200,1)');
+
+    // main wave path
+    ctx.beginPath();
+    for(var i=0;i<path.length;i++){
+      if(i===0) ctx.moveTo(path[i].x, path[i].y); else ctx.lineTo(path[i].x, path[i].y);
+    }
+    ctx.strokeStyle = 'rgba(120,170,40,0.55)';
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(143,195,31,0.5)';
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // anchor tick marks on the main path
+    for(var a=0;a<anchors.length;a++){
+      var ap = pointAt(anchorS[a]);
+      ctx.beginPath();
+      ctx.arc(ap.x, ap.y, lit[a]?4.5:3, 0, Math.PI*2);
+      ctx.fillStyle = lit[a] ? 'rgba(143,195,31,0.95)' : 'rgba(120,160,60,0.35)';
+      if(lit[a]){ ctx.shadowColor='rgba(143,195,31,0.9)'; ctx.shadowBlur=12; }
+      ctx.fill();
+      ctx.shadowBlur=0;
+    }
+
+    // light points + trails
+    for(var li=0; li<lights.length; li++){
+      var L = lights[li];
+      var s = ((t / cycleSec) + L.off) % 1;
+      var p = pointAt(s);
+      // activate anchors when a light first reaches them
+      for(var a=0;a<anchorS.length;a++){
+        if(!lit[a]){
+          // consider "reached" when light's s crosses anchor s within this frame window
+          var prev = ((t - 1/60) / cycleSec + L.off);
+          prev = ((prev % 1) + 1) % 1;
+          var crossed = (prev <= anchorS[a] && s >= anchorS[a]) || (prev > s && (anchorS[a] >= prev || anchorS[a] <= s));
+          if(crossed) activate(a);
+        }
+      }
+      // trail
+      L.trail.push({x:p.x, y:p.y});
+      if(L.trail.length > 22) L.trail.shift();
+      for(var ti=0; ti<L.trail.length-1; ti++){
+        var seg = L.trail[ti];
+        var a = ti / L.trail.length;
+        ctx.beginPath();
+        ctx.arc(seg.x, seg.y, 2.2 * a + 0.4, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(' + L.color[0] + ',' + L.color[1] + ',' + L.color[2] + ',' + (a*0.55).toFixed(3) + ')';
+        ctx.fill();
+      }
+      // head
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+      ctx.fillStyle = 'rgb(' + L.color[0] + ',' + L.color[1] + ',' + L.color[2] + ')';
+      ctx.shadowColor = 'rgba(' + L.color[0] + ',' + L.color[1] + ',' + L.color[2] + ',0.9)';
+      ctx.shadowBlur = 16;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function startWhenVisible(){
+    if(started) return;
+    var io = new IntersectionObserver(function(entries){
+      for(var i=0;i<entries.length;i++){
+        if(entries[i].isIntersecting){
+          started = true;
+          startTime = performance.now();
+          io.disconnect();
+          break;
+        }
+      }
+    }, {threshold:0.15});
+    io.observe(sec);
+  }
+
+  function onResize(){
+    if(rafId) cancelAnimationFrame(rafId);
+    measure();
+    rafId = requestAnimationFrame(frame);
+  }
+
+  measure();
+  startWhenVisible();
+  rafId = requestAnimationFrame(frame);
+  var rt = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(rt); rt = setTimeout(onResize, 150);
+  }, {passive:true});
 })();
 </script>
