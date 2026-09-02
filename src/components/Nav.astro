@@ -15,7 +15,7 @@ const base = import.meta.env.BASE_URL;
   <div class="enter-content">
     <div class="enter-title">Interspecies</div>
     <div class="enter-wave-row">
-      <div class="left-text cover-fade">Life has been<br>sending signals<br>for 3.8 billion years.</div>
+      <div class="left-text cover-fade">Life has been<br>sending signals for 3.8 billion years.</div>
       <div class="wave-area cover-fade" id="wave-area">
         <canvas id="enter-wave-canvas"></canvas>
         <button class="wave-btn" id="enter-btn">
@@ -111,10 +111,7 @@ revealEls.forEach(el => obs.observe(el));
   window.__enterCanvas = { spawnRipple: sr };
   function spawnCursorWaveGroup(x, y) { [0.85, 1.0, 1.15].forEach((intensity, index) => { setTimeout(() => sr(x, y, intensity), index * 350); }); }
   function draw() {
-    ctx.clearRect(0,0,w,h); ctx.fillStyle='#f5f7f0'; ctx.fillRect(0,0,w,h);
-    const g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.6);
-    g.addColorStop(0,'rgba(143,195,31,0.03)'); g.addColorStop(1,'rgba(143,195,31,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle='rgba(143,195,31,0.03)'; ctx.lineWidth=1; for(let x=0;x<w;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();} for(let y=0;y<h;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    ctx.clearRect(0,0,w,h);
     dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;d.pulse+=0.025;if(d.x<-10)d.x=w+10;if(d.x>w+10)d.x=-10;if(d.y<-10)d.y=h+10;if(d.y>h+10)d.y=-10;const po=d.opacity*(0.6+0.4*Math.sin(d.pulse));const gl=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r*5);gl.addColorStop(0,`rgba(143,195,31,${po*0.5})`);gl.addColorStop(1,'rgba(143,195,31,0)');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(d.x,d.y,d.r*5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(143,195,31,${po})`;ctx.fill();});
     crt+=0.016; if(crt>1.5){crt=0;sr(w/2,h/2,0.6+Math.random()*0.3);}
     rt+=0.016; if(mx>0&&my>0&&mx<w&&my<h&&rt>2.5){rt=0;spawnCursorWaveGroup(mx,my);}
