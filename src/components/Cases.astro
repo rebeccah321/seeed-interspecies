@@ -39,8 +39,7 @@ const base = import.meta.env.BASE_URL;
       <div class="carousel-row" id="carousel-row-2" style="--fade-from:#eaf2f9"><div class="carousel-fade-left"></div><div class="carousel-fade-right"></div><div class="carousel-track auto-scroll-right" id="carousel-track-2"></div></div>
     </div>
     <div class="case-modal-overlay" id="case-modal">
-      <div class="case-modal">
-        <button class="case-modal-close" id="case-modal-close-btn">✕</button>
+      <div class="case-modal">        <div class="case-modal-bar"><button class="case-modal-close" id="case-modal-close-btn">✕</button></div>
         <div class="modal-img" id="modal-img"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
         <div class="modal-tags" id="modal-tags"></div><div id="modal-status-badge" class="modal-status-badge"></div><h3 id="modal-title"></h3><p class="modal-meta" id="modal-meta"></p><p class="modal-desc" id="modal-desc"></p>
         <div class="modal-stats" id="modal-stats"></div>
@@ -82,7 +81,7 @@ const base = import.meta.env.BASE_URL;
   draw();
 })();
 
-const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:true, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
+const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
 window.addEventListener('load',()=>worldMap.invalidateSize());
