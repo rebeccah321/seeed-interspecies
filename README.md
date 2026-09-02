@@ -1,71 +1,53 @@
 # Seeed × Interspecies
 
-Open-hardware landing page for the **Interspecies** initiative — Seeed Studio's platform for animal behavior research, environmental sensing, and human–non-human interaction.
+Seeed Studio's open-hardware platform for animal behavior research, environmental sensing, and human–non-human interaction.
 
-**Live:** https://rebeccah321.github.io/seeed-interspecies/
+We don't speak for animals. We build the receivers — sensors, networks, AI — so any species and any ecosystem can be heard.
 
----
+**Site:** https://rebeccah321.github.io/seeed-interspecies/
 
-## Development
+## What we do
 
-Node ≥ 22.12.0 (even-numbered versions only).
+Six research domains, from traditional fieldwork to AI-powered sensing:
 
-```bash
-npm install       # install dependencies
-npm run dev       # dev server → http://localhost:4321/seeed-interspecies/
-npm run build     # build to dist/
-npm run preview   # preview build locally
-```
+1. Individual identification & lifecycle tracking
+2. Population counting & dynamics
+3. Cognitive decline & aging research
+4. Acoustic monitoring
+5. Social behavior & group dynamics
+6. Habitat & carrying capacity monitoring
 
-## Project Structure
+Aligned with UN SDGs 13, 14, 15, 9, 11, 17, 4, and 10.
 
-```
-src/
-  pages/index.astro       # page root — assembles all section components
-  layouts/BaseLayout.astro
-  components/             # one .astro file per page section
-    Nav.astro  Hero.astro  Why.astro  What.astro
-    Cases.astro            # Leaflet map + modal + carousel
-    People.astro  Join.astro  Footer.astro
-  data/projects.js        # map pins & carousel card data (edit content here)
-  styles/global.css       # Tailwind @theme tokens + all custom CSS
+## Deployments
 
-public/
-  images/                 # case / hero photos
-  partner-logos/
-  sdg-icons/
+| Project | Where | Status |
+|---------|-------|--------|
+| Wetland restoration monitoring (TNC) | Deep Bay, Hong Kong | Phase 1 running |
+| Bhutan tiger (RiKAnet) | Bhutan | Framework in progress |
+| Mothbox open trap cam | Panama Fab Lab | Deployed |
+| Mothbox | Peru · Yellowstone | Planned |
+| Mammalian olfactory sensor | Seattle Fab Lab | Open |
+| CollarID | MIT | Intent |
+| LifeScience zoo pilot | India | Intent |
 
-docs/                     # content planning documents
-.github/workflows/
-  deploy.yml              # GitHub Actions → GitHub Pages (auto on push to main)
-```
+## Partners
 
-## Deployment
+MIT Media Lab · Interspecies Internet · Fab Lab Network · Dina Lab
 
-Push to `main` triggers automatic deployment via GitHub Actions (`withastro/action@v6 → actions/deploy-pages@v5`).
+## Get involved
 
-First-time setup: **Settings → Pages → Source → GitHub Actions** (repo owner `rebeccah321` must enable this once).
+- **Participate** — join an existing open-source challenge, or deploy a kit in a local Fab Lab
+- **Initiate** — have a research question that needs hardware? Write [solution@seeed.cc](mailto:solution@seeed.cc)
+- **Follow** — [Seeed on Facebook](https://www.facebook.com/seeedstudio)
 
-## Design System
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| Brand | `#8FC31F` | Seeed lime green — primary accent |
-| Brand Deep | `#00936d` | Teal-green — secondary accent, headings |
-| Surface | `#f8f8f8` | Cool gray background |
-| Surface Card | `#ffffff` | Card backgrounds |
-| Ink | `#32373c` | Primary text |
-| Muted | `#6d6f70` | Secondary text |
-
-Typography: Space Grotesk (display) + Inter (body). Built with Astro 7 + Tailwind CSS 4 + Leaflet 1.
-
-## Key People
+## People
 
 - **Becca** — solution marketing, landing page, cases, contact routing
 - **Allen** — GitHub / Open Datalogger, demos, Fab Lab
 
 ## Links
 
-- [Seeed SDG Page](https://www.seeedstudio.com/blog/sdg/)
+- [Seeed SDG](https://www.seeedstudio.com/blog/sdg/)
 - [Interspecies Internet](https://interspecies.io)
 - [Content docs](docs/)
