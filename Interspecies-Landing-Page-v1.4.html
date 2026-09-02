@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interspecies — Seeed Studio | Open Hardware for Animal & Ecological Research</title>
+<meta name="description" content="Seeed Studio serves as the AI hardware and prototyping partner that turns research ideas into real-world systems for animal behavior, environmental signals.">
+<meta name="theme-color" content="#8FC31F">
+<meta property="og:title" content="Interspecies — Seeed">
+<meta property="og:description" content="Open hardware for animal behavior research, environmental sensing.">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        surface: '#f8f8f8', 'surface-card': '#ffffff', 'surface-dim': '#f1f1f1',
+        brand: '#8FC31F', 'brand-dim': '#6fa816', 'brand-deep': '#00936d',
+        'brand-light': '#f3f9e8', ink: '#32373c', muted: '#6d6f70',
+        line: '#e0e0e0',
+      },
+      fontFamily: { display: ['"Space Grotesk"','system-ui','sans-serif'], sans: ['Inter','system-ui','-apple-system','sans-serif'] },
+      boxShadow: { card: '0 2px 8px rgba(0,0,0,.06)', 'card-hover': '0 4px 16px rgba(0,0,0,.10)' }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@200;300;400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  html{scroll-behavior:smooth} body{-webkit-font-smoothing:antialiased;background:#f8f8f8}
+  .pill{border-radius:9999px}
+  #nav.scrolled{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  #nav.scrolled .nav-link{color:#6d6f70}#nav.scrolled .nav-link:hover{color:#32373c}
+  #nav.scrolled .brand-text{color:#32373c}#nav.scrolled .brand-text span{color:#8FC31F}
+  #nav.scrolled .nav-cta{border-color:#8FC31F;color:#8FC31F}#nav.scrolled .nav-cta:hover{background:#8FC31F;color:#fff}
+  .hero-bg{background:linear-gradient(170deg,#f3f9e8 0%,#f8f8f8 50%,#f1f1f1 100%)}
+  .hero-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.12}
+  #world-map{background:#c8dce8;height:420px;border-radius:1rem;font:inherit;z-index:0}
+  @media(max-width:767px){#world-map{height:320px}}
+  #world-map .leaflet-control-attribution{background:rgba(255,255,255,.75);color:rgba(0,0,0,.45);font-size:9px;border-radius:4px}#world-map .leaflet-control-attribution a{color:rgba(0,0,0,.6)}
+  .map-ref-labels{filter:contrast(1.5) brightness(0.75) saturate(0.3);-webkit-filter:contrast(1.5) brightness(0.75) saturate(0.3)}
+  #world-map .leaflet-control-zoom{border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:8px;overflow:hidden}
+  #world-map .leaflet-control-zoom a{background:rgba(255,255,255,.88);color:#555;width:32px;height:32px;line-height:32px;font-size:16px;border-bottom:1px solid #eee}
+  #world-map .leaflet-control-zoom a:hover{background:#f0f5fa;color:#333}
+  .map-float-card{position:absolute;z-index:1000;pointer-events:none;max-width:300px;padding:18px 20px;border-radius:14px;background:rgba(255,255,255,.88);backdrop-filter:blur(18px) saturate(1.1);border:1px solid rgba(255,255,255,.6);box-shadow:0 8px 32px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04),inset 0 0 0 1px rgba(255,255,255,.5);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;font-family:Inter,system-ui,-apple-system,sans-serif}
+  .map-float-card.visible{opacity:1;transform:translateY(0)}
+  .map-float-card::before{content:'';position:absolute;inset:0;border-radius:14px;padding:1px;background:linear-gradient(135deg,rgba(143,195,31,.25),rgba(0,147,109,.15),rgba(143,195,31,.05),rgba(0,147,109,.25));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:cardShimmer 3s ease-in-out infinite;pointer-events:none}
+  @keyframes cardShimmer{0%,100%{opacity:.6}50%{opacity:1}}
+  .map-float-card .card-status{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .project-preview{width:100%;height:110px;border-radius:10px;margin-bottom:12px;overflow:hidden;border:1px solid rgba(22,34,29,.07)}.project-preview img{width:100%;height:100%;object-fit:cover;display:block}
+  .project-preview.tnc{background-image:linear-gradient(135deg,#dff3ff,#e8f7d7),radial-gradient(circle at 70% 35%,rgba(255,255,255,.9),transparent 28%),linear-gradient(180deg,transparent 65%,rgba(57,181,255,.24))}
+  .project-preview.bhutan{background-image:linear-gradient(135deg,#f3f7e7,#dceccf),repeating-linear-gradient(75deg,transparent 0 18px,rgba(143,195,31,.12) 18px 21px),linear-gradient(180deg,transparent 62%,rgba(69,196,166,.2))}
+  .project-preview.mothbox{background-image:linear-gradient(135deg,#fff3e7,#e9f7ff),radial-gradient(circle at 25% 65%,rgba(143,195,31,.24),transparent 38%),radial-gradient(circle at 75% 35%,rgba(57,181,255,.2),transparent 35%)}
+  .project-preview.olfactory{background-image:linear-gradient(135deg,#f4f1ff,#e2f4ff),repeating-linear-gradient(90deg,rgba(69,196,166,.24) 0 2px,transparent 2px 15px),linear-gradient(180deg,transparent 70%,rgba(57,181,255,.22))}
+  .project-preview.collarid{background-image:linear-gradient(135deg,#eaf5ff,#f2f5e6),radial-gradient(circle at 30% 30%,rgba(143,195,31,.18),transparent 34%),repeating-linear-gradient(115deg,transparent 0 20px,rgba(69,196,166,.12) 20px 23px)}
+  .project-preview.lifescience{background-image:linear-gradient(135deg,#f3f7e4,#dff3e1),radial-gradient(circle at 70% 70%,rgba(143,195,31,.18),transparent 42%),linear-gradient(180deg,transparent 66%,rgba(69,196,166,.2))}
+  .pin-marker{position:relative;width:40px;height:40px;cursor:pointer}
+  .pin-marker .wave-ring{position:absolute;inset:0;border-radius:50%;border:2px solid;opacity:0;animation:waveEmit 2.5s ease-out infinite}
+  .pin-marker .wave-ring:nth-child(1){animation-delay:0s}.pin-marker .wave-ring:nth-child(2){animation-delay:.8s}.pin-marker .wave-ring:nth-child(3){animation-delay:1.6s}
+  @keyframes waveEmit{0%{transform:scale(0.5);opacity:0.9}100%{transform:scale(3);opacity:0}}
+  .pin-marker .dot{position:absolute;inset:6px;border-radius:50%;backdrop-filter:blur(2px);border:2.5px solid rgba(255,255,255,.85);transition:transform .25s,box-shadow .25s;z-index:1}
+  .pin-marker.active .dot{background:rgba(143,195,31,.6);box-shadow:0 0 20px rgba(143,195,31,.6),inset 0 0 10px rgba(143,195,31,.25)}
+  .pin-marker.active .wave-ring{border-color:rgba(143,195,31,.5)}.pin-marker.open .dot{background:rgba(255,171,0,.55);box-shadow:0 0 18px rgba(255,171,0,.5),inset 0 0 8px rgba(255,171,0,.2)}.pin-marker.open .wave-ring{border-color:rgba(255,171,0,.45)}.pin-marker.planned .dot{background:rgba(170,184,171,.45);box-shadow:0 0 14px rgba(170,184,171,.35),inset 0 0 6px rgba(170,184,171,.15)}.pin-marker.planned .wave-ring{border-color:rgba(170,184,171,.35)}.pin-marker:hover .dot{transform:scale(1.35);box-shadow:0 0 28px rgba(143,195,31,.7),inset 0 0 14px rgba(143,195,31,.3)}
+  .sdg-card{transition:box-shadow .25s,transform .25s;position:relative;overflow:hidden}
+  .sdg-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
+  .research-card{display:flex;flex-direction:column;padding:0}
+  .research-card{min-height:460px}
+  .research-card::before{content:'';display:block;height:165px;flex-shrink:0;background-repeat:no-repeat;background-size:cover;background-position:center;border-bottom:none}
+  .research-card:nth-of-type(1)::before{background-image:linear-gradient(to bottom,transparent 0%,transparent 45%,rgba(255,255,255,.85) 80%,#fff 100%),url('images/card-1-identification.png')}
+  .research-card:nth-of-type(2)::before{background-image:linear-gradient(to bottom,transparent 0%,transparent 45%,rgba(255,255,255,.85) 80%,#fff 100%),url('images/card-2-population.png')}
+  .research-card:nth-of-type(3)::before{background-image:linear-gradient(to bottom,transparent 0%,transparent 45%,rgba(255,255,255,.85) 80%,#fff 100%),url('images/card-3-cognitive.png')}
+  .research-card:nth-of-type(4)::before{background-image:linear-gradient(to bottom,transparent 0%,transparent 45%,rgba(255,255,255,.85) 80%,#fff 100%),url('images/card-4-acoustic.png')}
+  .research-card:nth-of-type(5)::before{background-image:linear-gradient(to bottom,transparent 0%,transparent 45%,rgba(255,255,255,.85) 80%,#fff 100%),url('images/card-5-social.png')}
+  .research-card:nth-of-type(6)::before{background-image:linear-gradient(to bottom,transparent 0%,transparent 45%,rgba(255,255,255,.85) 80%,#fff 100%),url('images/card-6-habitat.png')}
+  .research-card .card-body{padding:.85rem 1.1rem .75rem;display:flex;flex-direction:column;flex:1}
+  .research-card:nth-of-type(1) .card-body{background:linear-gradient(to bottom,rgba(255,175,60,.07) 0%,rgba(255,175,60,.03) 30%,rgba(255,255,255,0) 65%)}
+  .research-card:nth-of-type(2) .card-body{background:linear-gradient(to bottom,rgba(180,150,70,.07) 0%,rgba(180,150,70,.03) 30%,rgba(255,255,255,0) 65%)}
+  .research-card:nth-of-type(3) .card-body{background:linear-gradient(to bottom,rgba(60,120,50,.07) 0%,rgba(60,120,50,.03) 30%,rgba(255,255,255,0) 65%)}
+  .research-card:nth-of-type(4) .card-body{background:linear-gradient(to bottom,rgba(40,110,160,.08) 0%,rgba(40,110,160,.03) 30%,rgba(255,255,255,0) 65%)}
+  .research-card:nth-of-type(5) .card-body{background:linear-gradient(to bottom,rgba(40,120,200,.08) 0%,rgba(40,120,200,.03) 30%,rgba(255,255,255,0) 65%)}
+  .research-card:nth-of-type(6) .card-body{background:linear-gradient(to bottom,rgba(60,140,110,.07) 0%,rgba(60,140,110,.03) 30%,rgba(255,255,255,0) 65%)}
+
+  .partner-logo{width:120px;height:48px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;background:#fff;border:1px solid rgba(22,34,29,.07);border-radius:8px;padding:6px}
+  .partner-logo img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+  .partner-logo.square{width:64px;height:64px;border-radius:14px}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}.reveal.visible{opacity:1;transform:translateY(0)}
+  .tech-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px;margin-right:4px;margin-bottom:4px}
+  .filter-btn{transition:all .2s;cursor:pointer}.filter-btn.active{background:#8FC31F;color:#fff;border-color:#8FC31F}
+  .sdg-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:"Space Grotesk",sans-serif;color:#fff;flex-shrink:0;margin:0 auto}
+  #hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+  .hero-bg .max-w-6xl{position:relative;z-index:1}
+  .hover-gloss{position:relative;overflow:hidden}.hover-gloss::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 25%,rgba(143,195,31,.06) 42%,rgba(143,195,31,.12) 48%,rgba(143,195,31,.06) 54%,transparent 75%);background-size:250% 100%;opacity:0;transition:opacity .4s;pointer-events:none}.hover-gloss:hover::after{opacity:1;animation:glossSweep 2.8s ease-in-out forwards}@keyframes glossSweep{0%{background-position:250% 0}100%{background-position:-250% 0}}
+  /* ===== Enter Overlay ===== */
+  .enter-overlay{position:fixed;inset:0;z-index:10000;background:#f5f7f0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.5s ease,visibility 1.5s ease}
+  .enter-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .enter-overlay .enter-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;cursor:none}
+  .enter-overlay .enter-content{position:relative;z-index:1;text-align:center;max-width:800px;width:100%;padding:2rem}
+  .enter-overlay .enter-title{font-family:"Space Grotesk",sans-serif;font-size:5rem;font-weight:700;color:#1a231a;line-height:1.05;margin-bottom:2.5rem;letter-spacing:-2px}
+  @media(max-width:640px){.enter-overlay .enter-title{font-size:3rem}}
+  .enter-overlay .enter-wave-row{display:flex;align-items:center;justify-content:center;gap:2rem;margin-bottom:2rem;position:relative;width:100%}
+  .enter-overlay .enter-wave-row .left-text,.enter-overlay .enter-wave-row .right-text{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:.92rem;font-weight:500;color:#4a6b5e;max-width:250px;line-height:1.75;flex-shrink:0;opacity:1;letter-spacing:.02em;text-shadow:0 1px 8px rgba(74,107,94,.15)}
+  .enter-overlay .enter-wave-row .left-text{text-align:right}
+  .enter-overlay .enter-wave-row .right-text{text-align:left}
+  .enter-overlay .enter-wave-row .wave-area{position:relative;width:370px;height:108px;flex-shrink:0}
+  .enter-overlay .enter-wave-row .wave-area canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .enter-overlay .enter-wave-row .wave-btn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;overflow:visible;background:linear-gradient(135deg,rgba(143,195,31,.24),rgba(57,181,255,.20));border:1px solid rgba(69,196,166,.55);color:#17231d;padding:.85rem 1.75rem;border-radius:9999px;font-family:"Space Grotesk",sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;display:inline-flex;align-items:center;gap:9px;white-space:nowrap;box-shadow:0 10px 30px rgba(35,46,32,.14),0 0 0 1px rgba(255,255,255,.7) inset,0 0 24px rgba(69,196,166,.22);backdrop-filter:blur(5px)}
+  .enter-overlay .enter-wave-row .wave-btn::before,.enter-overlay .enter-wave-row .wave-btn::after{content:'';position:absolute;inset:-9px;border-radius:inherit;border:1px solid rgba(69,196,166,.34);pointer-events:none;animation:signalRing 2.6s ease-out infinite}
+  .enter-overlay .enter-wave-row .wave-btn::after{animation-delay:1.3s}
+  .enter-overlay .enter-wave-row .wave-btn:hover{transform:translate(-50%,-50%) scale(1.035);border-color:rgba(69,196,166,.8);box-shadow:0 16px 42px rgba(35,46,32,.2),0 0 0 1px rgba(255,255,255,.8) inset,0 0 36px rgba(69,196,166,.34)}
+  .enter-overlay .enter-wave-row .wave-btn svg{width:15px;height:15px}
+  @keyframes signalRing{0%{transform:scale(.94);opacity:0}18%{opacity:.75}100%{transform:scale(1.22);opacity:0}}
+  .enter-overlay .enter-sub{position:absolute;bottom:1.75rem;display:inline-flex;align-items:center;gap:.5rem;color:#565d5a;font-size:.8rem;font-weight:500;letter-spacing:.04em;padding:.45rem .85rem;background:rgba(255,255,255,.72);border:1px solid rgba(143,195,31,.35);border-radius:999px;box-shadow:0 2px 10px rgba(35,46,32,.08)}
+  .cover-fade{opacity:0;transform:translateY(12px);animation:coverFade .8s ease forwards}
+  .cover-fade.left-text{animation-delay:.65s}
+  .cover-fade.right-text{animation-delay:.80s}
+  .cover-fade.wave-area{animation-delay:.35s}
+  .cover-slogan{position:relative;display:inline-flex;align-items:center;gap:.55rem;font-family:"Space Grotesk",sans-serif;font-size:1.1rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#333d36;margin-top:1rem;padding:.4rem .8rem}
+  .cover-slogan::before,.cover-slogan::after{content:'';width:26px;height:1px;background:linear-gradient(90deg,rgba(69,196,166,0),rgba(69,196,166,.65))}
+  .cover-slogan::after{background:linear-gradient(90deg,rgba(69,196,166,.65),rgba(69,196,166,0))}
+  .enter-title{opacity:0;transform:translateY(16px) scale(.97);filter:blur(6px);animation:titleArrive 1.5s cubic-bezier(.22,.75,.2,1) forwards;animation-delay:.18s}
+  .enter-sub{opacity:0;animation:coverFade .8s ease forwards;animation-delay:.75s}
+  .cover-slogan{opacity:0;animation:coverFade .8s ease forwards;animation-delay:.55s}
+  @keyframes coverFade{to{opacity:1;transform:translateY(0);filter:blur(0)}}
+  @keyframes titleArrive{to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+  @media(max-width:760px){.enter-wave-row{flex-direction:column;gap:.6rem}.enter-wave-row .left-text,.enter-wave-row .right-text{max-width:300px;text-align:center}.wave-area{width:300px}.wave-btn{font-size:.78rem;padding:.7rem 1.25rem}}
+  .honeyguide-cursor{position:fixed;pointer-events:none;z-index:10001;width:32px;height:28px;transform:translate(-50%,-50%);transition:opacity .3s;will-change:transform}.honeyguide-cursor.hidden{opacity:0}
+  .case-modal-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:1.5rem}.case-modal-overlay.open{display:flex}
+  .case-modal{background:#fff;border-radius:1.25rem;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.04);padding:2rem;position:relative;animation:modalIn .3s ease-out}@keyframes modalIn{0%{opacity:0;transform:translateY(20px) scale(.97)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  .case-modal-close{position:absolute;top:1rem;right:1rem;width:2rem;height:2rem;border-radius:50%;border:none;background:#f1f1f1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#666;transition:background .15s;z-index:1}.case-modal-close:hover{background:#e0e0e0}
+  .case-modal .modal-img{width:100%;height:240px;object-fit:cover;border-radius:.75rem;margin-bottom:1.25rem;overflow:hidden}.case-modal .modal-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .case-modal .modal-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.5rem}.case-modal .modal-tags span{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px}.modal-status-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem;background:#f3f9e8;color:#00936d}
+  .case-modal h3{font-size:1.25rem;font-weight:700;font-family:"Space Grotesk",sans-serif;margin-bottom:.5rem;color:#32373c}.case-modal .modal-meta{font-size:.75rem;color:#6d6f70;margin-bottom:1rem}.case-modal .modal-desc{font-size:.875rem;color:#32373c;line-height:1.6;margin-bottom:1.25rem}
+  .case-modal .modal-stats{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}.case-modal .modal-stat{background:#f8f8f8;border-radius:.75rem;padding:.75rem}.case-modal .modal-stat .val{font-size:1.25rem;font-weight:700;font-family:"Space Grotesk",sans-serif;color:#00936d}.case-modal .modal-stat .lbl{font-size:.7rem;color:#6d6f70;margin-top:2px}
+  .case-modal .modal-cta{display:inline-flex;align-items:center;gap:6px;padding:.625rem 1.25rem;border-radius:9999px;background:#8FC31F;color:#fff;font-size:.8125rem;font-weight:600;border:none;cursor:pointer;transition:background .2s;text-decoration:none}.case-modal .modal-cta:hover{background:#6fa816}
+  .carousel-wrap{position:relative;margin-top:1rem;-webkit-user-select:none;user-select:none}
+  .carousel-row{position:relative;overflow:hidden;margin-bottom:0.5rem}.carousel-row .carousel-fade-left{position:absolute;top:0;left:0;bottom:0;width:60px;background:linear-gradient(90deg,var(--fade-from,rgba(255,255,255,1)),rgba(255,255,255,0));z-index:2;pointer-events:none}.carousel-row .carousel-fade-right{position:absolute;top:0;right:0;bottom:0;width:60px;background:linear-gradient(270deg,var(--fade-from,rgba(255,255,255,1)),rgba(255,255,255,0));z-index:2;pointer-events:none}
+  .carousel-track{display:flex;gap:0.75rem;width:max-content;will-change:transform}.carousel-track.auto-scroll{animation:scrollLeft 50s linear infinite}.carousel-track.auto-scroll-right{animation:scrollRight 50s linear infinite}.carousel-track.dragging{animation-play-state:paused!important;cursor:grabbing}
+  @keyframes scrollLeft{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}@keyframes scrollRight{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+  .carousel-card{position:relative;overflow:hidden;flex-shrink:0;width:300px;min-height:112px;background:linear-gradient(140deg,#f4f7ef 0%,#ebeede 100%);border:1px solid #c8d0bf;border-bottom:2px solid #b5c0a8;border-radius:1rem;padding:1.15rem 1.25rem;cursor:pointer;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;display:flex;align-items:center;gap:.75rem;box-shadow:0 3px 8px rgba(35,46,32,.08),inset 0 -3px 0 rgba(143,195,31,.1)}.carousel-card::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 28%,rgba(143,195,31,.05) 44%,rgba(57,181,255,.14) 50%,rgba(143,195,31,.05) 56%,transparent 74%);background-size:250% 100%;opacity:0;pointer-events:none}.carousel-card:hover{box-shadow:0 16px 36px rgba(35,46,32,.16),inset 0 -3px 0 rgba(143,195,31,.22);transform:translateY(-4px);border-color:#8FC31F66}.carousel-card:hover::after{opacity:1;animation:dataSweep 2.4s ease-in-out forwards}
+  @keyframes dataSweep{0%{background-position:250% 0}100%{background-position:-250% 0}}
+  .carousel-card .c-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}.carousel-card .c-dot.active{background:#8FC31F;box-shadow:0 0 6px rgba(143,195,31,.5)}.carousel-card .c-dot.open{background:#ffab00;box-shadow:0 0 6px rgba(255,171,0,.4)}.carousel-card .c-dot.planned{background:#aab8ab}
+  .carousel-card .c-body{flex:1;min-width:0}.carousel-card .c-body h4{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:.825rem;color:#2a2f33;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.carousel-card .c-body p{font-size:.7rem;color:#5d605e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .carousel-card .c-right{flex-shrink:0;display:flex;align-items:center;gap:3px}.carousel-card .c-right .c-label{font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.carousel-card .c-right .c-label.active{color:#8FC31F}.carousel-card .c-right .c-label.open{color:#ffab00}.carousel-card .c-right .c-label.planned{color:#aab8ab}.carousel-card .c-right .c-chev{color:#ccc;font-size:.65rem;transition:transform .2s}.carousel-card:hover .c-right .c-chev{transform:translateX(3px);color:#8FC31F}
+  #map-canvas-overlay{position:absolute;inset:0;z-index:500;pointer-events:none;border-radius:1rem;overflow:hidden}#map-connection-canvas{width:100%;height:100%;display:block}.map-wrapper{position:relative}
+  .sdg-row{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:0;width:100%}
+  .sdg-logo{width:100px;height:100px;flex-shrink:0;border-radius:4px;overflow:hidden;display:block;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  .sdg-logo img{width:100%;height:100%;display:block;object-fit:cover}
+  @media(max-width:640px){.sdg-logo{width:72px;height:72px}}
+  #sdg-ring-wrap,#sdg-ring-canvas{display:none}
+  .logo-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2rem 2.5rem}.logo-strip span{font-family:"Space Grotesk",sans-serif;font-size:.75rem;font-weight:600;color:#9a9a9a;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}.logo-strip .sep{color:#e0e0e0;font-size:.6rem}
+
+  /* ===== Photo Hero (v0.6) ===== */
+  .photo-hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+  .photo-hero .hero-photo{position:absolute;inset:0;background-image:url('images/honeyguide-hero.png');background-size:cover;background-position:center;transform:scale(1.02)}
+  .photo-hero .hero-veil{position:absolute;inset:0;background:rgba(245,247,238,.32)}
+  .photo-hero .hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 60% 45%,transparent 30%,rgba(20,28,18,.14) 100%)}.photo-hero .hero-text-shade{position:absolute;inset:0;background:linear-gradient(95deg,transparent 0%,transparent 35%,rgba(15,20,12,.28) 60%,rgba(15,20,12,.38) 100%);z-index:1}
+  .photo-hero .hero-inner{position:relative;z-index:2;width:100%;max-width:620px;margin:0 0 0 auto;padding:3.5rem 2.5rem 2.5rem;text-align:right;margin-right:8%}
+  @media(max-width:768px){.photo-hero .hero-inner{max-width:90%;margin:0 auto;padding:3rem 1.5rem 2rem;text-align:center}}
+  .photo-hero .hero-serif-title{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:clamp(1.6rem,3.2vw,2.5rem);line-height:1.1;color:#fff;text-shadow:0 2px 30px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);letter-spacing:-.5px;margin-bottom:.7rem}
+  .photo-hero .hero-body{font-family:'Poppins',system-ui,sans-serif;font-weight:300;font-size:clamp(.9rem,1.1vw,1rem);line-height:1.72;color:#fff;text-shadow:0 1px 16px rgba(0,0,0,.5),0 0 3px rgba(0,0,0,.3);max-width:600px;margin-left:auto}.photo-hero .hero-body strong{font-weight:600;color:#fff}.photo-hero .hero-body p{margin:0 0 .7rem}.photo-hero .hero-body p:last-child{margin-bottom:0}
+  @media(max-width:768px){.photo-hero .hero-body{margin:0 auto}}
+  .photo-hero .hero-scroll{position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:.5rem;color:rgba(255,255,255,.6);transition:color .3s}
+  .photo-hero .hero-scroll:hover{color:#fff}
+  .photo-hero .hero-scroll span{font-size:10px;letter-spacing:2px;text-transform:uppercase}
+
+  .photo-hero .hero-cta-outline{display:inline-flex;align-items:center;gap:6px;padding:.6rem 1.4rem;border:1px solid rgba(255,255,255,.5);border-radius:9999px;color:#fff;font-family:'Poppins',system-ui,sans-serif;font-size:.8rem;font-weight:300;letter-spacing:.03em;transition:all .25s;text-decoration:none;backdrop-filter:blur(4px);background:rgba(255,255,255,.08)}
+  .photo-hero .hero-cta-outline:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.8)}
+  .photo-hero .hero-cta-solid{display:inline-flex;align-items:center;padding:.6rem 1.4rem;border:none;border-radius:9999px;background:#fff;color:#1a231a;font-family:'Poppins',system-ui,sans-serif;font-size:.8rem;font-weight:500;letter-spacing:.03em;transition:all .25s;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+  .photo-hero .hero-cta-solid:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,0,0,.22)}
+  @media(max-width:768px){.photo-hero .flex.flex-wrap.gap-3.mt-6{justify-content:center;margin-left:0}}
+
+  /* ===== WHY "Breathing" Section ===== */
+  .why-section{background:linear-gradient(180deg,#d4ecb0 0%,#cfe6cc 25%,#c5dee2 55%,#bed8db 80%,#b8d3d6 100%);padding:4.5rem 0 0;position:relative;overflow:visible}
+  .why-top-label{position:absolute;top:1.2rem;left:50%;transform:translateX(-50%);z-index:6}
+  .why-top-label span{display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#5a8a16;background:rgba(255,255,255,.75);padding:5px 18px;border-radius:9999px;border:1px solid rgba(143,195,31,.35);box-shadow:0 2px 10px rgba(143,195,31,.18)}
+  .why-spine{position:relative;max-width:820px;margin:0 auto;padding:3rem 2rem 2rem}
+  .why-line-track{position:absolute;left:50%;top:0;width:2px;height:100%;background:linear-gradient(to bottom,rgba(143,195,31,.12),rgba(0,147,109,.08));transform:translateX(-50%);z-index:1}
+  .why-line-fill{position:absolute;top:0;left:0;width:100%;height:0;background:linear-gradient(to bottom,#8FC31F 0%,#00936d 100%);z-index:2;box-shadow:0 0 6px rgba(143,195,31,.5)}
+  .why-line-fill::after{content:'';position:absolute;bottom:-4px;left:-3px;width:8px;height:8px;border-radius:50%;background:#8FC31F;box-shadow:0 0 10px rgba(143,195,31,.9),0 0 24px rgba(143,195,31,.45);animation:whyTipPulse 1.4s ease-in-out infinite}
+  @keyframes whyTipPulse{0%,100%{opacity:.6;transform:scale(.85)}50%{opacity:1;transform:scale(1.5)}}
+  .why-items{position:relative;z-index:3}
+  .why-item{position:relative;margin-bottom:2.5rem}
+  .why-item:last-child{margin-bottom:0}
+  .why-dot{position:absolute;left:50%;top:6px;width:7px;height:7px;border-radius:50%;background:#c8c8c8;transform:translateX(-50%);transition:background .5s,box-shadow .5s;z-index:4}
+  .why-dot.active{background:#8FC31F;box-shadow:0 0 0 5px rgba(143,195,31,.22),0 0 16px rgba(143,195,31,.65);animation:whyDotPulse 1.6s ease-in-out infinite}
+  @keyframes whyDotPulse{0%,100%{box-shadow:0 0 0 5px rgba(143,195,31,.22),0 0 16px rgba(143,195,31,.65)}50%{box-shadow:0 0 0 11px rgba(143,195,31,.06),0 0 30px rgba(143,195,31,.9)}}
+  .why-content{width:44%;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}
+  .why-content.active{opacity:1;transform:translateY(0)}
+  .why-left .why-content{margin-right:auto}
+  .why-right .why-content{margin-left:auto}
+  .why-content h3{font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:1.1rem;color:#2a2f33;margin-bottom:.5rem;line-height:1.4}
+  .why-content p{font-size:.85rem;color:#6d6f70;line-height:1.7}
+  /* snake-line signal-wave connector from WHY to WHAT */
+  .why-connector{position:relative;height:90px;background:linear-gradient(180deg,#b8d3d6 0%,#cdd9c8 40%,#f3f7ec 100%);overflow:visible;display:flex;justify-content:center;align-items:flex-start}
+  .why-connector svg{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:90px;overflow:visible}
+  @media(max-width:640px){.why-content{width:80%}.why-left .why-content,.why-right .why-content{margin:0 auto}}
+  /* People &amp; Partners cards — light green / light gray */
+  .partner-card{background:linear-gradient(140deg,#eef5e2 0%,#eaeef0 55%,#e6eaec 100%);border:1px solid rgba(143,195,31,.12)}
+  .partner-card:hover{background:linear-gradient(140deg,#e8f3d8 0%,#e4e8ec 55%,#e0e4e8 100%)}
+</style>
+</head>
+<body class="text-ink font-sans">
+
+<div class="honeyguide-cursor" id="honeyguide-cursor">
+  <svg viewBox="0 0 32 28" fill="none">
+    <path d="M2 16c1-2 3-4 5-5l2-1c1-2 3-5 5-6 1 0 2 1 2 2 0 1-1 3-2 4l3 2c2 1 3 2 3 3s-1 2-3 3l-3 2c1 1 2 3 2 4 0 1-1 2-2 2-2-1-4-4-5-6l-2-1c-2-1-4-3-5-5z" fill="#1a231a" opacity="0.7"/>
+    <circle cx="16" cy="12" r="1" fill="#fff" opacity="0.8"/>
+  </svg>
+</div>
+
+<!-- ============ ENTER OVERLAY ============ -->
+<div class="enter-overlay" id="enter-overlay">
+  <canvas class="enter-canvas" id="enter-canvas"></canvas>
+  <div class="enter-content">
+    <div class="enter-title">Interspecies</div>
+    <div class="enter-wave-row">
+      <div class="left-text cover-fade">Life has been<br>sending signals<br>for 3.8 billion years.</div>
+      <div class="wave-area cover-fade" id="wave-area">
+        <canvas id="enter-wave-canvas"></canvas>
+        <button class="wave-btn" id="enter-btn">
+          Enter the Network
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <div class="right-text cover-fade">We're only now<br>learning to receive them.</div>
+    </div>
+    <div class="cover-slogan">Open hardware for animal & ecological research</div>
+  </div>
+  <div class="enter-sub">Seeed Studio · Interspecies Initiative</div>
+</div>
+
+<!-- ============ NAV ============ -->
+<nav id="nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 brand-text text-ink font-display font-bold text-lg tracking-tight">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+      Seeed<span>·</span>Interspecies
+    </a>
+    <div class="hidden md:flex items-center gap-7 text-sm">
+      <a href="#why" class="nav-link text-muted hover:text-ink">Why</a><a href="#what" class="nav-link text-muted hover:text-ink">What We Do</a>
+      <a href="#cases" class="nav-link text-muted hover:text-ink">Cases</a><a href="#people" class="nav-link text-muted hover:text-ink">People</a>
+      <a href="#sdg" class="nav-link text-muted hover:text-ink">SDG</a><a href="#join" class="nav-link text-muted hover:text-ink">Join</a>
+    </div>
+    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand">Get in touch</a>
+    <button class="md:hidden text-ink" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-line px-6 py-4 space-y-3">
+    <a href="#why" class="block text-sm text-muted">Why</a><a href="#what" class="block text-sm text-muted">What We Do</a>
+    <a href="#cases" class="block text-sm text-muted">Cases</a><a href="#people" class="block text-sm text-muted">People</a>
+    <a href="#sdg" class="block text-sm text-muted">SDG</a><a href="#join" class="block text-sm text-muted">Join</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<section id="top" class="photo-hero">
+  <div class="hero-photo"></div>
+  <div class="hero-veil"></div>
+  <div class="hero-vignette"></div>
+  <div class="hero-text-shade"></div>
+  <div class="hero-inner">
+    <h1 class="hero-serif-title">Technology for<br>Interspecies Understanding</h1>
+    <div class="hero-body">
+      <p>In Mozambique, a bird called the <strong>honeyguide</strong> recruits humans to beehives. It calls, they follow, and they share the honey. A partnership that has worked for generations — between two species that never learned each other's language, but developed a protocol anyway.</p>
+      <p><strong>This isn't a fairytale. It's a documented biological partnership.</strong> Cross-species communication has always been productive — it was just handcrafted, one relationship at a time, hard to scale.</p>
+      <p><strong>That's what changes now.</strong> We're not talking to animals in their language. We're here to build the receivers — sensors, networks, AI — the open tools that let every species and every ecosystem finally be&nbsp;heard.</p>
+    </div>
+    <div class="flex flex-wrap gap-3 mt-3 justify-end" style="margin-left:auto">
+      <a href="#cases" class="hero-cta-outline">Explore Cases
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a href="#join" class="hero-cta-solid">FUTURE PROJECTS</a>
+    </div>
+  </div>
+  <a href="#why" class="hero-scroll">
+    <span>Scroll</span>
+    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  </a>
+</section>
+
+<!-- ============ WHY — Breathing Section ============ -->
+<section id="why" class="why-section">
+  <div class="why-top-label"><span>WHY</span></div>
+  <div class="why-line-track"><div class="why-line-fill" id="why-line-fill"></div></div>
+  <div class="why-spine">
+    <div class="why-items" id="why-items">
+      <div class="why-item why-left" data-why-idx="0">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>Cross-species collaboration is nothing new.</h3>
+          <p>The honeyguide leads humans to honey. Dolphins herd fish toward waiting fishermen in Brazil. These partnerships have run for centuries — but always one relationship at a time, master to apprentice, impossible to scale.</p>
+        </div>
+      </div>
+      <div class="why-item why-right" data-why-idx="1">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>Signals are everywhere. We've been missing most of them.</h3>
+          <p>Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting data for millions of years. Until now, we could receive only a tiny fraction.</p>
+        </div>
+      </div>
+      <div class="why-item why-left" data-why-idx="2">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>Now, for the first time, we can listen at scale.</h3>
+          <p>Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, listening at scale is possible.</p>
+        </div>
+      </div>
+      <div class="why-item why-right" data-why-idx="3">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>We don't speak for animals. We build the tools that let them be heard.</h3>
+          <p>Seeed is not a lab that speaks for animals. We build the open-source hardware that lets any species, any ecosystem, finally be heard.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- snake-line signal-wave connector from WHY → WHAT -->
+<div class="why-connector">
+  <svg viewBox="0 0 120 90" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="why-conn-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8FC31F"/>
+        <stop offset="100%" stop-color="#00936d"/>
+      </linearGradient>
+    </defs>
+    <path id="why-signal-path" d="M60,0 C60,18 20,28 60,45 C100,62 20,72 60,90" fill="none" stroke="url(#why-conn-grad)" stroke-width="2" stroke-dasharray="5,4" opacity="0.75"/>
+    <circle r="3.5" fill="#8FC31F">
+      <animateMotion dur="2.5s" repeatCount="indefinite">
+        <mpath href="#why-signal-path"/>
+      </animateMotion>
+    </circle>
+  </svg>
+</div>
+
+<!-- ============ WHAT ============ -->
+<section id="what" class="py-16" style="background:#f3f7ec">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">What We Do</div>
+      <h2 class="font-display text-2xl md:text-4xl font-bold mb-3">Fieldwork to Frontier — Six Domains, One Stack</h2>
+      <p class="text-muted max-w-3xl mx-auto text-sm">From traditional field methods to AI-powered sensing — the full landscape of animal research, and where open hardware changes what's possible.</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
+        <div class="card-body">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Individual Identification &amp; Lifecycle Tracking</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional Fieldwork</p><p class="text-xs text-ink/70">Mark-recapture, photo ID, GPS collars — invasive, expensive.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-Powered</p><p class="text-xs text-ink/70">AI reads natural markings — tiger stripes, fin notches — like barcodes.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">Edge AI</span></div>
+        </div>
+      </div>
+      <div class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
+        <div class="card-body">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Population Counting &amp; Dynamics</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional Fieldwork</p><p class="text-xs text-ink/70">Camera traps + manual review. A single estimate takes weeks.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-Powered</p><p class="text-xs text-ink/70">On-device AI identifies and counts species automatically.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span></div>
+        </div>
+      </div>
+      <div class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
+        <div class="card-body">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Cognitive Decline &amp; Aging Research</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional Fieldwork</p><p class="text-xs text-ink/70">Manual ethogram coding — short, subjective, expert-dependent.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-Powered</p><p class="text-xs text-ink/70">24/7 gait and vocal monitoring. VLM detects changes early.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">VLM</span><span class="tech-tag bg-brand/15 text-brand-deep">STT</span></div>
+        </div>
+      </div>
+      <div class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
+        <div class="card-body">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19 12a4 4 0 0 0-2-3.5"/><path d="M22 12a8 8 0 0 0-4-7"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Acoustic Monitoring</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional Fieldwork</p><p class="text-xs text-ink/70">Record + send to experts. Expensive, slow.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-Powered</p><p class="text-xs text-ink/70">Edge-based sound classification identifies species automatically.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">STT</span><span class="tech-tag bg-brand/15 text-brand-deep">Audio AI</span></div>
+        </div>
+      </div>
+      <div class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
+        <div class="card-body">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Social Behavior &amp; Group Dynamics</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional Fieldwork</p><p class="text-xs text-ink/70">Years of focal observation. Patterns take seasons to spot.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-Powered</p><p class="text-xs text-ink/70">Multi-camera arrays map interactions in real time.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">CV</span><span class="tech-tag bg-brand/15 text-brand-deep">Multi-modal</span></div>
+        </div>
+      </div>
+      <div class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
+        <div class="card-body">
+        <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 22V8l6-4 6 4v14"/><path d="M2 14h12"/><path d="M10 22V10"/><path d="M18 22V6l4-2v18"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-2">Habitat &amp; Carrying Capacity Monitoring</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2"><p class="text-xs text-amber-800 font-medium">Traditional Fieldwork</p><p class="text-xs text-ink/70">Periodic sampling + lab analysis. You miss almost everything.</p></div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-2 mb-3"><p class="text-xs text-brand-deep font-medium">AI-Powered</p><p class="text-xs text-ink/70">Continuous sensors report daily. Restoration becomes watchable.</p></div>
+        <div class="flex flex-wrap gap-1"><span class="tech-tag bg-brand/15 text-brand-deep">Environmental Sensors</span><span class="tech-tag bg-brand/15 text-brand-deep">IoT</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EVIDENCE ============ -->
+<section id="cases" class="py-16 bg-surface-card border-b border-line">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Evidence</div>
+      <h2 class="font-display text-2xl md:text-4xl font-bold mb-3">Deployments in the Wild</h2>
+      <p class="text-muted max-w-2xl mx-auto text-sm">Every pin on this map is a real deployment — in the rainforest, the wetland, the mountain range.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-4 reveal" id="filter-bar">
+      <span class="text-xs text-muted mr-1">Filter:</span>
+      <button class="filter-btn active pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="all">All</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="CV">CV</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="LoRa">LoRa</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="STT">STT</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="VLM">VLM</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="Tracker">Tracker</button>
+      <button class="filter-btn pill border border-line px-2.5 py-1 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="Environmental">Environmental</button>
+    </div>
+    <div class="relative mb-4 reveal map-wrapper">
+      <div id="world-map"></div>
+      <div id="map-canvas-overlay"><canvas id="map-connection-canvas"></canvas></div>
+      <div id="map-float-card" class="map-float-card"><div id="map-float-card-body"></div></div>
+    </div>
+    <!-- Case label + status legend -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-3 reveal">
+      <div class="text-sm font-bold tracking-[2px] uppercase text-brand-deep">Case</div>
+      <div class="flex items-center gap-4 text-[11px] text-muted">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-2 h-2 rounded-full" style="background:#8FC31F;box-shadow:0 0 4px rgba(143,195,31,.5)"></span>Deployed</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-2 h-2 rounded-full" style="background:#ffab00;box-shadow:0 0 4px rgba(255,171,0,.4)"></span>In Progress</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-2 h-2 rounded-full" style="background:#aab8ab"></span>Open to Collaborate</span>
+      </div>
+    </div>
+    <div class="carousel-wrap reveal">
+      <div class="carousel-row" id="carousel-row-1" style="--fade-from:#ebeede"><div class="carousel-fade-left"></div><div class="carousel-fade-right"></div><div class="carousel-track auto-scroll" id="carousel-track-1"></div></div>
+      <div class="carousel-row" id="carousel-row-2" style="--fade-from:#ebeede"><div class="carousel-fade-left"></div><div class="carousel-fade-right"></div><div class="carousel-track auto-scroll-right" id="carousel-track-2"></div></div>
+    </div>
+    <div class="case-modal-overlay" id="case-modal">
+      <div class="case-modal">
+        <button class="case-modal-close" onclick="closeCaseModal()">✕</button>
+        <div class="modal-img" id="modal-img"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
+        <div class="modal-tags" id="modal-tags"></div><div id="modal-status-badge" class="modal-status-badge"></div><h3 id="modal-title"></h3><p class="modal-meta" id="modal-meta"></p><p class="modal-desc" id="modal-desc"></p>
+        <div class="modal-stats" id="modal-stats"></div>
+        <a id="modal-cta" class="modal-cta" href="#" target="_blank" rel="noopener">View Full Case<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PEOPLE ============ -->
+<section id="people" class="py-16" style="background:#f7f5f0">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Who We Work With</div>
+      <h2 class="font-display text-2xl md:text-4xl font-bold mb-3">People &amp; Partners</h2>
+    </div>
+    <div class="grid md:grid-cols-4 gap-4 mb-8">
+      <div class="partner-card rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="partner-logo"><img src="partner-logos/mit-media-lab.svg" alt="MIT Media Lab logo"></div>
+        <h3 class="font-display font-bold text-sm">MIT Media Lab</h3>
+        <p class="text-xs text-muted mt-1">Pioneering the Fab Lab network and Interspecies Internet initiative.</p>
+      </div>
+      <div class="partner-card rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="partner-logo square"><img src="partner-logos/interspecies-internet.png" alt="Interspecies Internet logo"></div>
+        <h3 class="font-display font-bold text-sm">Interspecies Internet</h3>
+        <p class="text-xs text-muted mt-1">A flagship future project for cross-species communication.</p>
+      </div>
+      <div class="partner-card rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="partner-logo"><img src="partner-logos/fab-lab-network.svg" alt="Fab Lab Network logo"></div>
+        <h3 class="font-display font-bold text-sm">Fab Lab Network</h3>
+        <p class="text-xs text-muted mt-1">Global network of digital fabrication laboratories.</p>
+      </div>
+      <div class="partner-card rounded-xl p-5 text-center reveal hover:shadow-card-hover transition-shadow">
+        <div class="partner-logo square"><img src="partner-logos/dina-lab.png" alt="Dina Lab logo"></div>
+        <h3 class="font-display font-bold text-sm">Dina Lab</h3>
+        <p class="text-xs text-muted mt-1">Creator of the Mothbox open-source insect trap cam.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ JOIN ============ -->
+<section id="join" class="py-12" style="background:#f3f7ec">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-6 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-2">What's the Next?</div>
+      <h2 class="font-display text-xl md:text-2xl font-bold mb-2">FUTURE PROJECTS</h2>
+      <p class="text-muted max-w-xl mx-auto text-sm leading-relaxed">Tell us your story. We're seeking researchers, NGOs, Fab Labs, and makers to launch the next deployment.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4 mb-4 reveal">
+      <div class="rounded-xl p-5 transition-all" style="background:#4a7c3e;border:1px solid #3d6b32">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style="background:rgba(255,255,255,.15)"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1 text-white">Participate</h3>
+        <p class="text-xs mb-3" style="color:rgba(255,255,255,.7)">Join an existing open-source challenge. Contribute to a build. Deploy a replicate kit in your local Fab Lab.</p>
+        <a href="https://github.com" target="_blank" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color:#c8e6a0">Browse open challenges<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="rounded-xl p-5 transition-all" style="background:#4a7c3e;border:1px solid #3d6b32">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style="background:rgba(255,255,255,.15)"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1 text-white">Initiate</h3>
+        <p class="text-xs mb-3" style="color:rgba(255,255,255,.7)">Have a research question that needs a hardware answer? Submit your proposal and we'll help find the right tools.</p>
+        <a href="mailto:solution@seeed.cc" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color:#c8e6a0">Submit your project<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="rounded-xl p-5 transition-all" style="background:#4a7c3e;border:1px solid #3d6b32">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style="background:rgba(255,255,255,.15)"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1 text-white">Follow &amp; Share</h3>
+        <p class="text-xs mb-3" style="color:rgba(255,255,255,.7)">Follow us for the latest deployments, open-source tools, and interspecies research stories from the field.</p>
+        <a href="https://www.facebook.com/seeedstudio" target="_blank" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color:#c8e6a0">Follow on Facebook<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+    <!-- SDG icons row -->
+    <div class="mt-10 reveal">
+      <div class="text-center mb-6"><div class="text-[10px] font-semibold tracking-[2px] uppercase text-muted">Aligned with UN Sustainable Development Goals</div></div>
+      <div class="sdg-row" title="UN Sustainable Development Goals">
+        <span class="sdg-logo"><img src="sdg-icons/sdg-13.svg" alt="UN SDG 13: Climate Action"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-14.svg" alt="UN SDG 14: Life Below Water"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-15.svg" alt="UN SDG 15: Life on Land"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-09.svg" alt="UN SDG 9: Industry, Innovation and Infrastructure"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-11.svg" alt="UN SDG 11: Sustainable Cities and Communities"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-04.svg" alt="UN SDG 4: Quality Education"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-10.svg" alt="UN SDG 10: Reduced Inequalities"></span>
+        <span class="sdg-logo"><img src="sdg-icons/sdg-17.svg" alt="UN SDG 17: Partnerships for the Goals"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer id="contact" style="background:#252C24;min-height:456px;padding-top:90px;padding-bottom:40px;font-family:Inter,system-ui,sans-serif">
+  <div style="max-width:1200px;margin:0 auto;padding:0 60px 0 75px">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
+      <!-- Col 1: Brand -->
+      <div class="md:col-span-1">
+        <div class="flex items-center gap-3 mb-4">
+          <div style="width:40px;height:40px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#252C24" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+          </div>
+          <span style="color:#FFFFFF;font-size:18px;font-weight:600;letter-spacing:-.3px">Seeed — Interspecies</span>
+        </div>
+        <p style="color:#777B76;font-size:16px;line-height:1.6">Open hardware for animal and ecological research. Bridging scientific exploration and technologies that operate in the wild.</p>
+      </div>
+      <!-- Col 2: Sections -->
+      <div>
+        <div style="color:#A4A7A4;font-size:14px;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:16px">Sections</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="#why" style="color:#777B76;font-size:16px;text-decoration:none">Why</a>
+          <a href="#what" style="color:#777B76;font-size:16px;text-decoration:none">What We Do</a>
+          <a href="#cases" style="color:#777B76;font-size:16px;text-decoration:none">Cases</a>
+          <a href="#people" style="color:#777B76;font-size:16px;text-decoration:none">People &amp; Partners</a>
+          <a href="#join" style="color:#777B76;font-size:16px;text-decoration:none">Ways to Join</a>
+        </div>
+      </div>
+      <!-- Col 3: Resources -->
+      <div>
+        <div style="color:#A4A7A4;font-size:14px;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:16px">Resources</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="https://github.com/honeylab" target="_blank" style="color:#777B76;font-size:16px;text-decoration:none">GitHub</a>
+          <a href="https://www.seeedstudio.com" target="_blank" style="color:#777B76;font-size:16px;text-decoration:none">Seeed Studio</a>
+          <a href="https://interspecies.internet.com" target="_blank" style="color:#777B76;font-size:16px;text-decoration:none">Interspecies Internet</a>
+        </div>
+      </div>
+      <!-- Col 4: Contact -->
+      <div>
+        <div style="color:#A4A7A4;font-size:14px;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:16px">Contact</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <a href="mailto:solution@seeed.cc" style="color:#777B76;font-size:16px;text-decoration:none">solution@seeed.cc</a>
+          <a href="mailto:press@seeed.cc" style="color:#777B76;font-size:16px;text-decoration:none">press@seeed.cc</a>
+          <a href="https://www.facebook.com/seeedstudio" target="_blank" style="color:#777B76;font-size:16px;text-decoration:none">Facebook</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Bottom divider line -->
+  <div style="max-width:1200px;margin:0 auto;padding:0 1px 0 75px">
+    <div style="border-top:2px solid #414B3F;margin-top:40px"></div>
+    <p style="color:#555;color:#5a5e55;font-size:13px;margin-top:16px">&copy; 2026 Seeed Studio. Interspecies Initiative. Open-source hardware under MIT License.</p>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ====================================================================
+// 1. HERO CANVAS  (disabled in v0.6 — photo hero replaces canvas)
+// ====================================================================
+(function initHeroCanvas() {
+  const canvas = document.getElementById('hero-canvas'); if (!canvas) return;
+  const ctx = canvas.getContext('2d'); let w = 0, h = 0, mouseX = -1000, mouseY = -1000, mt = 0, ct = 0;
+  const waves = [];
+  function resize() { const p = canvas.parentElement; if (!p) return; const r = p.getBoundingClientRect(), d = window.devicePixelRatio || 1; w = canvas.width = r.width * d; h = canvas.height = r.height * d; canvas.style.width = r.width + 'px'; canvas.style.height = r.height + 'px'; }
+  resize(); window.addEventListener('resize', resize);
+  canvas.parentElement.addEventListener('mousemove', function(e) { const r = canvas.getBoundingClientRect(); mouseX = (e.clientX - r.left) * (window.devicePixelRatio || 1); mouseY = (e.clientY - r.top) * (window.devicePixelRatio || 1); });
+  function sw(x, y, i) { i = i || 1; if (w === 0 || h === 0) return; for (let j = 0; j < 3; j++) { waves.push({ x, y, r: 1, maxR: (180 + Math.random() * 120) * i, speed: 1.0 + Math.random() * 0.5, opacity: (0.25 + Math.random() * 0.15) * i, delay: j * 0.3, age: 0 }); } if (waves.length > 45) waves.splice(0, waves.length - 45); }
+  function si() { if (w > 0 && h > 0) sw(w / 2, h / 2, 1.2); else setTimeout(si, 50); } si();
+  function draw() {
+    ctx.clearRect(0, 0, w, h); ct += 0.016; if (ct > 1.5) { ct = 0; sw(w / 2, h / 2, 0.8 + Math.random() * 0.4); }
+    if (mouseX > 0 && mouseY > 0 && mouseX < w && mouseY < h) { mt += 0.016; if (mt > 1.5) { mt = 0; sw(mouseX, mouseY, 0.6 + Math.random() * 0.3); } } else { mt = 0; }
+    for (let i = waves.length - 1; i >= 0; i--) { const wa = waves[i]; wa.age += 0.016; if (wa.age < wa.delay) continue; wa.r = Math.max(2, (wa.age - wa.delay) * wa.speed * 60); if (wa.r > wa.maxR) { waves.splice(i, 1); continue; } const p = wa.r / wa.maxR, f = wa.opacity * (1 - p) * (1 - p); ctx.beginPath(); ctx.arc(wa.x, wa.y, wa.r, 0, Math.PI * 2); ctx.strokeStyle = `rgba(57, 181, 255, ${f})`; ctx.lineWidth = Math.max(0.5, 2.5 * (1 - p * 0.6)); ctx.stroke(); if (wa.r > 4) { try { const g = ctx.createRadialGradient(wa.x, wa.y, wa.r * 0.2, wa.x, wa.y, wa.r); g.addColorStop(0, 'rgba(57, 181, 255, 0)'); g.addColorStop(0.4, `rgba(57, 181, 255, ${f * 0.25})`); g.addColorStop(1, 'rgba(57, 181, 255, 0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(wa.x, wa.y, wa.r, 0, Math.PI * 2); ctx.fill(); } catch(e) {} } }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ====================================================================
+// 2. ENTER OVERLAY — ripples + wave track
+// ====================================================================
+(function initEnterCanvas() {
+  const canvas = document.getElementById('enter-canvas'); const ctx = canvas.getContext('2d');
+  let w, h, mx = -1000, my = -1000;
+  function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);  document.addEventListener('mousemove', function(e) { mx = e.clientX; my = e.clientY; });
+  const dots = []; for (let i = 0; i < 80; i++) { dots.push({ x: Math.random()*w, y: Math.random()*h, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4-0.15, r: 1.5+Math.random()*2.5, opacity: 0.3+Math.random()*0.5, pulse: Math.random()*Math.PI*2 }); }
+  const ripples = []; let rt = 0, crt = 0;
+  function sr(x, y, i) {
+    i = i || 1;
+    const isLargeWave = i >= 3;
+    const maxR = isLargeWave
+      ? Math.max(w, h) * (0.25 + Math.min(i, 6) * 0.06)
+      : (120 + Math.random() * 80) * i;
+    ripples.push({
+      x,
+      y,
+      r: 0,
+      maxR,
+      speed: isLargeWave ? 5.0 : 1.05 + Math.random() * 0.25,
+      opacity: Math.min(0.78, 0.4 + Math.random() * 0.15 * i),
+      intensity: i,
+      heavy: isLargeWave
+    });
+    if (ripples.length > 30) ripples.shift();
+  }
+  window.__enterCanvas = { spawnRipple: sr };
+  function spawnCursorWaveGroup(x, y) {
+    [0.85, 1.0, 1.15].forEach((intensity, index) => {
+      setTimeout(() => sr(x, y, intensity), index * 350);
+    });
+  }  function draw() {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle='#f5f7f0'; ctx.fillRect(0,0,w,h);
+    const g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.6);
+    g.addColorStop(0,'rgba(143,195,31,0.03)'); g.addColorStop(1,'rgba(143,195,31,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(143,195,31,0.03)'; ctx.lineWidth=1; for(let x=0;x<w;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();} for(let y=0;y<h;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+    dots.forEach(d=>{d.x+=d.vx;d.y+=d.vy;d.pulse+=0.025;if(d.x<-10)d.x=w+10;if(d.x>w+10)d.x=-10;if(d.y<-10)d.y=h+10;if(d.y>h+10)d.y=-10;const po=d.opacity*(0.6+0.4*Math.sin(d.pulse));const gl=ctx.createRadialGradient(d.x,d.y,0,d.x,d.y,d.r*5);gl.addColorStop(0,`rgba(143,195,31,${po*0.5})`);gl.addColorStop(1,'rgba(143,195,31,0)');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(d.x,d.y,d.r*5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(143,195,31,${po})`;ctx.fill();});
+    crt+=0.016; if(crt>1.5){crt=0;sr(w/2,h/2,0.6+Math.random()*0.3);}
+    rt+=0.016; if(mx>0&&my>0&&mx<w&&my<h&&rt>2.5){rt=0;spawnCursorWaveGroup(mx,my);}
+    ripples.forEach((r,i)=>{
+      r.r += r.speed;
+      if (r.r > r.maxR) { ripples.splice(i, 1); return; }
+      const p = r.r / r.maxR;
+      const fade = r.heavy ? (1-p) : (1-p) * (1-p);
+      const f = r.opacity * fade;
+      ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(69,196,166,${f})`;
+      ctx.lineWidth = (r.heavy ? 4 : 2) * (1-p*0.65);
+      ctx.stroke();
+      const gl=ctx.createRadialGradient(r.x,r.y,r.r*0.35,r.x,r.y,r.r);
+      gl.addColorStop(0,'rgba(69,196,166,0)');
+      gl.addColorStop(0.5,`rgba(69,196,166,${f*(r.heavy ? 0.3 : 0.2)})`);
+      gl.addColorStop(1,'rgba(69,196,166,0)');
+      ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(r.x,r.y,r.r,0,Math.PI*2); ctx.fill();
+      if (r.heavy && r.r > 24) {
+        const secondaryR = r.r * 0.62;
+        const secondaryP = secondaryR / r.maxR;
+        const secondaryF = r.opacity * 0.55 * (1-secondaryP);
+        ctx.beginPath(); ctx.arc(r.x,r.y,secondaryR,0,Math.PI*2);
+        ctx.strokeStyle = `rgba(69,196,166,${secondaryF})`;
+        ctx.lineWidth = 2.5 * (1-secondaryP);
+        ctx.stroke();
+      }
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// Enter wave track canvas
+(function initWaveTrack() {
+  const canvas = document.getElementById('enter-wave-canvas'); if (!canvas) return;
+  const ctx = canvas.getContext('2d'); let w, h, phase = 0;
+  function resize() { const r = canvas.parentElement.getBoundingClientRect(); w = canvas.width = r.width; h = canvas.height = r.height; }
+  resize(); window.addEventListener('resize', resize);
+  const signalColor = (progress, alpha) => {
+    const red = Math.round(143 + (57 - 143) * progress);
+    const green = Math.round(195 + (181 - 195) * progress);
+    const blue = Math.round(31 + (255 - 31) * progress);
+    return `rgba(${red},${green},${blue},${alpha})`;
+  };
+  function draw() {
+    ctx.clearRect(0, 0, w, h); phase += 0.02;
+    const cy = h / 2;
+    const track = (progress, waveIndex) => {
+      const waveOffset = waveIndex === 0 ? -9 : 9;
+      return cy + waveOffset + Math.sin(progress * Math.PI * 3 + phase * 1.2 + waveIndex) * 7;
+    };
+    for (let waveIndex = 0; waveIndex < 2; waveIndex++) {
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 3) {
+        const pointY = track(x / w, waveIndex);
+        if (x === 0) ctx.moveTo(x, pointY); else ctx.lineTo(x, pointY);
+      }
+      const opacity = 0.36 + 0.08 * Math.sin(phase + waveIndex * 1.4);
+      const trackGradient = ctx.createLinearGradient(0, 0, w, 0);
+      trackGradient.addColorStop(0, 'rgba(143,195,31,0.4)');
+      trackGradient.addColorStop(0.5, 'rgba(69,196,166,0.42)');
+      trackGradient.addColorStop(1, 'rgba(57,181,255,0.4)');
+      ctx.strokeStyle = trackGradient;
+      ctx.lineWidth = 2.2;
+      ctx.shadowColor = 'rgba(69,196,166, 0.42)';
+      ctx.shadowBlur = 7;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    for (let pulseIndex = 0; pulseIndex < 3; pulseIndex++) {
+      const progress = (phase * 0.24 + pulseIndex / 3) % 1;
+      for (let trailStep = 0; trailStep < 10; trailStep++) {
+        const trailProgress = Math.max(0, progress - trailStep * 0.012);
+        const waveIndex = trailStep % 2;
+        const x = trailProgress * w;
+        const y = track(trailProgress, waveIndex);
+        const life = 1 - trailStep / 10;
+        ctx.beginPath();
+        ctx.arc(x, y, trailStep === 0 ? 3.2 : 2.4 * life, 0, Math.PI * 2);
+        ctx.fillStyle = signalColor(trailProgress, trailStep === 0 ? 0.72 : 0.42 * life);
+        ctx.fill();
+      }
+    }
+    [0, 1].forEach(endpoint => {
+      const x = endpoint ? w - 2 : 2;
+      const y = cy + (endpoint ? 9 : -9);
+      ctx.beginPath();
+      ctx.arc(x, y, 3.4, 0, Math.PI * 2);
+      ctx.fillStyle = endpoint ? 'rgba(57,181,255,0.68)' : 'rgba(143,195,31,0.68)';
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+(function(){
+  const c=document.getElementById('honeyguide-cursor'),o=document.getElementById('enter-overlay');
+  let cx=-1000,cy=-1000;
+  document.addEventListener('mousemove',function(e){cx=e.clientX;cy=e.clientY;});
+  function followCursor(){
+    if(!o.classList.contains('hidden')&&cx>-500){
+      c.style.display='block';c.style.left=cx+'px';c.style.top=cy+'px';
+    }
+    requestAnimationFrame(followCursor);
+  }
+  followCursor();
+  document.addEventListener('mouseleave',()=>c.style.display='none');
+  document.addEventListener('mouseenter',()=>{if(!o.classList.contains('hidden'))c.style.display='block';});
+})();
+document.getElementById('enter-btn').addEventListener('click',function(e){
+  const o=document.getElementById('enter-overlay');
+  const rect=document.getElementById('enter-canvas').getBoundingClientRect();
+  const cx=e.clientX-rect.left, cy=e.clientY-rect.top;
+  o.style.pointerEvents='none';
+  document.body.style.cursor='default';
+  document.getElementById('honeyguide-cursor').classList.add('hidden');
+  if(window.__enterCanvas){
+    window.__enterCanvas.spawnRipple(cx,cy,6.0);
+    setTimeout(()=>window.__enterCanvas.spawnRipple(cx,cy,5.0),400);
+    setTimeout(()=>window.__enterCanvas.spawnRipple(cx,cy,3.0),800);
+  }
+  setTimeout(()=>o.classList.add('hidden'),1000);
+  setTimeout(()=>window.dispatchEvent(new Event('resize')),2200);
+});
+
+// ====================================================================
+// 3. NAV + REVEAL
+// ====================================================================
+const nav=document.getElementById('nav'); window.addEventListener('scroll',()=>{if(window.scrollY>80)nav.classList.add('scrolled');else nav.classList.remove('scrolled');});
+const revealEls=document.querySelectorAll('.reveal'); const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:0.1,rootMargin:'0px 0px -40px 0px'}); revealEls.forEach(el=>obs.observe(el));
+
+// ====================================================================
+// 4. MAP
+// ====================================================================
+(function(){const c=document.getElementById('map-connection-canvas');if(!c)return;const ctx=c.getContext('2d');let w,h;const COORDS=[{id:'tnc',lat:22.49,lng:114.05},{id:'bhutan',lat:27.51,lng:90.43},{id:'mothbox-panama',lat:8.98,lng:-79.52},{id:'mothbox-peru',lat:-9.19,lng:-75.02},{id:'mothbox-yellowstone',lat:44.6,lng:-110.5},{id:'olfactory',lat:47.63,lng:-122.33},{id:'collarid',lat:42.36,lng:-71.09},{id:'lifescience',lat:19.08,lng:72.88}];function xy(lat,lng){return{x:((lng+180)/360)*w,y:((90-lat)/180)*h};}function resize(){const p=c.parentElement.getBoundingClientRect();w=c.width=p.width;h=c.height=p.height;c.style.width=p.width+'px';c.style.height=p.height+'px';}resize();window.addEventListener('resize',resize);const pairs=[['tnc','bhutan'],['bhutan','mothbox-panama'],['mothbox-panama','mothbox-peru'],['mothbox-panama','mothbox-yellowstone'],['mothbox-yellowstone','collarid'],['collarid','olfactory'],['bhutan','lifescience'],['collarid','tnc']];const conns=[];pairs.forEach(([a,b])=>{const pa=COORDS.find(p=>p.id===a),pb=COORDS.find(p=>p.id===b);if(pa&&pb)conns.push({from:pa,to:pb});});function draw(){ctx.clearRect(0,0,w,h);conns.forEach(c=>{const f=xy(c.from.lat,c.from.lng),t=xy(c.to.lat,c.to.lng);ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(143,195,31,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);});requestAnimationFrame(draw);}draw();})();
+(function(){const c=document.getElementById('sdg-ring-canvas');if(!c)return;const ctx=c.getContext('2d');let w,h;function resize(){const r=c.getBoundingClientRect();w=c.width=r.width*(window.devicePixelRatio||1);h=c.height=r.height*(window.devicePixelRatio||1);c.style.width=r.width+'px';c.style.height=r.height+'px';}resize();window.addEventListener('resize',resize);const cx=w/2,cy=h/2,rx=w*0.42,ry=h*0.3;let angle=0;function draw(){ctx.clearRect(0,0,w,h);angle+=0.008;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.strokeStyle='rgba(0,147,109,0.15)';ctx.lineWidth=1.5;ctx.setLineDash([3,6]);ctx.stroke();ctx.setLineDash([]);const dx=cx+rx*Math.cos(angle),dy=cy+ry*Math.sin(angle*0.7);const g=ctx.createRadialGradient(dx,dy,0,dx,dy,20);g.addColorStop(0,'rgba(0,147,109,0.4)');g.addColorStop(0.5,'rgba(0,147,109,0.15)');g.addColorStop(1,'rgba(0,147,109,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(dx,dy,20,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(dx,dy,3,0,Math.PI*2);ctx.fillStyle='#00936d';ctx.fill();for(let i=1;i<=12;i++){const t=angle-i*0.05,tx=cx+rx*Math.cos(t),ty=cy+ry*Math.sin(t*0.7),f=1-i/12;ctx.beginPath();ctx.arc(tx,ty,2*f,0,Math.PI*2);ctx.fillStyle=`rgba(0,147,109,${f*0.3})`;ctx.fill();}for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,px=cx+rx*0.92*Math.cos(a),py=cy+ry*0.92*Math.sin(a*0.7);ctx.beginPath();ctx.arc(px,py,1.5,0,Math.PI*2);ctx.fillStyle='rgba(0,147,109,0.2)';ctx.fill();}requestAnimationFrame(draw);}draw();})();
+
+const PROJECTS = [
+  { id:'tnc', img:'images/case-tnc.png', tone:'active', name:'Wetland Restoration — Deep Bay', status:'Phase 1 Running', coords:[22.49,114.05], location:'Bay Area, Hong Kong', desc:'A continuous monitoring system for a dynamic tidal wetland: SenseCAP 4G returns water-quality, weather, and pond conditions so restoration can be evaluated between site visits instead of only from periodic samples.', summary:'Wetland restoration monitoring in HK', tags:['SenseCAP 4G Data Logger','SenseCAP S700-C'], stats:[{val:'Deployed', lbl:'Status'},{val:'24/7', lbl:'Monitoring'}], link:'https://seeedstudio.feishu.cn/docx/ZxOadAzFZoSwOyxVEtQcuOzpnMe', linkText:'Read blog →' },
+  { id:'bhutan', img:'images/case-bhutan.png', tone:'active', name:'Bhutan Tiger', status:'Framework Building', coords:[27.51,90.43], location:'Bhutan FabLab', desc:'A nationwide tiger monitoring framework combining GPS trackers, a low-power LoRa/Mesh backbone for mountainous terrain, and reCamera computer vision for stripe-based re-identification. The framework is in progress; field results are not yet available.', summary:'National tiger tracking', tags:['Tracker','LoRa/Mesh','reCamera'], stats:[{val:'Nationwide', lbl:'Scope'},{val:'2026 Q4', lbl:'Validation'}], link:'' },
+  { id:'mothbox-panama', img:'images/case-mothbox-panama.png', tone:'active', name:'Mothbox — Open Trap Cam', status:'Deployed', coords:[8.98,-79.52], location:'Panama City · Panama FabLab', desc:'An open-source insect trap camera built around reCamera edge AI and LoRa return. It automates moth and general insect counting, reduces manual image review, and is designed to be replicated by Fab Labs.', summary:'Open-source insect trap cam', tags:['reCamera','LoRa'], stats:[{val:'Deployed', lbl:'Status'},{val:'Edge AI', lbl:'On device'}], link:'https://mothbox.org', linkText:'mothbox.org →' },
+  { id:'mothbox-peru', img:'images/case-mothbox-peru.png', tone:'planned', name:'Mothbox — Peru', status:'Planned', coords:[-9.19,-75.02], location:'Peru FabLab', desc:'A planned Mothbox replication for Neotropical insect monitoring, extending the same open trap-camera approach to another regional Fab Lab deployment.', summary:'Mothbox replication in Peru', tags:['reCamera','LoRa'], stats:[{val:'Open to Collaborate', lbl:'Status'}], link:'' },
+  { id:'mothbox-yellowstone', img:'images/case-mothbox-yellowstone.png', tone:'planned', name:'Mothbox — Yellowstone', status:'Planned', coords:[44.6,-110.5], location:'Yellowstone, USA', desc:'A planned North American extension of the Mothbox open trap-camera model for continued insect biodiversity monitoring.', summary:'Mothbox in Yellowstone', tags:['reCamera','LoRa'], stats:[{val:'Open to Collaborate', lbl:'Status'}], link:'' },
+  { id:'olfactory', img:'images/case-olfactory.png', tone:'open', name:'Olfactory Sensor', status:'Open', coords:[47.63,-122.33], location:'Seattle FabLab', desc:'A lab-built mammalian olfactory sensing prototype being explored for manufacture through Seeed Fusion, addressing the gap between a working research prototype and a reproducible field-ready device.', summary:'Mammalian olfactory sensor', tags:['Seeed Fusion'], stats:[{val:'In Progress', lbl:'Status'}], link:'' },
+  { id:'collarid', img:'images/case-collarid.png', tone:'planned', name:'CollarID — MIT', status:'Intent', coords:[42.36,-71.09], location:'Boston, USA', desc:'A proposed open, low-cost, multi-species tracking collar combining GPS, Meshtastic communication, and computer-vision re-identification, with Seeed Fusion supporting the path from MIT’s open design to small-batch manufacture.', summary:'Multi-species tracking collar', tags:['Tracker','Meshtastic','reCamera','Seeed Fusion'], stats:[{val:'Open to Collaborate', lbl:'Status'}], link:'' },
+  { id:'lifescience', img:'images/case-lifescience.png', tone:'planned', name:'LifeScience Zoo Pilot', status:'Intent', coords:[19.08,72.88], location:'India', desc:'A proposed zoo pilot for multi-species monitoring. Rather than supplying a single sensor, it combines technology selection, hardware, and an in-zoo Fab Lab so the zoo can build and iterate its own monitoring devices.', summary:'Zoo monitoring pilot', tags:['reCamera','Tracker','SenseCAP Weather Station','Acoustic Sensors'], stats:[{val:'Open to Collaborate', lbl:'Status'}], link:'' }
+];
+
+const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:true, worldCopyJump:true, minZoom:2, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
+window.addEventListener('load',()=>worldMap.invalidateSize());
+const toneColor={active:'#8FC31F',open:'#ffab00',planned:'#aab8ab'};
+const floatCard=document.getElementById('map-float-card'),floatCardBody=document.getElementById('map-float-card-body');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
+let activeMarker=null;
+function pfm(marker){const mc=worldMap.getContainer(),mr=mc.getBoundingClientRect(),p=worldMap.latLngToContainerPoint(marker.getLatLng());const cw=floatCard.offsetWidth||300,ch=floatCard.offsetHeight||160,m=18;let l=p.x+28,t=p.y-ch-20;if(t<m)t=p.y+28;if(l+cw>mr.width-m)l=p.x-cw-28;if(l<m)l=m;if(t<m)t=m;if(t+ch>mr.height-m)t=mr.height-ch-m;floatCard.style.left=l+'px';floatCard.style.top=t+'px';}
+function previewClass(p){return p.id.indexOf('mothbox')===0?'mothbox':p.id}
+function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<div class="project-preview"><img src="'+(p.img||'')+'" alt="'+esc(p.name)+'" onerror="this.style.display=\'none\'"></div><span class="card-status" style="background:'+c+'22;color:'+c+'">'+({active:'Deployed',open:'In Progress',planned:'Open to Collaborate'}[p.tone]||p.status)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(p.name)+'</h5><p class="text-xs text-brand-deep mb-2">'+esc(p.location)+'</p><p class="text-xs text-muted leading-relaxed">'+esc(p.summary)+'</p>';floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
+function hfc(){floatCard.classList.remove('visible');activeMarker=null;}
+function ocm(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;const preview=document.getElementById('modal-img');preview.className='modal-img';preview.innerHTML='<img src="'+(p.img||'')+'" alt="'+esc(p.name)+'" style="width:100%;height:100%;object-fit:cover;border-radius:.75rem" onerror="this.style.display=\'none\'">';document.getElementById('modal-title').textContent=p.name;document.getElementById('modal-meta').textContent=p.location;document.getElementById('modal-desc').textContent=p.desc;document.getElementById('modal-tags').innerHTML=p.tags.map(t=>'<span>'+esc(t)+'</span>').join('');const sb=document.getElementById('modal-status-badge');const sc=toneColor[p.tone];sb.style.background=sc+'22';sb.style.color=sc;sb.textContent=({active:'Deployed',open:'In Progress',planned:'Open to Collaborate'}[p.tone]||p.status);const se=document.getElementById('modal-stats');if(p.stats&&p.stats.length){se.style.display='grid';se.innerHTML=p.stats.map(s=>'<div class="modal-stat"><div class="val">'+esc(s.val)+'</div><div class="lbl">'+esc(s.lbl)+'</div></div>').join('');}else{se.style.display='none';}const cta=document.getElementById('modal-cta');if(p.link){cta.href=p.link;cta.style.display='inline-flex';cta.textContent=p.linkText||'View Full Case';}else{cta.style.display='none';}document.getElementById('case-modal').classList.add('open');document.body.style.overflow='hidden';}
+function ccm(){document.getElementById('case-modal').classList.remove('open');document.body.style.overflow='';}
+document.getElementById('case-modal').addEventListener('click',function(e){if(e.target===this)ccm();});document.addEventListener('keydown',function(e){if(e.key==='Escape')ccm();});
+const markers={};PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:p.name,riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id));});floatCard.addEventListener('mouseenter',()=>{if(activeMarker)floatCard.classList.add('visible');});floatCard.addEventListener('mouseleave',()=>hfc());worldMap.on('move zoom',()=>{if(activeMarker&&floatCard.classList.contains('visible'))pfm(activeMarker);});
+const filterBtns=document.querySelectorAll('.filter-btn');const tagMap={'tnc':['Environmental','IoT'],'bhutan':['CV','LoRa','Tracker'],'mothbox-panama':['CV','LoRa'],'mothbox-peru':['CV','LoRa'],'mothbox-yellowstone':['CV','LoRa'],'olfactory':['Environmental'],'collarid':['CV','LoRa','Tracker'],'lifescience':['CV','Environmental','LoRa']};
+filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;Object.keys(markers).forEach(k=>{const tags=tagMap[k]||[];if(f==='all'||tags.includes(f))worldMap.addLayer(markers[k]);else worldMap.removeLayer(markers[k]);});});});
+const esc2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
+function bcr(tid,projects){const track=document.getElementById(tid);track.innerHTML='';const items=[...projects,...projects];items.forEach(p=>{const card=document.createElement('div');card.className='carousel-card';card.innerHTML='<span class="c-dot '+p.tone+'"></span><div class="c-body"><h4>'+esc2(p.name)+'</h4><p>'+esc2(p.summary)+'</p></div><div class="c-right"><span class="c-label '+p.tone+'">'+({active:'Deployed',open:'In Progress',planned:'Open to Collaborate'}[p.tone]||p.status)+'</span><span class="c-chev">→</span></div>';card.addEventListener('click',()=>{const m=markers[p.id];if(m){worldMap.setView(m.getLatLng(),worldMap.getZoom()>=4?worldMap.getZoom():4,{animate:true});sfc(p,m);}ocm(p.id);});track.appendChild(card);});let drag=false,sx=0,sl=0;track.addEventListener('mousedown',function(e){drag=true;track.classList.add('dragging');sx=e.pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('mouseleave',function(){if(drag){drag=false;track.classList.remove('dragging');}});track.addEventListener('mouseup',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();const x=e.pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});track.addEventListener('touchstart',function(e){drag=true;track.classList.add('dragging');sx=e.touches[0].pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('touchend',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('touchmove',function(e){if(!drag)return;const x=e.touches[0].pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});}
+bcr('carousel-track-1',PROJECTS.filter(p=>p.tone==='active'));bcr('carousel-track-2',PROJECTS.filter(p=>p.tone!=='active'));
+document.querySelectorAll('#mobile-menu a').forEach(a=>{a.addEventListener('click',()=>document.getElementById('mobile-menu').classList.add('hidden'));});
+
+  // ===== WHY section scroll animation =====
+  (function initWhyScroll(){
+    var whySec=document.getElementById('why');if(!whySec)return;
+    var fill=document.getElementById('why-line-fill');if(!fill)return;
+    var items=document.querySelectorAll('.why-item');
+    var dots=document.querySelectorAll('.why-dot');
+    var contents=document.querySelectorAll('.why-content');
+    var rafId=null;
+    function updateWhy(){
+      rafId=null;
+      var rect=whySec.getBoundingClientRect();
+      var winH=window.innerHeight;
+      // Progress: line starts growing from the very top as the section scrolls into view
+      var total=rect.height+winH*0.3;
+      var passed=winH*0.5-rect.top; // starts when section top is at 50% of viewport
+      var progress=Math.max(0,Math.min(1,passed/total));
+      // Grow line
+      fill.style.height=(progress*100)+'%';
+      // Activate items based on progress
+      var itemStep=1/(items.length+0.5);
+      for(var i=0;i<items.length;i++){
+        var threshold=(i+0.5)*itemStep;
+        if(progress>=threshold){
+          if(!dots[i].classList.contains('active')){dots[i].classList.add('active');}
+          if(!contents[i].classList.contains('active')){contents[i].classList.add('active');}
+        }
+      }
+    }
+    function onScroll(){
+      if(rafId)return;
+      rafId=requestAnimationFrame(updateWhy);
+    }
+    window.addEventListener('scroll',onScroll,{passive:true});
+    window.addEventListener('resize',onScroll,{passive:true});
+    // Initial check
+    setTimeout(updateWhy,100);
+  })();
+
+</script>
+</body>
+</html>
