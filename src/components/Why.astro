@@ -72,7 +72,7 @@
   var lit = [false,false,false,false];
   var started = false;
   var startTime = 0;
-  var cycleSec = 6.0;    // seconds for one light point to traverse full path
+  var cycleSec = 3.4;    // seconds for one light point to traverse full path (~75% faster)
   var rafId = null;
 
   // Catmull-Rom spline sampler through a list of points
@@ -183,9 +183,9 @@
 
   // trail history per light point
   var lights = [
-    {off:0.00, color:[143,195,31], trail:[]},   // green
-    {off:0.33, color:[40,200,210], trail:[]},   // cyan
-    {off:0.66, color:[60,140,230], trail:[]}    // blue
+    {off:0.00, color:[143,195,31], trail:[]},   // green  (lead)
+    {off:0.05, color:[40,200,210], trail:[]},   // cyan
+    {off:0.10, color:[60,140,230], trail:[]}    // blue
   ];
 
   function activate(idx){
@@ -234,15 +234,9 @@
       var L = lights[li];
       var s = ((t / cycleSec) + L.off) % 1;
       var p = pointAt(s);
-      // activate anchors when a light first reaches them
+      // light up a segment the moment a light point first reaches its anchor
       for(var a=0;a<anchorS.length;a++){
-        if(!lit[a]){
-          // consider "reached" when light's s crosses anchor s within this frame window
-          var prev = ((t - 1/60) / cycleSec + L.off);
-          prev = ((prev % 1) + 1) % 1;
-          var crossed = (prev <= anchorS[a] && s >= anchorS[a]) || (prev > s && (anchorS[a] >= prev || anchorS[a] <= s));
-          if(crossed) activate(a);
-        }
+        if(!lit[a] && s >= anchorS[a]) activate(a);
       }
       // trail
       L.trail.push({x:p.x, y:p.y});
