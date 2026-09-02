@@ -1,0 +1,48 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+
+<!-- ============ JOIN ============ -->
+<section id="join" class="py-12" style="background:#f3f7ec">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-6 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-2">What's the Next?</div>
+      <h2 class="font-display text-xl md:text-2xl font-bold mb-2">FUTURE PROJECTS</h2>
+      <p class="text-muted max-w-xl mx-auto text-sm leading-relaxed">Tell us your story. We're seeking researchers, NGOs, Fab Labs, and makers to launch the next deployment.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4 mb-4 reveal">
+      <div class="rounded-xl p-5 transition-all" style="background:#4a7c3e;border:1px solid #3d6b32">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style="background:rgba(255,255,255,.15)"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1 text-white">Participate</h3>
+        <p class="text-xs mb-3" style="color:rgba(255,255,255,.7)">Join an existing open-source challenge. Contribute to a build. Deploy a replicate kit in your local Fab Lab.</p>
+        <a href="https://github.com" target="_blank" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color:#c8e6a0">Browse open challenges<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="rounded-xl p-5 transition-all" style="background:#4a7c3e;border:1px solid #3d6b32">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style="background:rgba(255,255,255,.15)"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1 text-white">Initiate</h3>
+        <p class="text-xs mb-3" style="color:rgba(255,255,255,.7)">Have a research question that needs a hardware answer? Submit your proposal and we'll help find the right tools.</p>
+        <a href="mailto:solution@seeed.cc" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color:#c8e6a0">Submit your project<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="rounded-xl p-5 transition-all" style="background:#4a7c3e;border:1px solid #3d6b32">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center mb-3" style="background:rgba(255,255,255,.15)"><svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <h3 class="font-display font-bold text-sm mb-1 text-white">Follow &amp; Share</h3>
+        <p class="text-xs mb-3" style="color:rgba(255,255,255,.7)">Follow us for the latest deployments, open-source tools, and interspecies research stories from the field.</p>
+        <a href="https://www.facebook.com/seeedstudio" target="_blank" class="inline-flex items-center gap-1 text-xs font-medium hover:underline" style="color:#c8e6a0">Follow on Facebook<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+    <!-- SDG icons row -->
+    <div class="mt-10 reveal" id="sdg">
+      <div class="text-center mb-6"><div class="text-[10px] font-semibold tracking-[2px] uppercase text-muted">Aligned with UN Sustainable Development Goals</div></div>
+      <div class="sdg-row" title="UN Sustainable Development Goals">
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-13.svg`} alt="UN SDG 13: Climate Action"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-14.svg`} alt="UN SDG 14: Life Below Water"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-15.svg`} alt="UN SDG 15: Life on Land"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-09.svg`} alt="UN SDG 9: Industry, Innovation and Infrastructure"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-11.svg`} alt="UN SDG 11: Sustainable Cities and Communities"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-04.svg`} alt="UN SDG 4: Quality Education"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-10.svg`} alt="UN SDG 10: Reduced Inequalities"></span>
+        <span class="sdg-logo"><img src={`${base}/sdg-icons/sdg-17.svg`} alt="UN SDG 17: Partnerships for the Goals"></span>
+      </div>
+    </div>
+  </div>
+</section>

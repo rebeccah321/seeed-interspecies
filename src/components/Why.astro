@@ -1,0 +1,94 @@
+---
+---
+
+<!-- ============ WHY — Breathing Section ============ -->
+<section id="why" class="why-section">
+  <div class="why-top-label"><span>WHY</span></div>
+  <div class="why-line-track"><div class="why-line-fill" id="why-line-fill"></div></div>
+  <div class="why-spine">
+    <div class="why-items" id="why-items">
+      <div class="why-item why-left" data-why-idx="0">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>Cross-species collaboration is nothing new.</h3>
+          <p>The honeyguide leads humans to honey. Dolphins herd fish toward waiting fishermen in Brazil. These partnerships have run for centuries — but always one relationship at a time, master to apprentice, impossible to scale.</p>
+        </div>
+      </div>
+      <div class="why-item why-right" data-why-idx="1">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>Signals are everywhere. We've been missing most of them.</h3>
+          <p>Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting data for millions of years. Until now, we could receive only a tiny fraction.</p>
+        </div>
+      </div>
+      <div class="why-item why-left" data-why-idx="2">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>Now, for the first time, we can listen at scale.</h3>
+          <p>Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, listening at scale is possible.</p>
+        </div>
+      </div>
+      <div class="why-item why-right" data-why-idx="3">
+        <div class="why-dot"></div>
+        <div class="why-content">
+          <h3>We don't speak for animals. We build the tools that let them be heard.</h3>
+          <p>Seeed is not a lab that speaks for animals. We build the open-source hardware that lets any species, any ecosystem, finally be heard.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- snake-line signal-wave connector from WHY → WHAT -->
+<div class="why-connector">
+  <svg viewBox="0 0 120 90" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="why-conn-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8FC31F"/>
+        <stop offset="100%" stop-color="#00936d"/>
+      </linearGradient>
+    </defs>
+    <path id="why-signal-path" d="M60,0 C60,18 20,28 60,45 C100,62 20,72 60,90" fill="none" stroke="url(#why-conn-grad)" stroke-width="2" stroke-dasharray="5,4" opacity="0.75"/>
+    <circle r="3.5" fill="#8FC31F">
+      <animateMotion dur="2.5s" repeatCount="indefinite">
+        <mpath href="#why-signal-path"/>
+      </animateMotion>
+    </circle>
+  </svg>
+</div>
+
+<script>
+// ===== WHY section scroll animation =====
+(function initWhyScroll(){
+  var whySec=document.getElementById('why');if(!whySec)return;
+  var fill=document.getElementById('why-line-fill');if(!fill)return;
+  var items=document.querySelectorAll('.why-item');
+  var dots=document.querySelectorAll('.why-dot');
+  var contents=document.querySelectorAll('.why-content');
+  var rafId=null;
+  function updateWhy(){
+    rafId=null;
+    var rect=whySec.getBoundingClientRect();
+    var winH=window.innerHeight;
+    var total=rect.height+winH*0.3;
+    var passed=winH*0.5-rect.top;
+    var progress=Math.max(0,Math.min(1,passed/total));
+    fill.style.height=(progress*100)+'%';
+    var itemStep=1/(items.length+0.5);
+    for(var i=0;i<items.length;i++){
+      var threshold=(i+0.5)*itemStep;
+      if(progress>=threshold){
+        if(!dots[i].classList.contains('active')){dots[i].classList.add('active');}
+        if(!contents[i].classList.contains('active')){contents[i].classList.add('active');}
+      }
+    }
+  }
+  function onScroll(){
+    if(rafId)return;
+    rafId=requestAnimationFrame(updateWhy);
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll,{passive:true});
+  setTimeout(updateWhy,100);
+})();
+</script>
