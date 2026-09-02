@@ -66,18 +66,67 @@ tailwind.config = {
   .conn{stroke:#d0d0d0;stroke-width:1.5;fill:none}
   .conn-brand{stroke:#8FC31F;stroke-width:2;fill:none;stroke-dasharray:4 4}
   /* world map (Leaflet + CARTO dark basemap) */
-  #world-map{background:#161d16;height:430px;border-radius:1rem;font:inherit;z-index:0}
-  @media(max-width:767px){#world-map{height:340px}}
-  #world-map .leaflet-control-attribution{background:rgba(26,35,26,.85);color:rgba(255,255,255,.45);font-size:9px}
-  #world-map .leaflet-control-attribution a{color:rgba(255,255,255,.6)}
-  .pin-marker{position:relative;width:22px;height:22px}
-  .pin-marker .ring{position:absolute;inset:0;border-radius:50%;background:rgba(143,195,31,.35);animation:pulse 2s infinite}
-  .pin-marker .dot{position:absolute;inset:4px;border-radius:50%;background:#8FC31F;border:2.5px solid #fff;box-shadow:0 0 10px rgba(143,195,31,.9);transition:transform .15s}
-  .pin-marker:hover .dot{transform:scale(1.3)}
-  .pin-marker.open .dot{background:#ffab00;box-shadow:0 0 10px rgba(255,171,0,.9)}
-  .pin-marker.open .ring{background:rgba(255,171,0,.3)}
-  .pin-marker.planned .dot{background:#aab8ab;box-shadow:0 0 8px rgba(170,184,171,.7)}
-  .pin-marker.planned .ring{display:none}
+  #world-map{background:#c8dce8;height:500px;border-radius:1rem;font:inherit;z-index:0}
+  @media(max-width:767px){#world-map{height:380px}}
+  #world-map .leaflet-control-attribution{background:rgba(255,255,255,.75);color:rgba(0,0,0,.45);font-size:9px;border-radius:4px}
+  #world-map .leaflet-control-attribution a{color:rgba(0,0,0,.6)}
+  /* make reference labels more readable */
+  .map-ref-labels{
+    filter:contrast(1.5) brightness(0.75) saturate(0.3);
+    -webkit-filter:contrast(1.5) brightness(0.75) saturate(0.3);
+  }
+  /* style the zoom control to match the light theme */
+  #world-map .leaflet-control-zoom{border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:8px;overflow:hidden}
+  #world-map .leaflet-control-zoom a{
+    background:rgba(255,255,255,.88);color:#555;width:32px;height:32px;line-height:32px;
+    font-size:16px;border-bottom:1px solid #eee;
+  }
+  #world-map .leaflet-control-zoom a:hover{background:#f0f5fa;color:#333}
+  /* floating hover card — glass morphism overlay on the map */
+  .map-float-card{
+    position:absolute;z-index:1000;pointer-events:none;
+    max-width:300px;padding:18px 20px;border-radius:14px;
+    background:rgba(255,255,255,.88);backdrop-filter:blur(18px) saturate(1.1);
+    -webkit-backdrop-filter:blur(18px) saturate(1.1);
+    border:1px solid rgba(255,255,255,.6);
+    box-shadow:0 8px 32px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04),inset 0 0 0 1px rgba(255,255,255,.5);
+    opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;
+    font-family:Inter,system-ui,-apple-system,sans-serif;
+  }
+  .map-float-card.visible{opacity:1;transform:translateY(0)}
+  /* shimmer wave on the card border */
+  .map-float-card::before{
+    content:'';position:absolute;inset:0;border-radius:14px;padding:1px;
+    background:linear-gradient(135deg,rgba(143,195,31,.25),rgba(0,147,109,.15),rgba(143,195,31,.05),rgba(0,147,109,.25));
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    animation:cardShimmer 3s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes cardShimmer{
+    0%,100%{opacity:.6}50%{opacity:1}
+  }
+  .map-float-card .card-status{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  /* pin markers — larger, glowing halo */
+  .pin-marker{position:relative;width:32px;height:32px}
+  .pin-marker .ring{
+    position:absolute;inset:-6px;border-radius:50%;
+    background:radial-gradient(circle,rgba(143,195,31,.18) 0%,rgba(143,195,31,.06) 50%,transparent 70%);
+    animation:ringGlow 2.5s ease-in-out infinite;
+  }
+  .pin-marker .dot{
+    position:absolute;inset:4px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#b8e050,#8FC31F);
+    border:2px solid rgba(255,255,255,.85);
+    box-shadow:0 0 14px rgba(143,195,31,.5),0 0 28px rgba(143,195,31,.2),0 2px 6px rgba(0,0,0,.12);
+    transition:transform .2s,box-shadow .2s;
+  }
+  .pin-marker:hover .dot{transform:scale(1.25);box-shadow:0 0 20px rgba(143,195,31,.7),0 0 40px rgba(143,195,31,.3),0 2px 8px rgba(0,0,0,.15)}
+  .pin-marker.open .dot{background:radial-gradient(circle at 35% 35%,#ffc44d,#ffab00);box-shadow:0 0 14px rgba(255,171,0,.5),0 0 28px rgba(255,171,0,.2)}
+  .pin-marker.open .ring{background:radial-gradient(circle,rgba(255,171,0,.18) 0%,rgba(255,171,0,.06) 50%,transparent 70%)}
+  .pin-marker.planned .dot{background:radial-gradient(circle at 35% 35%,#cdd8cd,#aab8ab);box-shadow:0 0 10px rgba(170,184,171,.35),0 0 18px rgba(170,184,171,.12)}
+  .pin-marker.planned .ring{background:radial-gradient(circle,rgba(170,184,171,.12) 0%,rgba(170,184,171,.04) 50%,transparent 70%)}
+  @keyframes ringGlow{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.35);opacity:.25}}
   @keyframes pulse{0%{transform:scale(1);opacity:.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
   /* timeline */
   .timeline-track{height:2px;background:linear-gradient(90deg,#8FC31F,#e0e0e0)}
@@ -91,9 +140,6 @@ tailwind.config = {
   /* reveal */
   .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
   .reveal.visible{opacity:1;transform:translateY(0)}
-  /* map side preview card */
-  #map-card{transition:border-color .25s}
-  #map-card .card-status{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 </style>
 </head>
 <body class="bg-surface text-ink font-sans">
@@ -377,6 +423,22 @@ tailwind.config = {
       </div>
     </div>
 
+    <!-- WORLD MAP -->
+    <div class="reveal">
+      <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Deployment Map</h4>
+      <div class="relative w-full">
+        <div id="world-map" class="w-full rounded-2xl border border-line overflow-hidden" style="height:500px"></div>
+        <div id="map-float-card" class="map-float-card">
+          <div id="map-float-card-body"></div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-5 mt-4 text-xs text-muted/70">
+        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-brand"></span> Active — deployed / running</span>
+        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#ffab00]"></span> Open lead — seeking partner</span>
+        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-white/30"></span> Planned / intent</span>
+      </div>
+    </div>
+
     <!-- CHALLENGES FUNNEL -->
     <div class="mb-16 reveal">
       <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Challenges: Clue → Solution → Case</h4>
@@ -486,28 +548,8 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- WORLD MAP -->
-    <div class="reveal">
-      <h4 class="text-sm font-semibold text-white/70 uppercase tracking-wider mb-6">Deployment Map</h4>
-      <div class="flex flex-col lg:flex-row gap-5 items-stretch">
-        <div id="world-map" class="w-full lg:flex-1 rounded-2xl border border-dark-line overflow-hidden"></div>
-        <div id="map-card" class="lg:w-80 shrink-0 bg-dark-card border border-dark-line rounded-2xl p-6 flex flex-col justify-center min-h-[200px]">
-          <div id="map-card-hint">
-            <div class="w-10 h-10 rounded-lg bg-brand/15 flex items-center justify-center mb-4">
-              <svg class="w-5 h-5 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            </div>
-            <p class="text-sm text-white/70 font-medium mb-1">Explore live projects</p>
-            <p class="text-xs text-white/40 leading-relaxed">Hover or tap a map pin to preview the project — status, location, hardware stack, and where it stands today.</p>
-          </div>
-          <div id="map-card-body" class="hidden"></div>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-5 mt-4 text-xs text-white/50">
-        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-brand"></span> Active — deployed / running</span>
-        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-[#ffab00]"></span> Open lead — seeking partner</span>
-        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-white/30"></span> Planned / intent</span>
-      </div>
-    </div>
+
+
   </div>
 </section>
 
@@ -788,42 +830,113 @@ const PROJECTS = [
     tags:['Multi-product','In-zoo FabLab'] }
 ];
 
-const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:false, worldCopyJump:true })
-  .setView([25, 20], 2);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-  subdomains:'abcd', maxZoom:18
+const worldMap = L.map('world-map', {
+    scrollWheelZoom:false, zoomControl:true, worldCopyJump:true,
+    minZoom:2, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8
+  })
+  .setView([15, 0], 2);
+// ESRI Ocean Basemap — light blue water, subtle land
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'',
+  maxZoom:16
+}).addTo(worldMap);
+// ESRI Ocean Reference — country/continent labels
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'&copy; <a href="https://www.arcgis.com/">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom:16,
+  className:'map-ref-labels'
 }).addTo(worldMap);
 window.addEventListener('load', () => worldMap.invalidateSize());
 
 const toneColor = { active:'#8FC31F', open:'#ffab00', planned:'#aab8ab' };
-const cardEl = document.getElementById('map-card');
-const cardHint = document.getElementById('map-card-hint');
-const cardBody = document.getElementById('map-card-body');
+const floatCard = document.getElementById('map-float-card');
+const floatCardBody = document.getElementById('map-float-card-body');
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 
-function showProjectCard(p) {
+let activeMarker = null;
+
+function positionFloatCard(marker) {
+  const mapContainer = worldMap.getContainer();
+  const mapRect = mapContainer.getBoundingClientRect();
+  const point = worldMap.latLngToContainerPoint(marker.getLatLng());
+  const cardW = floatCard.offsetWidth || 300;
+  const cardH = floatCard.offsetHeight || 160;
+  const margin = 18;
+
+  let left = point.x + 28;
+  let top = point.y - cardH - 20;
+
+  if (top < margin) {
+    top = point.y + 28;
+  }
+  if (left + cardW > mapRect.width - margin) {
+    left = point.x - cardW - 28;
+  }
+  if (left < margin) {
+    left = margin;
+  }
+  if (top < margin) top = margin;
+  if (top + cardH > mapRect.height - margin) top = mapRect.height - cardH - margin;
+
+  floatCard.style.left = left + 'px';
+  floatCard.style.top = top + 'px';
+}
+
+function showFloatCard(p, marker) {
   const c = toneColor[p.tone];
-  cardHint.classList.add('hidden');
-  cardBody.classList.remove('hidden');
-  cardEl.style.borderColor = c + '66';
-  cardBody.innerHTML =
+  floatCardBody.innerHTML =
     '<span class="card-status" style="background:' + c + '22;color:' + c + '">' + esc(p.status) + '</span>' +
-    '<h5 class="font-display font-bold text-white text-base mt-3 mb-1">' + esc(p.name) + '</h5>' +
-    '<p class="text-xs text-brand mb-3">' + esc(p.location) + '</p>' +
-    '<p class="text-xs text-white/50 leading-relaxed mb-4">' + esc(p.desc) + '</p>' +
+    '<h5 class="font-display font-bold text-ink text-base mt-3 mb-1">' + esc(p.name) + '</h5>' +
+    '<p class="text-xs text-brand-deep mb-3">' + esc(p.location) + '</p>' +
+    '<p class="text-xs text-muted leading-relaxed mb-4">' + esc(p.desc) + '</p>' +
     '<div class="flex flex-wrap gap-1">' + p.tags.map(t => '<span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">' + esc(t) + '</span>').join('') + '</div>' +
-    (p.link ? '<a href="' + esc(p.link) + '" target="_blank" rel="noopener" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mt-3">' + esc(p.linkText || 'Learn more →') + '</a>' : '');
+    (p.link ? '<a href="' + esc(p.link) + '" target="_blank" rel="noopener" style="pointer-events:auto" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mt-3">' + esc(p.linkText || 'Learn more →') + '</a>' : '');
+  floatCard.classList.add('visible');
+  positionFloatCard(marker);
+  activeMarker = marker;
+}
+
+function hideFloatCard() {
+  floatCard.classList.remove('visible');
+  activeMarker = null;
 }
 
 PROJECTS.forEach(p => {
   const icon = L.divIcon({
     className: '',
     html: '<div class="pin-marker ' + p.tone + '"><div class="ring"></div><div class="dot"></div></div>',
-    iconSize: [22, 22], iconAnchor: [11, 11]
+    iconSize: [32, 32], iconAnchor: [16, 16]
   });
   const marker = L.marker(p.coords, { icon, title: p.name, riseOnHover: true, keyboard: true }).addTo(worldMap);
-  marker.on('mouseover click', () => showProjectCard(p));
+  marker.on('mouseover', () => showFloatCard(p, marker));
+  marker.on('mouseout', () => {
+    setTimeout(() => {
+      if (activeMarker === marker) {
+        const cardHovered = floatCard.matches(':hover');
+        if (!cardHovered) hideFloatCard();
+      }
+    }, 150);
+  });
+  marker.on('click', () => {
+    if (p.link) {
+      window.open(p.link, '_blank', 'noopener');
+    } else {
+      document.getElementById('cases').scrollIntoView({ behavior:'smooth' });
+    }
+  });
+});
+
+floatCard.addEventListener('mouseenter', () => {
+  if (activeMarker) floatCard.classList.add('visible');
+});
+floatCard.addEventListener('mouseleave', () => {
+  hideFloatCard();
+});
+
+worldMap.on('move zoom', () => {
+  if (activeMarker && floatCard.classList.contains('visible')) {
+    positionFloatCard(activeMarker);
+  }
 });
 const progressFill = document.querySelector('.progress-fill');
 if (progressFill) {

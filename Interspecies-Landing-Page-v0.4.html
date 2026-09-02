@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interspecies — Seeed Studio | Open Hardware for Animal & Ecological Research</title>
+<meta name="description" content="Seeed Studio serves as the AI hardware and prototyping partner that turns research ideas into real-world systems for animal behavior, environmental signals, and human–non-human interaction.">
+<meta name="theme-color" content="#8FC31F">
+<meta property="og:title" content="Interspecies — Seeed Studio">
+<meta property="og:description" content="Open hardware for animal behavior research, environmental sensing, and human–non-human interaction.">
+<meta property="og:type" content="website">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        surface:        '#f8f8f8',
+        'surface-card': '#ffffff',
+        'surface-dim':  '#f1f1f1',
+        brand:          '#8FC31F',
+        'brand-dim':    '#6fa816',
+        'brand-deep':   '#00936d',
+        'brand-light':  '#f3f9e8',
+        ink:            '#32373c',
+        muted:          '#6d6f70',
+        'dark':         '#1a231a',
+        'dark-card':    '#212d21',
+        'dark-line':    '#364536',
+        line:           '#e0e0e0',
+      },
+      fontFamily: {
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        sans:    ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      boxShadow: {
+        card: '0 2px 8px rgba(0,0,0,.06)',
+        'card-hover': '0 4px 16px rgba(0,0,0,.10)',
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  html{scroll-behavior:smooth}
+  body{-webkit-font-smoothing:antialiased}
+  .pill{border-radius:9999px}
+  #nav.scrolled{background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+  #nav.scrolled .nav-link{color:#6d6f70}
+  #nav.scrolled .nav-link:hover{color:#32373c}
+  #nav.scrolled .brand-text{color:#32373c}
+  #nav.scrolled .brand-text span{color:#8FC31F}
+  #nav.scrolled .nav-cta{border-color:#8FC31F;color:#8FC31F}
+  #nav.scrolled .nav-cta:hover{background:#8FC31F;color:#fff}
+  .hero-bg{background:linear-gradient(170deg,#f3f9e8 0%,#f8f8f8 50%,#f1f1f1 100%)}
+  .hero-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.15}
+  .conn{stroke:#d0d0d0;stroke-width:1.5;fill:none}
+  .conn-brand{stroke:#8FC31F;stroke-width:2;fill:none;stroke-dasharray:4 4}
+  #world-map{background:#c8dce8;height:500px;border-radius:1rem;font:inherit;z-index:0}
+  @media(max-width:767px){#world-map{height:380px}}
+  #world-map .leaflet-control-attribution{background:rgba(255,255,255,.75);color:rgba(0,0,0,.45);font-size:9px;border-radius:4px}
+  #world-map .leaflet-control-attribution a{color:rgba(0,0,0,.6)}
+  .map-ref-labels{filter:contrast(1.5) brightness(0.75) saturate(0.3);-webkit-filter:contrast(1.5) brightness(0.75) saturate(0.3)}
+  #world-map .leaflet-control-zoom{border:none;box-shadow:0 2px 8px rgba(0,0,0,.08);border-radius:8px;overflow:hidden}
+  #world-map .leaflet-control-zoom a{background:rgba(255,255,255,.88);color:#555;width:32px;height:32px;line-height:32px;font-size:16px;border-bottom:1px solid #eee}
+  #world-map .leaflet-control-zoom a:hover{background:#f0f5fa;color:#333}
+  .map-float-card{position:absolute;z-index:1000;pointer-events:none;max-width:300px;padding:18px 20px;border-radius:14px;background:rgba(255,255,255,.88);backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1);border:1px solid rgba(255,255,255,.6);box-shadow:0 8px 32px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04),inset 0 0 0 1px rgba(255,255,255,.5);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;font-family:Inter,system-ui,-apple-system,sans-serif}
+  .map-float-card.visible{opacity:1;transform:translateY(0)}
+  .map-float-card::before{content:'';position:absolute;inset:0;border-radius:14px;padding:1px;background:linear-gradient(135deg,rgba(143,195,31,.25),rgba(0,147,109,.15),rgba(143,195,31,.05),rgba(0,147,109,.25));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:cardShimmer 3s ease-in-out infinite;pointer-events:none}
+  @keyframes cardShimmer{0%,100%{opacity:.6}50%{opacity:1}}
+  .map-float-card .card-status{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .pin-marker{position:relative;width:32px;height:32px}
+  .pin-marker .ring{position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(143,195,31,.18) 0%,rgba(143,195,31,.06) 50%,transparent 70%);animation:ringGlow 2.5s ease-in-out infinite}
+  .pin-marker .dot{position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#b8e050,#8FC31F);border:2px solid rgba(255,255,255,.85);box-shadow:0 0 14px rgba(143,195,31,.5),0 0 28px rgba(143,195,31,.2),0 2px 6px rgba(0,0,0,.12);transition:transform .2s,box-shadow .2s}
+  .pin-marker:hover .dot{transform:scale(1.25);box-shadow:0 0 20px rgba(143,195,31,.7),0 0 40px rgba(143,195,31,.3),0 2px 8px rgba(0,0,0,.15)}
+  .pin-marker.open .dot{background:radial-gradient(circle at 35% 35%,#ffc44d,#ffab00);box-shadow:0 0 14px rgba(255,171,0,.5),0 0 28px rgba(255,171,0,.2)}
+  .pin-marker.open .ring{background:radial-gradient(circle,rgba(255,171,0,.18) 0%,rgba(255,171,0,.06) 50%,transparent 70%)}
+  .pin-marker.planned .dot{background:radial-gradient(circle at 35% 35%,#cdd8cd,#aab8ab);box-shadow:0 0 10px rgba(170,184,171,.35),0 0 18px rgba(170,184,171,.12)}
+  .pin-marker.planned .ring{background:radial-gradient(circle,rgba(170,184,171,.12) 0%,rgba(170,184,171,.04) 50%,transparent 70%)}
+  @keyframes ringGlow{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.35);opacity:.25}}
+  @keyframes pulse{0%{transform:scale(1);opacity:.35}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
+  .timeline-track{height:2px;background:linear-gradient(90deg,#8FC31F,#e0e0e0)}
+  .milestone-node{transition:all .2s}
+  .milestone-node:hover{transform:scale(1.15)}
+  .progress-fill{background:linear-gradient(90deg,#8FC31F,#00936d);transition:width 1s ease}
+  .sdg-card{transition:box-shadow .25s,transform .25s}
+  .sdg-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+  .tech-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px;margin-right:4px;margin-bottom:4px}
+  .filter-btn{transition:all .2s;cursor:pointer}
+  .filter-btn.active{background:#8FC31F;color:#fff;border-color:#8FC31F}
+  .case-card{transition:all .3s}
+  .case-card.hidden{display:none}
+   .sdg-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;font-family:"Space Grotesk",sans-serif;color:#fff;flex-shrink:0}
+  /* ===== Hero Canvas ===== */
+  #hero-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .hero-bg .max-w-6xl{z-index:1}
+  /* ===== Card Data-Stream Hover ===== */
+  .sdg-card{position:relative;overflow:hidden}
+  .sdg-card::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(143,195,31,.08) 50%,transparent 70%);background-size:200% 100%;opacity:0;transition:opacity .35s;pointer-events:none}
+  .sdg-card:hover::before{opacity:1;animation:dataStream 1.2s ease-in-out}
+  @keyframes dataStream{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  /* ===== SDG Orbiting Ring ===== */
+  #sdg-ring-wrap{position:relative;display:inline-block;width:100%;max-width:800px;margin:0 auto 2rem}
+  #sdg-ring-canvas{display:block;width:100%;height:auto;aspect-ratio:8/1;pointer-events:none}
+  #sdg-ring-wrap .sdg-ring-dot{position:absolute;width:6px;height:6px;border-radius:50%;background:#00936d;box-shadow:0 0 8px rgba(0,147,109,.6);pointer-events:none}
+  /* ===== Case Modal (Tier 2) ===== */
+  .case-modal-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:1.5rem}
+  .case-modal-overlay.open{display:flex}
+  .case-modal{background:#fff;border-radius:1.25rem;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.04);padding:2rem;position:relative;animation:modalIn .3s ease-out}
+  @keyframes modalIn{0%{opacity:0;transform:translateY(20px) scale(.97)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  .case-modal-close{position:absolute;top:1rem;right:1rem;width:2rem;height:2rem;border-radius:50%;border:none;background:#f1f1f1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#666;transition:background .15s}
+  .case-modal-close:hover{background:#e0e0e0}
+  .case-modal .modal-img{width:100%;height:200px;object-fit:cover;border-radius:.75rem;background:#f1f1f1;margin-bottom:1.25rem}
+  .case-modal .modal-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1rem}
+  .case-modal .modal-tags span{font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px;background:#f3f9e8;color:#00936d}
+  .case-modal h3{font-size:1.25rem;font-weight:700;font-family:"Space Grotesk",sans-serif;margin-bottom:.5rem}
+  .case-modal .modal-meta{font-size:.75rem;color:#6d6f70;margin-bottom:1rem}
+  .case-modal .modal-desc{font-size:.875rem;color:#32373c;line-height:1.6;margin-bottom:1.25rem}
+  .case-modal .modal-stats{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.25rem}
+  .case-modal .modal-stat{background:#f8f8f8;border-radius:.75rem;padding:.75rem}
+  .case-modal .modal-stat .val{font-size:1.25rem;font-weight:700;font-family:"Space Grotesk",sans-serif;color:#00936d}
+  .case-modal .modal-stat .lbl{font-size:.7rem;color:#6d6f70;margin-top:2px}
+  .case-modal .modal-cta{display:inline-flex;align-items:center;gap:6px;padding:.625rem 1.25rem;border-radius:9999px;background:#8FC31F;color:#fff;font-size:.8125rem;font-weight:600;border:none;cursor:pointer;transition:background .2s;text-decoration:none}
+  .case-modal .modal-cta:hover{background:#6fa816}
+  /* Simplified case cards (Tier 1) */
+  .case-card-simple{cursor:pointer;transition:all .25s}
+  .case-card-simple:hover{box-shadow:0 4px 16px rgba(0,0,0,.10);transform:translateY(-2px)}
+  .case-card-simple .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .case-card-simple .status-dot.active{background:#8FC31F;box-shadow:0 0 6px rgba(143,195,31,.5)}
+  .case-card-simple .status-dot.open{background:#ffab00;box-shadow:0 0 6px rgba(255,171,0,.4)}
+  .case-card-simple .status-dot.planned{background:#aab8ab}
+  .case-card-simple .status-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+  .case-card-simple .status-label.active{color:#8FC31F}
+  .case-card-simple .status-label.open{color:#ffab00}
+  .case-card-simple .status-label.planned{color:#aab8ab}
+  /* ===== Map Connection Lines Canvas ===== */
+  #map-canvas-overlay{position:absolute;inset:0;z-index:500;pointer-events:none;border-radius:1rem;overflow:hidden}
+  #map-connection-canvas{width:100%;height:100%;display:block}
+  /* ===== Enter Overlay ===== */
+  .enter-overlay{position:fixed;inset:0;z-index:10000;background:#1a231a;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s,visibility .8s}
+  .enter-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .enter-overlay .enter-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .enter-overlay .enter-content{position:relative;z-index:1;text-align:center;max-width:520px;padding:2rem}
+  .enter-overlay .enter-content h1{font-family:"Space Grotesk",sans-serif;font-size:2.5rem;font-weight:700;color:#fff;line-height:1.15;margin-bottom:1rem}
+  .enter-overlay .enter-content p{color:rgba(255,255,255,.5);font-size:.875rem;margin-bottom:2.5rem;line-height:1.5}
+  .enter-overlay .enter-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;padding:.75rem 2rem;border-radius:9999px;font-size:.875rem;font-weight:500;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:8px}
+  .enter-overlay .enter-btn:hover{background:rgba(143,195,31,.2);border-color:#8FC31F}
+  .enter-overlay .enter-btn svg{width:16px;height:16px}
+  .enter-overlay .enter-sub{position:absolute;bottom:2.5rem;color:rgba(255,255,255,.2);font-size:.75rem}
+</style>
+</head>
+<body class="bg-surface text-ink font-sans">
+
+<!-- ============ NAV ============ -->
+<nav id="nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 brand-text text-ink font-display font-bold text-lg tracking-tight">
+      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+      Seeed<span>·</span>Interspecies
+    </a>
+    <div class="hidden md:flex items-center gap-7 text-sm">
+      <a href="#why" class="nav-link text-muted hover:text-ink transition-colors">Why</a>
+      <a href="#what" class="nav-link text-muted hover:text-ink transition-colors">What We Do</a>
+      <a href="#cases" class="nav-link text-muted hover:text-ink transition-colors">Cases</a>
+      <a href="#people" class="nav-link text-muted hover:text-ink transition-colors">People</a>
+      <a href="#sdg" class="nav-link text-muted hover:text-ink transition-colors">SDG</a>
+      <a href="#join" class="nav-link text-muted hover:text-ink transition-colors">Join</a>
+      <a href="#contact" class="nav-link text-muted hover:text-ink transition-colors">Contact</a>
+    </div>
+    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand transition-colors">Get in touch</a>
+    <button class="md:hidden text-ink" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-surface-card border-b border-line px-6 py-4 space-y-3">
+    <a href="#why" class="block text-sm text-muted">Why</a>
+    <a href="#what" class="block text-sm text-muted">What We Do</a>
+    <a href="#cases" class="block text-sm text-muted">Cases</a>
+    <a href="#people" class="block text-sm text-muted">People</a>
+    <a href="#sdg" class="block text-sm text-muted">SDG</a>
+    <a href="#join" class="block text-sm text-muted">Join</a>
+    <a href="#contact" class="block text-sm text-muted">Contact</a>
+  </div>
+</nav>
+
+<!-- ============ ENTER OVERLAY ============ -->
+<div class="enter-overlay" id="enter-overlay">
+  <canvas class="enter-canvas" id="enter-canvas"></canvas>
+  <div class="enter-content">
+    <h1>Life has been sending signals<br>for <span style="color:#8FC31F">3.8 billion years</span>.</h1>
+    <p>Open hardware for animal &amp; ecological research.<br>We're building the receivers.</p>
+    <button class="enter-btn" onclick="dismissEnterOverlay()">
+      Enter the Network
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+  <div class="enter-sub">Seeed Studio · Interspecies Initiative</div>
+</div>
+
+<section id="top" class="hero-bg min-h-screen flex items-center pt-24 pb-16 relative overflow-hidden">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-orb w-96 h-96 bg-brand" style="top:-80px;right:-60px"></div>
+  <div class="hero-orb w-80 h-80 bg-brand-deep" style="bottom:-60px;left:-40px"></div>
+  <div class="absolute inset-0 opacity-[.03]" style="background-image:linear-gradient(rgba(0,0,0,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.4) 1px,transparent 1px);background-size:48px 48px"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <div class="max-w-4xl">
+      <div class="inline-flex items-center gap-2 pill border border-brand/40 bg-brand/10 px-4 py-1.5 text-xs font-medium text-brand-deep mb-6">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+        Open Datalogger for Interspecies Internet
+      </div>
+      <h1 class="font-display text-3xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-8">
+        Life has been sending signals<br>
+        for <span class="text-brand-deep">3.8 billion years</span>.<br>
+        We're only now learning to&nbsp;<span class="text-brand-deep">receive</span> them.
+      </h1>
+      <div class="bg-white/60 backdrop-blur-sm border border-line rounded-2xl p-6 md:p-8 mb-8 shadow-card">
+        <p class="text-base md:text-lg text-ink/80 leading-relaxed mb-4">
+          In Mozambique, a bird called the <strong>honeyguide</strong> does something remarkable. It flies to a person, calls, waits — then leads them, step by step, to a beehive. The human takes the honey and leaves the wax. <strong>Signaling, navigation, payment.</strong> A full collaboration protocol between two species — running for generations.
+        </p>
+        <p class="text-base md:text-lg text-ink/80 leading-relaxed">
+          <strong>Cross-species communication has always been productive.</strong> It was just handcrafted, one relationship at a time. We're not here to translate animal language. We're here to build the open tools — sensors, networks, AI — that let every species and every ecosystem finally be heard.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-4 mb-10">
+        <a href="#what" class="pill bg-brand text-white px-7 py-3.5 font-medium text-sm flex items-center gap-2 hover:bg-brand-dim transition-colors">
+          See What We Do
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#join" class="pill border border-line bg-white text-ink px-7 py-3.5 font-medium text-sm hover:border-brand hover:text-brand-deep transition-colors shadow-card">
+          Join the Project
+        </a>
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted">
+        <span>Backed by</span>
+        <span class="text-ink/80 font-medium">MIT Media Lab</span>
+        <span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Interspecies Internet</span>
+        <span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Fab Lab Network</span>
+        <span class="text-line">·</span>
+        <span class="text-ink/80 font-medium">Open Source · GitHub</span>
+      </div>
+    </div>
+  </div>
+  <a href="#why" class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted/60 hover:text-brand-deep transition-colors">
+    <span class="text-[10px] tracking-[2px] uppercase">Scroll</span>
+    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  </a>
+</section>
+
+<!-- ============ WHY ============ -->
+<section id="why" class="py-20 bg-surface-card border-b border-line">
+  <div class="max-w-5xl mx-auto px-6">
+    <div class="text-center mb-3 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Why Now</div>
+    </div>
+    <div class="space-y-6 max-w-4xl mx-auto reveal">
+      <div class="flex items-start gap-4">
+        <span class="text-2xl shrink-0 mt-0.5">🤝</span>
+        <div>
+          <span class="font-display font-bold text-lg">Cross-species collaboration is nothing new.</span>
+          <p class="text-muted mt-1">The honeyguide leading humans to honey. Dolphins herd fish toward waiting fishermen in Brazil — a partnership passed down for generations. Lumbering elephants guided by a single command. These aren't dreams. They're working protocols — handcrafted, one relationship at a time, impossible to scale.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <span class="text-2xl shrink-0 mt-0.5">📡</span>
+        <div>
+          <span class="font-display font-bold text-lg">Signals are everywhere. We've been missing most of them.</span>
+          <p class="text-muted mt-1">A tiger's stripes are a barcode. A bird's call carries identity, mood, intent. A pond's water chemistry tells you if it's thriving or dying. Animals and ecosystems have been broadcasting data for millions of years — we just didn't have the receivers.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <span class="text-2xl shrink-0 mt-0.5">⚡</span>
+        <div>
+          <span class="font-display font-bold text-lg">Now, for the first time, we can listen at scale.</span>
+          <p class="text-muted mt-1">Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. A camera the size of a matchbox can identify individual animals. A sensor no bigger than your thumb can monitor water quality for a year on solar power. The pieces are ready. What was missing was someone connecting them into a replicable system.</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <span class="text-2xl shrink-0 mt-0.5">🔧</span>
+        <div>
+          <span class="font-display font-bold text-lg">We don't speak for animals. We build the tools that let them be heard.</span>
+          <p class="text-muted mt-1">Seeed is not a research lab. We're an open-hardware platform — turning the ability to receive signals from any species, in any environment, into something any researcher, any NGO, any Fab Lab can replicate and deploy.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT ============ -->
+<section id="what" class="py-24 bg-surface">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">What We Do</div>
+      <h2 class="font-display text-3xl md:text-5xl font-bold mb-4">Six Research Areas,<br>One Platform</h2>
+      <p class="text-muted max-w-2xl mx-auto">Every animal study — whether it's counting tigers in Bhutan or monitoring water quality in Hong Kong — starts with the same question: <strong>how do we receive the signals that are already there?</strong> Here's how open hardware changes what's possible, across six core research areas.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Card 1 -->
+      <div class="bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal">
+        <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Individual Identification &amp; Lifecycle Tracking</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+          <p class="text-xs text-amber-800 font-medium">The old way</p>
+          <p class="text-sm text-ink/70">Mark-recapture, photo ID, GPS collars — invasive, expensive, every image reviewed by hand.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-3 mb-4">
+          <p class="text-xs text-brand-deep font-medium">What's changed</p>
+          <p class="text-sm text-ink/70">AI reads natural markings — tiger stripes, fin notches — like barcodes. Identify without capture, track without collars.</p>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Edge AI</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal">
+        <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Population Counting &amp; Dynamics</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+          <p class="text-xs text-amber-800 font-medium">The old way</p>
+          <p class="text-sm text-ink/70">Camera traps + manual review. A single population estimate takes weeks. Data is often outdated by the time you get it.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-3 mb-4">
+          <p class="text-xs text-brand-deep font-medium">What's changed</p>
+          <p class="text-sm text-ink/70">On-device AI identifies and counts species automatically. Results return via low-power mesh — no SD card hikes, no months of waiting.</p>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal">
+        <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Cognitive Decline &amp; Aging Research</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+          <p class="text-xs text-amber-800 font-medium">The old way</p>
+          <p class="text-sm text-ink/70">Manual ethogram coding — short observation windows, subjective, expert-dependent. Subtle declines go unnoticed until they're severe.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-3 mb-4">
+          <p class="text-xs text-brand-deep font-medium">What's changed</p>
+          <p class="text-sm text-ink/70">24/7 gait and vocal monitoring. VLM detects limping and vocal changes before they're visible to the human eye — early warning, not post-mortem.</p>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">VLM</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">STT</span>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal">
+        <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19 12a4 4 0 0 0-2-3.5"/><path d="M22 12a8 8 0 0 0-4-7"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Acoustic Monitoring</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+          <p class="text-xs text-amber-800 font-medium">The old way</p>
+          <p class="text-sm text-ink/70">Record + send to experts for manual listening. Expensive, slow, impossible to scale beyond a handful of sites.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-3 mb-4">
+          <p class="text-xs text-brand-deep font-medium">What's changed</p>
+          <p class="text-sm text-ink/70">Edge-based sound classification identifies species, behavior, and stress from calls — automatically, year-round, with audio-visual cross-validation to filter out wind and rain noise.</p>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="tech-tag bg-brand/15 text-brand-deep">STT</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Audio AI</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">VLM</span>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal">
+        <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Social Behavior &amp; Group Dynamics</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+          <p class="text-xs text-amber-800 font-medium">The old way</p>
+          <p class="text-sm text-ink/70">Years of focal observation and handwritten notes. Patterns like ostracism or bond dissolution take seasons to spot.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-3 mb-4">
+          <p class="text-xs text-brand-deep font-medium">What's changed</p>
+          <p class="text-sm text-ink/70">Multi-camera arrays automatically identify every individual and map their interactions — building a social network graph that updates in real time.</p>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Multi-modal</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Edge Computing</span>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal">
+        <div class="w-12 h-12 rounded-xl bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 22V8l6-4 6 4v14"/><path d="M2 14h12"/><path d="M10 22V10"/><path d="M18 22V6l4-2v18"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Habitat &amp; Carrying Capacity</h3>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+          <p class="text-xs text-amber-800 font-medium">The old way</p>
+          <p class="text-sm text-ink/70">Periodic field sampling + lab analysis. A wetland can change dramatically between visits — and you miss almost everything.</p>
+        </div>
+        <div class="bg-brand-light border border-brand/20 rounded-lg p-3 mb-4">
+          <p class="text-xs text-brand-deep font-medium">What's changed</p>
+          <p class="text-sm text-ink/70">Continuous water quality, weather, and soil sensors report daily. Restoration progress becomes something you watch, not something you wait for.</p>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="tech-tag bg-brand/15 text-brand-deep">Environmental Sensors</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">IoT</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Multi-modal</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EVIDENCE: CASES + WORLD MAP ============ -->
+<section id="cases" class="py-24 bg-surface-card">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Evidence</div>
+      <h2 class="font-display text-3xl md:text-5xl font-bold mb-4">Deployments in the Wild</h2>
+      <p class="text-muted max-w-2xl mx-auto">These aren't concept drawings. Every pin on this map is a real deployment — in the rainforest, the wetland, the mountain range. Open hardware, built by local Fab Labs, running in the field.</p>
+    </div>
+
+    <!-- filter bar -->
+    <div class="flex flex-wrap items-center gap-2 mb-6 reveal" id="filter-bar">
+      <span class="text-xs text-muted mr-2">Filter by:</span>
+      <button class="filter-btn active pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="all">All</button>
+      <button class="filter-btn pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="CV">CV</button>
+      <button class="filter-btn pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="LoRa">LoRa/Mesh</button>
+      <button class="filter-btn pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="STT">STT</button>
+      <button class="filter-btn pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="VLM">VLM</button>
+      <button class="filter-btn pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="Tracker">Tracker</button>
+      <button class="filter-btn pill border border-line px-3 py-1.5 text-xs font-medium text-ink hover:bg-brand/10 hover:border-brand/40" data-filter="Environmental">Environmental</button>
+    </div>
+
+    <!-- world map container -->
+   <div class="relative mb-10 reveal">
+     <div id="world-map"></div>
+      <div id="map-canvas-overlay">
+        <canvas id="map-connection-canvas"></canvas>
+      </div>
+     <div id="map-float-card" class="map-float-card">
+        <div id="map-float-card-body"></div>
+      </div>
+    </div>
+
+    <!-- project cards grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5" id="case-grid">
+      <!-- TNC -->
+      <div class="case-card bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal" data-tags="Environmental,IoT">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-brand"></span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-brand-deep">Phase 1 Running</span>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">TNC Wetland — Deep Bay, Hong Kong</h3>
+        <p class="text-xs text-muted mb-3">TNC · Deep Bay gei wai wetland</p>
+        <p class="text-sm text-ink/70 mb-3">Continuous wetland monitoring: SenseCAP 4G Data Logger + weather station + water-quality array. The team catches DO drops in real time. Phase 2 adds reCamera Pro bird diversity observation.</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="tech-tag bg-brand/15 text-brand-deep">Environmental</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">IoT</span>
+        </div>
+        <a href="https://seeedstudio.feishu.cn/docx/ZxOadAzFZoSwOyxVEtQcuOzpnMe" target="_blank" class="text-xs text-brand hover:underline font-medium">Read blog →</a>
+      </div>
+
+      <!-- Mothbox -->
+      <div class="case-card bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal" data-tags="CV,LoRa">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-brand"></span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-brand-deep">Deployed</span>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">Mothbox — Open Trap Cam</h3>
+        <p class="text-xs text-muted mb-3">Panama City · Panama FabLab</p>
+        <p class="text-sm text-ink/70 mb-3">Open-source insect biodiversity trap cam: reCamera runs edge-AI moth/insect ID with auto-counting, LoRa returns data from remote sites. Replicated across the global Fab Lab network.</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span>
+        </div>
+        <a href="https://mothbox.org" target="_blank" class="text-xs text-brand hover:underline font-medium">mothbox.org →</a>
+      </div>
+
+      <!-- RiKAnet -->
+      <div class="case-card bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal" data-tags="CV,LoRa,Tracker">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-600">Framework Building</span>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">RiKAnet — Bhutan Tiger Monitoring</h3>
+        <p class="text-xs text-muted mb-3">Nationwide · RiKAnet / Bhutan FabLab</p>
+        <p class="text-sm text-ink/70 mb-3">National-scale tiger monitoring: GPS tracker positioning + LoRa/Mesh backbone covering protected areas + reCamera CV tiger-stripe re-identification. Field validation planned for 2026 Q4.</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Tracker</span>
+        </div>
+      </div>
+
+      <!-- Olfactory Sensor -->
+      <div class="case-card bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal" data-tags="Environmental">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-600">Open</span>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">Olfactory Sensor — Robert Long</h3>
+        <p class="text-xs text-muted mb-3">Woodland Park, Seattle · Seattle FabLab</p>
+        <p class="text-sm text-ink/70 mb-3">Mass-producing a lab-built mammalian olfactory sensor. Seeed Fusion bridges the prototype-to-production gap: PCB assembly, sourcing, testing, and the small-batch-to-volume transition.</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="tech-tag bg-brand/15 text-brand-deep">Environmental</span>
+        </div>
+      </div>
+
+      <!-- CollarID -->
+      <div class="case-card bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal" data-tags="CV,LoRa,Tracker">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Intent</span>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">CollarID — MIT Media Lab</h3>
+        <p class="text-xs text-muted mb-3">MIT Media Lab, Cambridge, MA</p>
+        <p class="text-sm text-ink/70 mb-3">Open-source multi-species tracking collar: Tracker GPS + Meshtastic low-power mesh + reCamera CV individual re-identification. Seeed Fusion provides small-batch co-manufacturing.</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Tracker</span>
+        </div>
+      </div>
+
+      <!-- LifeScience Trust -->
+      <div class="case-card bg-surface-card border border-line rounded-2xl p-6 sdg-card reveal" data-tags="CV,Environmental,LoRa">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Intent</span>
+        </div>
+        <h3 class="font-display font-bold text-base mb-1">LifeScience Trust — Zoo Pilot</h3>
+        <p class="text-xs text-muted mb-3">India · LifeScience Trust / India FabLab</p>
+        <p class="text-sm text-ink/70 mb-3">Multi-species zoo monitoring as a turnkey program: needs-based product selection (reCamera / Tracker / weather / acoustics), procurement, and an in-zoo FabLab for local manufacturing.</p>
+        <div class="flex flex-wrap gap-1 mb-3">
+          <span class="tech-tag bg-brand/15 text-brand-deep">CV</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">Environmental</span>
+          <span class="tech-tag bg-brand/15 text-brand-deep">LoRa</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHO: PEOPLE + PARTNERS ============ -->
+<section id="people" class="py-24 bg-surface">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-16 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Who We Work With</div>
+      <h2 class="font-display text-3xl md:text-5xl font-bold mb-4">People &amp; Partners</h2>
+      <p class="text-muted max-w-xl mx-auto">Researchers, protectors, builders — the people and institutions working at the frontier of interspecies understanding, backed by Seeed's open-hardware ecosystem.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="bg-surface-card border border-line rounded-2xl p-6 text-center reveal">
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-base">Neil Gershenfeld</h3>
+        <p class="text-xs text-brand font-medium mb-2">Director, MIT Center for Bits &amp; Atoms</p>
+        <p class="text-xs text-muted leading-relaxed">Pioneering Fab Lab network and Interspecies Internet as a flagship future project. Seeed serves as the open-hardware reference platform.</p>
+        <div class="flex justify-center gap-2 mt-4">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">MIT Media Lab</span>
+        </div>
+      </div>
+      <div class="bg-surface-card border border-line rounded-2xl p-6 text-center reveal">
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-base">Andy from Dina Lab</h3>
+        <p class="text-xs text-brand font-medium mb-2">Creator of Mothbox · Open Datalogger</p>
+        <p class="text-xs text-muted leading-relaxed">Built the first open-source moth trap cam in Panama FabLab. Co-developing the Interspecies Open Datalogger middleware with Seeed — connecting any sensor to any species question.</p>
+        <div class="flex justify-center gap-2 mt-4">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">Dina Lab</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">Panama FabLab</span>
+        </div>
+      </div>
+      <div class="bg-surface-card border border-line rounded-2xl p-6 text-center reveal">
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-br from-brand-light to-surface-dim flex items-center justify-center">
+          <svg class="w-10 h-10 text-brand/40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 3-9 7v1h18v-1c0-4-4-7-9-7Z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-base">TNC Hong Kong Team</h3>
+        <p class="text-xs text-brand font-medium mb-2">The Nature Conservancy · Deep Bay</p>
+        <p class="text-xs text-muted leading-relaxed">Restoring traditional tidal shrimp ponds (gei wai) wetland. Deployed Seeed continuous monitoring to turn environmental data into conservation evidence — Phase 1 live, Phase 2 planned.</p>
+        <div class="flex justify-center gap-2 mt-4">
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">TNC</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-light text-brand-deep">Hong Kong</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 border-t border-line pt-8 reveal">
+      <p class="text-center text-xs text-muted uppercase tracking-wider mb-6">Partners &amp; Collaborators</p>
+      <div class="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-muted font-display font-bold text-sm">
+        <span>MIT Media Lab</span>
+        <span class="text-line">·</span>
+        <span>Interspecies Internet</span>
+        <span class="text-line">·</span>
+        <span>Fab Lab Network</span>
+        <span class="text-line">·</span>
+        <span>The Nature Conservancy</span>
+        <span class="text-line">·</span>
+        <span>RiKAnet</span>
+        <span class="text-line">·</span>
+        <span>Dina Lab</span>
+        <span class="text-line">·</span>
+        <span>WILDLABS</span>
+        <span class="text-line">·</span>
+        <span>Woodland Park</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHY IT MATTERS: SDG ============ -->
+<section id="sdg" class="py-24 bg-surface-card border-b border-line">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center mb-14 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Why It Matters</div>
+      <h2 class="font-display text-3xl md:text-5xl font-bold mb-4">8 Goals, One Network</h2>
+     <p class="text-muted max-w-2xl mx-auto">This isn't just a technology project. Every signal we receive — from a tiger's movement to a wetland's water quality — feeds into the UN Sustainable Development Goals. Biodiversity isn't a footnote to the SDGs. It's the foundation.</p>
+   </div>
+
+    <div class="text-center reveal" id="sdg-ring-wrap">
+      <canvas id="sdg-ring-canvas"></canvas>
+    </div>
+
+   <div class="grid grid-cols-2 md:grid-cols-4 gap-5 reveal">
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#48773E;">13</div>
+        <h4 class="font-display font-bold text-sm mb-1">Climate Action</h4>
+        <p class="text-xs text-muted">Environment-behavior modeling tracks how climate shifts affect migration and habitat use.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#007DBC;">14</div>
+        <h4 class="font-display font-bold text-sm mb-1">Life Below Water</h4>
+        <p class="text-xs text-muted">Hydrophones track whales and dolphins. Continuous water quality monitoring protects coastal wetlands.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#3EB049;">15</div>
+        <h4 class="font-display font-bold text-sm mb-1">Life on Land</h4>
+        <p class="text-xs text-muted">Tiger monitoring in Bhutan. Mothbox biodiversity early warning. Anti-poaching and population tracking.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#F26B2B;">9</div>
+        <h4 class="font-display font-bold text-sm mb-1">Industry &amp; Infrastructure</h4>
+        <p class="text-xs text-muted">Open-source hardware reference platform. Fab Lab local manufacturing. Replicable, not proprietary.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#F89D2A;">11</div>
+        <h4 class="font-display font-bold text-sm mb-1">Sustainable Cities</h4>
+        <p class="text-xs text-muted">Disaster resilience toolkit (MaRK), community emergency mesh networks for vulnerable urban areas.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#C31F33;">4</div>
+        <h4 class="font-display font-bold text-sm mb-1">Quality Education</h4>
+        <p class="text-xs text-muted">Fab City Cape Town, STEM teaching kits, maker training programs across the Global South.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#C41F65;">10</div>
+        <h4 class="font-display font-bold text-sm mb-1">Reduced Inequalities</h4>
+        <p class="text-xs text-muted">Technology democratization for the Global South — AI monitoring and diagnostics reach基层 clinics and reserves.</p>
+      </div>
+      <div class="text-center p-5">
+        <div class="sdg-icon mx-auto mb-3" style="background:#1D4E6F;">17</div>
+        <h4 class="font-display font-bold text-sm mb-1">Partnerships</h4>
+        <p class="text-xs text-muted">WILDLABS × Arm, TNC, GIG Fund, interspecies.io, MIT Media Lab. Open standards before any single company.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOIN ============ -->
+<section id="join" class="py-24 bg-dark text-white relative overflow-hidden">
+  <div class="absolute inset-0 opacity-[.02]" style="background-image:linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);background-size:48px 48px"></div>
+  <div class="max-w-6xl mx-auto px-6 relative z-10">
+    <div class="mb-12 reveal">
+      <div class="text-xs font-semibold tracking-[2px] uppercase text-brand mb-3">Get Involved</div>
+      <h2 class="font-display text-3xl md:text-4xl font-bold mb-3">Three Ways to Join</h2>
+      <p class="text-white/50 max-w-xl">Whether you're a researcher with a question, a Fab Lab with a 3D printer, or just someone who thinks animals deserve to be heard — there's a place for you here.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 mb-10 reveal">
+      <div class="bg-dark-card border border-dark-line rounded-xl p-8 hover:border-brand/40 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-brand/15 flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Participate</h3>
+        <p class="text-sm text-white/50 leading-relaxed mb-6">Join an existing challenge. Contribute to an open build. Deploy a replicate kit in your local Fab Lab. The hardware is open, the designs are shared, and the community is waiting.</p>
+        <a href="https://github.com" target="_blank" class="inline-flex items-center gap-2 text-sm text-brand hover:text-brand-dim font-medium transition-colors">
+          Browse open challenges
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <div class="bg-dark-card border border-dark-line rounded-xl p-8 hover:border-brand/40 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-brand/15 flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Initiate</h3>
+        <p class="text-sm text-white/50 leading-relaxed mb-6">Have a research question that needs a hardware answer? A conservation site that could benefit from continuous monitoring? Submit your proposal — we'll help you find the right tools and partners.</p>
+        <a href="#contact" class="inline-flex items-center gap-2 text-sm text-brand hover:text-brand-dim font-medium transition-colors">
+          Submit your project
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <div class="bg-dark-card border border-dark-line rounded-xl p-8 hover:border-brand/40 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-brand/15 flex items-center justify-center mb-5">
+          <svg class="w-6 h-6 text-brand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3 class="font-display font-bold text-lg mb-2">Follow &amp; Share</h3>
+        <p class="text-sm text-white/50 leading-relaxed mb-6">Are you studying animal behavior, monitoring ecosystems, or building interspecies communication tools? Tell us your story. Selected stories become featured cases on this page and the Interspecies project.</p>
+        <a href="https://www.facebook.com/seeedstudio" target="_blank" class="inline-flex items-center gap-2 text-sm text-brand hover:text-brand-dim font-medium transition-colors">
+          Follow on Facebook
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact" class="py-24 bg-surface">
+  <div class="max-w-3xl mx-auto px-6 text-center reveal">
+    <div class="text-xs font-semibold tracking-[2px] uppercase text-brand-deep mb-3">Get in touch</div>
+    <h2 class="font-display text-3xl md:text-4xl font-bold mb-4">Media &amp; Press Contact</h2>
+    <p class="text-muted max-w-lg mx-auto mb-10">For press inquiries, partnership proposals, or to share your interspecies research story — reach out directly. We route every inquiry to the right team.</p>
+    <div class="grid md:grid-cols-3 gap-4 mb-10">
+      <a href="mailto:solution@seeed.cc" class="sdg-card bg-surface-card border border-line rounded-xl p-6 text-left block">
+        <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <h4 class="font-display font-bold text-sm mb-1">Solution &amp; Partnership</h4>
+        <p class="text-xs text-muted mb-2">Researchers, NGOs, Fab Labs — propose a deployment</p>
+        <span class="text-sm text-brand-deep font-medium">solution@seeed.cc</span>
+      </a>
+      <a href="mailto:press@seeed.cc" class="sdg-card bg-surface-card border border-line rounded-xl p-6 text-left block">
+        <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/></svg>
+        </div>
+        <h4 class="font-display font-bold text-sm mb-1">Media &amp; Press</h4>
+        <p class="text-xs text-muted mb-2">Press kit, interviews, story features</p>
+        <span class="text-sm text-brand-deep font-medium">press@seeed.cc</span>
+      </a>
+      <a href="mailto:interspecies@seeed.cc" class="sdg-card bg-surface-card border border-line rounded-xl p-6 text-left block">
+        <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-4">
+          <svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 7h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+        </div>
+        <h4 class="font-display font-bold text-sm mb-1">Open Datalogger</h4>
+        <p class="text-xs text-muted mb-2">GitHub, technical collaboration, Fab Lab replication</p>
+        <span class="text-sm text-brand-deep font-medium">interspecies@seeed.cc</span>
+      </a>
+    </div>
+    <a href="mailto:solution@seeed.cc?subject=Interspecies%20Project%20Inquiry" class="inline-flex items-center gap-2 pill bg-brand text-white px-8 py-4 text-sm font-medium hover:bg-brand-dim transition-colors">
+      Send us an email
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="bg-dark text-white py-16">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid md:grid-cols-4 gap-8 mb-8">
+      <div class="md:col-span-1">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+          <span class="font-display font-bold text-sm">Seeed · Interspecies</span>
+        </div>
+        <p class="text-xs text-white/40 leading-relaxed">Open hardware for animal and ecological research. Building the receivers that let every species and every ecosystem finally be heard.</p>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Sections</h4>
+        <div class="space-y-2 text-sm">
+          <a href="#why" class="block text-white/40 hover:text-white transition-colors">Why</a>
+          <a href="#what" class="block text-white/40 hover:text-white transition-colors">What We Do</a>
+          <a href="#cases" class="block text-white/40 hover:text-white transition-colors">Cases</a>
+          <a href="#people" class="block text-white/40 hover:text-white transition-colors">People</a>
+          <a href="#sdg" class="block text-white/40 hover:text-white transition-colors">SDG</a>
+          <a href="#join" class="block text-white/40 hover:text-white transition-colors">Join</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Resources</h4>
+        <div class="space-y-2 text-sm">
+          <a href="https://www.seeedstudio.com/blog/sdg/" target="_blank" class="block text-white/40 hover:text-white transition-colors">SDG Page</a>
+          <a href="https://github.com" target="_blank" class="block text-white/40 hover:text-white transition-colors">GitHub</a>
+          <a href="https://www.seeedstudio.com" target="_blank" class="block text-white/40 hover:text-white transition-colors">Seeed Studio</a>
+          <a href="https://interspecies.io" target="_blank" class="block text-white/40 hover:text-white transition-colors">Interspecies Internet</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-[10px] uppercase tracking-wider mb-4 text-white/60 font-semibold">Contact</h4>
+        <div class="space-y-2 text-sm text-white/40">
+          <a href="mailto:solution@seeed.cc" class="block hover:text-white transition-colors">solution@seeed.cc</a>
+          <a href="mailto:press@seeed.cc" class="block hover:text-white transition-colors">press@seeed.cc</a>
+          <a href="https://www.facebook.com/seeedstudio" target="_blank" class="block hover:text-white transition-colors">Facebook</a>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-dark-line pt-8 text-center text-xs text-white/30">
+      <p>&copy; 2026 Seeed Studio. Part of the Interspecies Internet initiative.</p>
+      <p class="mt-1">Open-source hardware · MIT License</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 80) nav.classList.add('scrolled');
+  else nav.classList.remove('scrolled');
+});
+
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+revealEls.forEach(el => observer.observe(el));
+
+// --- Deployment map: Leaflet + real-world project coordinates ---
+const PROJECTS = [
+  { id:'tnc', tone:'active', name:'TNC Wetland — Deep Bay, Hong Kong', status:'Phase 1 Running',
+    coords:[22.49,114.05], location:'Deep Bay gei wai wetland · TNC Hong Kong',
+    desc:'Continuous wetland-restoration monitoring: SenseCAP 4G Data Logger + S700-C weather station + anti-corrosion water-quality array. The team catches DO drops in real time; Phase 2 adds reCamera Pro bird diversity observation.',
+    tags:['SenseCAP 4G','S700-C','Water sensors'],
+    link:'https://seeedstudio.feishu.cn/docx/ZxOadAzFZoSwOyxVEtQcuOzpnMe', linkText:'Read blog →' },
+  { id:'bhutan', tone:'active', name:'RiKAnet — Bhutan Tiger Monitoring', status:'Framework Building',
+    coords:[27.51,90.43], location:'Nationwide · RiKAnet / Bhutan FabLab',
+    desc:'National-scale tiger monitoring: Tracker GPS individual positioning + LoRa/Mesh backbone covering protected areas + reCamera CV tiger-stripe re-identification. Framework under construction; field validation planned for 2026 Q4.',
+    tags:['Tracker','LoRa/Mesh','reCamera CV'] },
+  { id:'mothbox-panama', tone:'active', name:'Mothbox — Open Trap Cam', status:'Deployed',
+    coords:[8.98,-79.52], location:'Panama City · Panama FabLab',
+    desc:'Open-source insect biodiversity trap cam: reCamera runs edge-AI moth/insect ID with auto-counting, LoRa returns data from remote field sites. Deployed and running; replicated across the global Fab Lab network.',
+    tags:['reCamera','LoRa','Open Datalogger'],
+    link:'https://mothbox.org', linkText:'mothbox.org →' },
+  { id:'mothbox-peru', tone:'planned', name:'Mothbox — Peru Extension', status:'Planned',
+    coords:[-9.19,-75.02], location:'Peru · regional FabLab',
+    desc:'Next Mothbox replication site. The same open hardware stack, built locally by a regional Fab Lab for Neotropical insect biodiversity monitoring.',
+    tags:['reCamera','LoRa'] },
+  { id:'mothbox-yellowstone', tone:'planned', name:'Mothbox — Yellowstone Extension', status:'Planned',
+    coords:[44.6,-110.5], location:'Yellowstone, USA',
+    desc:'Mothbox extension site for North America. The open design lets local partners build, adapt, and maintain the trap cam with Fab Lab support.',
+    tags:['reCamera','LoRa'] },
+  { id:'olfactory', tone:'open', name:'Olfactory Sensor — Robert Long', status:'Open',
+    coords:[47.63,-122.33], location:'Woodland Park, Seattle · Seattle FabLab',
+    desc:'Mass-producing a lab-built mammalian olfactory sensor. Seeed Fusion bridges the prototype-to-production gap: PCB assembly, sourcing, testing, and the small-batch-to-volume transition.',
+    tags:['Seeed Fusion','Olfaction'] },
+  { id:'collarid', tone:'planned', name:'CollarID — MIT Media Lab', status:'Intent',
+    coords:[42.36,-71.09], location:'MIT Media Lab, Cambridge, MA',
+    desc:'Open-source multi-species tracking collar: Tracker GPS + Meshtastic low-power mesh return + reCamera CV individual re-identification. Seeed Fusion provides small-batch co-manufacturing of the MIT design.',
+    tags:['Tracker','Meshtastic','reCamera CV','Fusion'] },
+  { id:'lifescience', tone:'planned', name:'LifeScience Trust — Zoo Pilot', status:'Intent',
+    coords:[19.08,72.88], location:'India · LifeScience Trust / India FabLab',
+    desc:'Multi-species zoo monitoring as a turnkey program: needs-based product selection (reCamera / Tracker / weather / acoustics), procurement, and an in-zoo FabLab for local manufacturing.',
+    tags:['Multi-product','In-zoo FabLab'] }
+];
+
+const worldMap = L.map('world-map', {
+    scrollWheelZoom:false, zoomControl:true, worldCopyJump:true,
+    minZoom:2, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8
+  })
+  .setView([15, 0], 2);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'',
+  maxZoom:16
+}).addTo(worldMap);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', {
+  attribution:'&copy; <a href="https://www.arcgis.com/">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom:16,
+  className:'map-ref-labels'
+}).addTo(worldMap);
+window.addEventListener('load', () => worldMap.invalidateSize());
+
+const toneColor = { active:'#8FC31F', open:'#ffab00', planned:'#aab8ab' };
+const floatCard = document.getElementById('map-float-card');
+const floatCardBody = document.getElementById('map-float-card-body');
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+let activeMarker = null;
+
+function positionFloatCard(marker) {
+  const mapContainer = worldMap.getContainer();
+  const mapRect = mapContainer.getBoundingClientRect();
+  const point = worldMap.latLngToContainerPoint(marker.getLatLng());
+  const cardW = floatCard.offsetWidth || 300;
+  const cardH = floatCard.offsetHeight || 160;
+  const margin = 18;
+  let left = point.x + 28;
+  let top = point.y - cardH - 20;
+  if (top < margin) { top = point.y + 28; }
+  if (left + cardW > mapRect.width - margin) { left = point.x - cardW - 28; }
+  if (left < margin) { left = margin; }
+  if (top < margin) top = margin;
+  if (top + cardH > mapRect.height - margin) top = mapRect.height - cardH - margin;
+  floatCard.style.left = left + 'px';
+  floatCard.style.top = top + 'px';
+}
+
+function showFloatCard(p, marker) {
+  const c = toneColor[p.tone];
+  floatCardBody.innerHTML =
+    '<span class="card-status" style="background:' + c + '22;color:' + c + '">' + esc(p.status) + '</span>' +
+    '<h5 class="font-display font-bold text-ink text-base mt-3 mb-1">' + esc(p.name) + '</h5>' +
+    '<p class="text-xs text-brand-deep mb-3">' + esc(p.location) + '</p>' +
+    '<p class="text-xs text-muted leading-relaxed mb-4">' + esc(p.desc) + '</p>' +
+    '<div class="flex flex-wrap gap-1">' + p.tags.map(t => '<span class="text-[9px] px-1.5 py-0.5 rounded bg-brand/15 text-brand">' + esc(t) + '</span>').join('') + '</div>' +
+    (p.link ? '<a href="' + esc(p.link) + '" target="_blank" rel="noopener" style="pointer-events:auto" class="text-xs text-brand hover:underline inline-flex items-center gap-1 mt-3">' + esc(p.linkText || 'Learn more →') + '</a>' : '');
+  floatCard.classList.add('visible');
+  positionFloatCard(marker);
+  activeMarker = marker;
+}
+
+function hideFloatCard() {
+  floatCard.classList.remove('visible');
+  activeMarker = null;
+}
+
+PROJECTS.forEach(p => {
+  const icon = L.divIcon({
+    className: '',
+    html: '<div class="pin-marker ' + p.tone + '"><div class="ring"></div><div class="dot"></div></div>',
+    iconSize: [32, 32], iconAnchor: [16, 16]
+  });
+  const marker = L.marker(p.coords, { icon, title: p.name, riseOnHover: true, keyboard: true }).addTo(worldMap);
+  marker.on('mouseover', () => showFloatCard(p, marker));
+  marker.on('mouseout', () => {
+    setTimeout(() => {
+      if (activeMarker === marker) {
+        const cardHovered = floatCard.matches(':hover');
+        if (!cardHovered) hideFloatCard();
+      }
+    }, 150);
+  });
+  marker.on('click', () => {
+    if (p.link) {
+      window.open(p.link, '_blank', 'noopener');
+    } else {
+      document.getElementById('cases').scrollIntoView({ behavior:'smooth' });
+    }
+  });
+});
+
+floatCard.addEventListener('mouseenter', () => {
+  if (activeMarker) floatCard.classList.add('visible');
+});
+floatCard.addEventListener('mouseleave', () => { hideFloatCard(); });
+worldMap.on('move zoom', () => {
+  if (activeMarker && floatCard.classList.contains('visible')) positionFloatCard(activeMarker);
+});
+
+// --- Filter buttons for case cards ---
+const filterBtns = document.querySelectorAll('.filter-btn');
+const caseCards = document.querySelectorAll('.case-card');
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter = btn.dataset.filter;
+    caseCards.forEach(card => {
+      if (filter === 'all') {
+        card.classList.remove('hidden');
+      } else {
+        const tags = card.dataset.tags || '';
+        if (tags.split(',').map(t => t.trim()).includes(filter)) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      }
+    });
+  });
+});
+
+// Mobile menu close on link click
+document.querySelectorAll('#mobile-menu a').forEach(a => {
+  a.addEventListener('click', () => {
+    document.getElementById('mobile-menu').classList.add('hidden');
+  });
+});
+</script>
+</body>
+</html>
