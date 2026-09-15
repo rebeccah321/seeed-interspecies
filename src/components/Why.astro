@@ -48,60 +48,417 @@ const base = import.meta.env.BASE_URL;
           <p>Seeed is not a lab that speaks for animals. We build the open-source hardware that lets researchers and local teams turn those signals into useful knowledge — so any species, any ecosystem, can finally be heard.</p>
         </div>
       </div>
+
+      <nav class="why-domains" aria-label="Six research domains">
+        <a href="#domain-1" title="Individual identification">1</a>
+        <a href="#domain-2" title="Population counting">2</a>
+        <a href="#domain-3" title="Cognitive decline">3</a>
+        <a href="#domain-4" title="Acoustic monitoring">4</a>
+        <a href="#domain-5" title="Social behavior">5</a>
+        <a href="#domain-6" title="Habitat monitoring">6</a>
+      </nav>
+
+      <article class="why-copy" data-copy="01">
+        <div class="why-num">01</div>
+        <h3>Cross-species collaboration is nothing new.</h3>
+        <p class="why-type" id="why-type-01"></p>
+        <p class="why-full">
+          <strong>Honeyguides</strong> lead hunters. <strong>Dolphins</strong> signal when to cast. <strong>Cormorants</strong> and <strong>hunting eagles</strong> have worked under human command for centuries. <strong>Homing pigeons</strong> carried addressed messages. Each was a real protocol — precise, effective, but hard to scale.
+        </p>
+      </article>
+
+      <article class="why-copy" data-copy="02">
+        <div class="why-num">02</div>
+        <h3>The signals were never the issue. The network was.</h3>
+        <p>Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting all of this for millions of years. What has always been missing is just the receiver: a shared network that connects them all.</p>
+      </article>
+
+      <article class="why-copy" data-copy="03">
+        <div class="why-num">03</div>
+        <h3>Now the missing layer is finally here.</h3>
+        <p>Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, we can listen at scale — and those old handshakes can become a network.</p>
+      </article>
+
+      <article class="why-copy" data-copy="04">
+        <div class="why-num">04</div>
+        <h3>We don't speak for animals. We build the tools that let them be heard.</h3>
+        <p>Seeed is not a lab that speaks for animals. We build the open-source hardware that lets researchers and local teams turn those signals into useful knowledge — so any species, any ecosystem, can finally be heard.</p>
+      </article>
+
+      <nav class="why-rail" aria-label="Evidence sequence">
+        {photos.map((p, i) => (
+          <button type="button" data-rail={p.id} data-scene={String(i + 1)} aria-label={p.cap}>
+            <img src={p.src} alt="" width="66" height="44" />
+          </button>
+        ))}
+      </nav>
     </div>
   </div>
 </section>
 
-<!-- snake-line signal-wave connector from WHY → WHAT -->
 <div class="why-connector">
   <svg viewBox="0 0 120 90" preserveAspectRatio="none">
     <defs>
       <linearGradient id="why-conn-grad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#8FC31F"/>
-        <stop offset="100%" stop-color="#00936d"/>
+        <stop offset="0%" stop-color="#8FC31F" />
+        <stop offset="100%" stop-color="#00936d" />
       </linearGradient>
     </defs>
-    <path id="why-signal-path" d="M60,0 C60,18 20,28 60,45 C100,62 20,72 60,90" fill="none" stroke="url(#why-conn-grad)" stroke-width="2" stroke-dasharray="5,4" opacity="0.75"/>
+    <path id="why-signal-path" d="M60,0 C60,18 20,28 60,45 C100,62 20,72 60,90" fill="none" stroke="url(#why-conn-grad)" stroke-width="2" stroke-dasharray="5,4" opacity="0.75" />
     <circle r="3.5" fill="#8FC31F">
       <animateMotion dur="2.5s" repeatCount="indefinite">
-        <mpath href="#why-signal-path"/>
+        <mpath href="#why-signal-path" />
       </animateMotion>
     </circle>
   </svg>
 </div>
 
 <script>
-// ===== WHY section scroll animation =====
-(function initWhyScroll(){
-  var whySec=document.getElementById('why');if(!whySec)return;
-  var fill=document.getElementById('why-line-fill');if(!fill)return;
-  var items=document.querySelectorAll('.why-item');
-  var dots=document.querySelectorAll('.why-dot');
-  var contents=document.querySelectorAll('.why-content');var illus=document.querySelectorAll('.why-illustration');
-  var rafId=null;
-  function updateWhy(){
-    rafId=null;
-    var rect=whySec.getBoundingClientRect();
-    var winH=window.innerHeight;
-    var total=rect.height+winH*0.3;
-    var passed=winH*0.5-rect.top;
-    var progress=Math.max(0,Math.min(1,passed/total));
-    fill.style.height=(progress*100)+'%';
-    var itemStep=1/(items.length+0.5);
-    for(var i=0;i<items.length;i++){
-      var threshold=(i+0.5)*itemStep;
-      if(progress>=threshold){
-        if(!dots[i].classList.contains('active')){dots[i].classList.add('active');}
-        if(!contents[i].classList.contains('active')){contents[i].classList.add('active');}if(illus[i]&&!illus[i].classList.contains('active')){illus[i].classList.add('active');}
+(function initWhySpotlight() {
+  var section = document.getElementById('why');
+  var stage = document.getElementById('why-stage');
+  if (!section || !stage) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var pin = section.querySelector('.why-pin');
+  var drop = document.getElementById('why-drop');
+  var typeEl = document.getElementById('why-type-01');
+  var svg = document.getElementById('why-svg');
+  var canvas = document.getElementById('why-fx');
+  var rx = document.getElementById('why-rx');
+  var photos = ['dolphin', 'cormorant', 'eagle', 'pigeon'];
+  var nodes = {};
+  photos.forEach(function (id) {
+    nodes[id] = stage.querySelector('.why-photo[data-photo="' + id + '"]');
+  });
+  var railBtns = stage.querySelectorAll('.why-rail button');
+  var rxLines = svg ? svg.querySelectorAll('.why-rx-line') : [];
+  var domainLines = svg ? svg.querySelectorAll('.why-domain-line') : [];
+  var stageLine = document.getElementById('why-stage-line');
+  var domainAnchors = stage.querySelectorAll('.why-domains a');
+  var copy01 = stage.querySelector('.why-copy[data-copy="01"]');
+
+  section.classList.remove('is-settled');
+  section.classList.add('why-live');
+  section.setAttribute('data-scene', '0');
+
+  var BODY =
+    'Honeyguides lead hunters. Dolphins signal when to cast. Cormorants and hunting eagles have worked under human command for centuries. Homing pigeons carried addressed messages. Each was a real protocol — precise, effective, but hard to scale.';
+  var NAMES = ['Honeyguides', 'Dolphins', 'Cormorants', 'hunting eagles', 'Homing pigeons'];
+  var T1 = BODY.indexOf('cast.') + 5;
+  var T2 = BODY.indexOf('hunting eagles') + 'hunting eagles'.length;
+  var T3 = BODY.indexOf('centuries.') + 10;
+  var T4 = BODY.length;
+  var ENTER = { dolphin: 0.04, cormorant: 0.18, eagle: 0.34, pigeon: 0.5 };
+  var STAGED = { dolphin: 0.11, cormorant: 0.25, eagle: 0.41, pigeon: 0.56 };
+  var WALL = { dolphin: 0.18, cormorant: 0.34, eagle: 0.5, pigeon: 0.57 };
+  var AMP = { dolphin: 11, cormorant: 14, eagle: 8, pigeon: 12 };
+  var COLORS = { dolphin: '#8FC31F', cormorant: '#39b5ff', eagle: '#00936d', pigeon: '#c4a35a' };
+  var SCENES = [0, 0.04, 0.18, 0.34, 0.5, 0.64, 0.76, 0.88, 1];
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function remap(p, a, b) { return b === a ? 1 : clamp((p - a) / (b - a), 0, 1); }
+  function ease(t) { return t * t * (3 - 2 * t); }
+  function mobile() { return window.innerWidth < 768; }
+
+  function layout() {
+    if (mobile()) {
+      return {
+        stage: { x: 4, y: 12, w: 92, rot: 0 },
+        off: {
+          dolphin: { x: 4, y: 78, w: 92, rot: 0 },
+          cormorant: { x: 110, y: 12, w: 92, rot: 0 },
+          eagle: { x: 110, y: 12, w: 92, rot: 0 },
+          pigeon: { x: 110, y: 12, w: 92, rot: 0 },
+        },
+        wall: {
+          dolphin: { x: 4, y: 10, w: 38, rot: -3 },
+          cormorant: { x: 8, y: 36, w: 36, rot: 2.4 },
+          eagle: { x: 54, y: 14, w: 34, rot: 1.6 },
+          pigeon: { x: 50, y: 42, w: 32, rot: -2 },
+        },
+        rx: { x: 78, y: 58 },
+      };
+    }
+    return {
+      stage: { x: 22.5, y: 22, w: 55, rot: 0 },
+      off: {
+        dolphin: { x: 22.5, y: 78, w: 55, rot: 0 },
+        cormorant: { x: 108, y: 22, w: 55, rot: 0 },
+        eagle: { x: 108, y: 18, w: 55, rot: 0 },
+        pigeon: { x: 108, y: 24, w: 55, rot: 0 },
+      },
+      wall: {
+        dolphin: { x: 3.5, y: 12, w: 30, rot: -4.2 },
+        cormorant: { x: 5, y: 50, w: 36, rot: 3.1 },
+        eagle: { x: 33, y: 20, w: 32, rot: 1.8 },
+        pigeon: { x: 62, y: 49, w: 28, rot: -2.4 },
+      },
+      rx: { x: 76, y: 13 },
+    };
+  }
+
+  function poseOf(id, p, lay) {
+    var off = lay.off[id];
+    var st = lay.stage;
+    var wall = lay.wall[id];
+    if (p <= ENTER[id]) return { x: off.x, y: off.y, w: off.w, rot: off.rot, op: 0, z: 1 };
+    if (p < WALL[id]) {
+      var t = ease(remap(p, ENTER[id], STAGED[id]));
+      return {
+        x: lerp(off.x, st.x, t),
+        y: lerp(off.y, st.y, t),
+        w: lerp(off.w, st.w, t),
+        rot: lerp(off.rot, st.rot, t),
+        op: lerp(0, 1, t),
+        z: 8,
+      };
+    }
+    var t = ease(remap(p, WALL[id], WALL[id] + 0.055));
+    return {
+      x: lerp(st.x, wall.x, t),
+      y: lerp(st.y, wall.y, t),
+      w: lerp(st.w, wall.w, t),
+      rot: lerp(st.rot, wall.rot, t),
+      op: lerp(1, 0.85, t),
+      z: 3,
+    };
+  }
+
+  function applyPose(el, pose, par) {
+    el.style.setProperty('--x', pose.x + '%');
+    el.style.setProperty('--y', pose.y + '%');
+    el.style.setProperty('--w', pose.w + '%');
+    el.style.setProperty('--rot', pose.rot + 'deg');
+    el.style.setProperty('--op', String(pose.op));
+    el.style.setProperty('--z', String(pose.z));
+    el.style.setProperty('--par', par + 'px');
+  }
+
+  function sceneOf(p) {
+    for (var i = 0; i < 8; i++) if (p < SCENES[i + 1]) return i;
+    return 7;
+  }
+
+  function typeCount(p) {
+    if (p < 0.04) return 0;
+    if (p < 0.18) return Math.floor(lerp(0, T1, Math.min(1, remap(p, 0.04, 0.18) / 0.88)));
+    if (p < 0.34) return Math.floor(lerp(T1, T2, Math.min(1, remap(p, 0.18, 0.34) / 0.82)));
+    if (p < 0.5) return Math.floor(lerp(T2, T3, Math.min(1, remap(p, 0.34, 0.5) / 0.82)));
+    if (p < 0.64) return Math.floor(lerp(T3, T4, Math.min(1, remap(p, 0.5, 0.64) / 0.78)));
+    return T4;
+  }
+
+  function typedHtml(n) {
+    var s = BODY.slice(0, n);
+    var html = s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    NAMES.forEach(function (name) {
+      if (s.indexOf(name) !== -1) html = html.replace(name, '<strong>' + name + '</strong>');
+    });
+    if (n < T4) html += '<span class="why-caret"></span>';
+    return html;
+  }
+
+  function progress() {
+    var r = pin.getBoundingClientRect();
+    var vh = window.innerHeight;
+    var total = Math.max(1, r.height - vh);
+    return clamp(-r.top / total, 0, 1);
+  }
+
+  var particles = [];
+  var lastSpawn = 0;
+  function spawn(from, to, mode) {
+    particles.push({
+      x: from.x, y: from.y,
+      tx: to.x, ty: to.y,
+      vx: (Math.random() - 0.5) * 1.4,
+      vy: (Math.random() - 0.5) * 1.4,
+      life: 1,
+      color: from.color,
+      mode: mode,
+    });
+    if (particles.length > 90) particles.splice(0, particles.length - 90);
+  }
+
+  function centerOf(el) {
+    var s = stage.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 };
+  }
+  function topOf(el) {
+    var s = stage.getBoundingClientRect();
+    var r = el.getBoundingClientRect();
+    return { x: r.left - s.left + r.width / 2, y: r.top - s.top };
+  }
+
+  function drawSvg(p, lay, stagingId) {
+    if (!svg) return;
+    var sr = stage.getBoundingClientRect();
+    svg.setAttribute('viewBox', '0 0 ' + sr.width + ' ' + sr.height);
+    var rxPt = {
+      x: (lay.rx.x / 100) * sr.width,
+      y: (lay.rx.y / 100) * sr.height,
+    };
+    if (rx) {
+      rx.style.left = lay.rx.x + '%';
+      rx.style.top = lay.rx.y + '%';
+    }
+
+    if (stageLine) {
+      var show = 0;
+      if (stagingId && p < WALL[stagingId] && p > ENTER[stagingId]) {
+        show = 1 - remap(p, ENTER[stagingId] + 0.02, ENTER[stagingId] + 0.05);
+        show = clamp(show, 0, 1);
+      }
+      if (show > 0.02 && copy01 && nodes[stagingId]) {
+        var a = copy01.getBoundingClientRect();
+        var b = topOf(nodes[stagingId]);
+        var x1 = a.left - sr.left + Math.min(a.width * 0.4, 120);
+        var y1 = a.bottom - sr.top;
+        stageLine.setAttribute('d', 'M' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + (y1 + 24) + ', ' + b.x + ' ' + (b.y - 24) + ', ' + b.x + ' ' + b.y);
+        stageLine.style.opacity = String(show);
+      } else {
+        stageLine.style.opacity = '0';
       }
     }
+
+    var net = remap(p, 0.76, 0.88);
+    rxLines.forEach(function (path) {
+      var id = path.getAttribute('data-from');
+      var el = nodes[id];
+      if (!el || net <= 0) { path.style.opacity = '0'; return; }
+      var c = centerOf(el);
+      var mx = (c.x + rxPt.x) / 2;
+      var my = (c.y + rxPt.y) / 2 - 28;
+      path.setAttribute('d', 'M' + c.x + ' ' + c.y + ' Q ' + mx + ' ' + my + ' ' + rxPt.x + ' ' + rxPt.y);
+      path.style.opacity = String(0.25 + net * 0.65);
+    });
+
+    var dOn = remap(p, 0.88, 1);
+    domainLines.forEach(function (path, i) {
+      var a = domainAnchors[i];
+      if (!a || dOn <= 0) { path.style.opacity = '0'; return; }
+      var c = centerOf(a);
+      var mx = (rxPt.x + c.x) / 2;
+      path.setAttribute('d', 'M' + rxPt.x + ' ' + rxPt.y + ' Q ' + mx + ' ' + (rxPt.y + 40) + ' ' + c.x + ' ' + c.y);
+      path.style.opacity = String(dOn * 0.7);
+    });
   }
-  function onScroll(){
-    if(rafId)return;
-    rafId=requestAnimationFrame(updateWhy);
+
+  function drawParticles(p, dt) {
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var w = canvas.width = stage.clientWidth;
+    var h = canvas.height = stage.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+    var s5 = p >= 0.64 && p < 0.88;
+    var s6 = p >= 0.76;
+    if (!s5 && !s6) { particles.length = 0; return; }
+
+    lastSpawn += dt;
+    if (lastSpawn > 80) {
+      lastSpawn = 0;
+      photos.forEach(function (id) {
+        var el = nodes[id];
+        if (!el || Number(getComputedStyle(el).opacity) < 0.2) return;
+        var c = centerOf(el);
+        c.color = COLORS[id];
+        if (p < 0.76) {
+          spawn(c, { x: c.x + (Math.random() - 0.5) * 80, y: c.y + (Math.random() - 0.5) * 80 }, 'out');
+        } else if (rx) {
+          var r = centerOf(rx);
+          spawn(c, r, 'in');
+        }
+      });
+    }
+
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var q = particles[i];
+      if (q.mode === 'in') {
+        q.x = lerp(q.x, q.tx, 0.045);
+        q.y = lerp(q.y, q.ty, 0.045);
+      } else {
+        q.x += q.vx;
+        q.y += q.vy;
+      }
+      q.life -= 0.012;
+      if (q.life <= 0) { particles.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.max(0, q.life) * 0.85;
+      ctx.fillStyle = q.color;
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, 2.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
-  window.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('resize',onScroll,{passive:true});
-  setTimeout(updateWhy,100);
+
+  var stagingNow = '';
+  var last = performance.now();
+  var raf = 0;
+  var inView = false;
+
+  function tick(now) {
+    var dt = Math.min(50, now - last);
+    last = now;
+    var p = progress();
+    var sc = sceneOf(p);
+    section.setAttribute('data-scene', String(sc));
+    if (p >= 0.64) section.classList.add('is-done');
+    else section.classList.remove('is-done');
+
+    if (drop) drop.style.height = (ease(remap(p, 0, 0.04)) * 18) + 'vh';
+
+    var lay = layout();
+    var staging = '';
+    photos.forEach(function (id) {
+      if (p >= ENTER[id] && p < WALL[id]) staging = id;
+      var pose = poseOf(id, p, lay);
+      var par = (p - 0.5) * 2 * AMP[id];
+      applyPose(nodes[id], pose, par);
+    });
+    stagingNow = staging;
+
+    railBtns.forEach(function (btn) {
+      btn.classList.toggle('is-on', btn.getAttribute('data-rail') === staging);
+    });
+
+    if (typeEl && p < 0.64) typeEl.innerHTML = typedHtml(typeCount(p));
+    else if (typeEl && p >= 0.64) typeEl.innerHTML = '';
+    drawSvg(p, lay, staging);
+    drawParticles(p, dt);
+    if (inView) raf = requestAnimationFrame(tick);
+    else raf = 0;
+  }
+
+  function kick() {
+    inView = true;
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
+
+  if (typeof IntersectionObserver === 'function') {
+    var io = new IntersectionObserver(function (entries) {
+      inView = entries[0] && entries[0].isIntersecting;
+      if (inView) kick();
+    }, { rootMargin: '20% 0px' });
+    io.observe(section);
+  } else {
+    inView = true;
+  }
+
+  window.addEventListener('scroll', kick, { passive: true });
+  window.addEventListener('resize', kick, { passive: true });
+  kick();
+
+  railBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var sc = Number(btn.getAttribute('data-scene')) || 1;
+      var top = window.scrollY + pin.getBoundingClientRect().top;
+      var total = pin.offsetHeight - window.innerHeight;
+      window.scrollTo({ top: top + SCENES[sc] * total, behavior: 'smooth' });
+    });
+  });
 })();
 </script>
