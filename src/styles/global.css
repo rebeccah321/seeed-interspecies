@@ -197,10 +197,11 @@ html{scroll-behavior:smooth} body{-webkit-font-smoothing:antialiased;background:
 .why-right .why-content{margin-left:auto}
 .why-content h3{font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:1.1rem;color:#2a2f33;margin-bottom:.5rem;line-height:1.4}
 .why-content p{font-size:.85rem;color:#6d6f70;line-height:1.7}
-.why-illustration{width:44%;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease;color:#8FC31F}
+.why-illustration{width:44%;opacity:0;transform:translateY(8px);transition:opacity .7s ease,transform .7s ease}
 .why-illustration.active{opacity:1;transform:translateY(0)}
-.why-illustration svg{width:140px;height:120px;max-width:100%}
-.why-illustration img{width:100%;max-width:220px;height:160px;object-fit:cover;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.why-illustration img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.625rem;box-shadow:0 6px 24px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.12)}
+.why-photo-tilt-r img{transform:rotate(2.5deg);transition:transform .7s ease}
+.why-photo-tilt-l img{transform:rotate(-2.5deg);transition:transform .7s ease}
 .why-left .why-illustration{margin-left:auto}
 .why-right .why-illustration{margin-right:auto}
 .why-ill-right{margin-left:auto}.why-ill-left{margin-right:auto}
@@ -208,7 +209,7 @@ html{scroll-behavior:smooth} body{-webkit-font-smoothing:antialiased;background:
 /* snake-line signal-wave connector from WHY to WHAT */
 .why-connector{position:relative;height:90px;background:linear-gradient(180deg,#c2dae0 0%,#cdd9c8 40%,#f3f7ec 100%);overflow:visible;display:flex;justify-content:center;align-items:flex-start}
 .why-connector svg{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:90px;overflow:visible}
-@media(max-width:640px){.why-content{width:80%}.why-left .why-content,.why-right .why-content{margin:0 auto}.why-illustration{display:none}}
+@media(max-width:640px){.why-content{width:88%}.why-left .why-content,.why-right .why-content{margin:0 auto}.why-illustration{width:70%;margin:0 auto 1rem auto!important}.why-illustration img{aspect-ratio:3/2}}
 /* People & Partners cards — light green / light gray */
 .partner-card{background:linear-gradient(140deg,#eef5e2 0%,#eaeef0 55%,#e6eaec 100%);border:1px solid rgba(143,195,31,.12)}
 .partner-card:hover{background:linear-gradient(140deg,#e8f3d8 0%,#e4e8ec 55%,#e0e4e8 100%)}
