@@ -1,63 +1,55 @@
 ---
 const base = import.meta.env.BASE_URL;
+
+const items = [
+  {
+    photo: `${base}/images/why-dolphin.jpg`,
+    photoCap: 'Dolphin — Brazil',
+    title: 'Cross-species collaboration is nothing new.',
+    body: 'Honeyguides lead hunters. Dolphins signal when to cast. Cormorants and hunting eagles have worked under human command for centuries. Homing pigeons carried addressed messages. Each was a real protocol — precise, effective, but hard to scale.',
+  },
+  {
+    photo: `${base}/images/why-cormorant.jpg`,
+    photoCap: 'Cormorant — China',
+    title: 'The signals were never the issue. The network was.',
+    body: 'Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting all of this for millions of years. What has always been missing is just the receiver: a shared network that connects them all.',
+  },
+  {
+    photo: `${base}/images/why-eagle.jpg`,
+    photoCap: 'Golden Eagle — Mongolia',
+    title: 'Now the missing layer is finally here.',
+    body: 'Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, we can listen at scale — and those old handshakes can become a network.',
+  },
+  {
+    photo: `${base}/images/why-pigeon.jpg`,
+    photoCap: 'Homing Pigeon',
+    title: "We don't speak for animals. We build the tools that let them be heard.",
+    body: "Seeed is not a lab that speaks for animals. We build the open-source hardware that lets researchers and local teams turn those signals into useful knowledge — so any species, any ecosystem, can finally be heard.",
+  },
+];
 ---
 
-<!-- ============ WHY — Breathing Section ============ -->
+<!-- ============ WHY NOW ============ -->
 <section id="why" class="why-section">
   <div class="why-top-label"><span>Why Now</span></div>
-  <div class="why-line-track"><div class="why-line-fill" id="why-line-fill"></div></div>
-  <div class="why-spine">
-    <div class="why-items" id="why-items">
 
-      <div class="why-item why-left" data-why-idx="0">
-        <div class="why-dot"></div>
-        <div class="why-content">
-          <h3>Cross-species collaboration is nothing new.</h3>
-          <p>Honeyguides lead hunters. Dolphins signal when to cast. Cormorants and hunting eagles have worked under human command for centuries. Homing pigeons carried addressed messages. Each was a real protocol — precise, effective, but hard to scale.</p>
+  <div class="why-items">
+    {items.map((item, i) => (
+      <div class={`why-row ${i % 2 === 0 ? 'why-row-l' : 'why-row-r'}`} data-why-idx={i}>
+        <div class={`why-photo ${i % 2 === 0 ? 'order-2' : 'order-1'}`}>
+          <img src={item.photo} alt={item.photoCap} loading="lazy" />
+          <span class="why-photo-cap">{item.photoCap}</span>
         </div>
-        <div class="why-illustration why-ill-right why-photo-tilt-r">
-          <img src={`${base}/images/why-collaboration.jpg`} alt="A dolphin herding fish toward fishermen in a river" loading="lazy" />
+        <div class={`why-copy ${i % 2 === 0 ? 'order-1' : 'order-2'}`}>
+          <h3>{item.title}</h3>
+          <p>{item.body}</p>
         </div>
       </div>
-
-      <div class="why-item why-right" data-why-idx="1">
-        <div class="why-dot"></div>
-        <div class="why-illustration why-ill-left why-photo-tilt-l">
-          <img src={`${base}/images/why-signals.jpg`} alt="Abstract visualization of animal communication signals broadcasting outward" loading="lazy" />
-        </div>
-        <div class="why-content">
-          <h3>The signals were never the issue. The network was.</h3>
-          <p>Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting all of this for millions of years. <strong>What has always been missing is just the receiver: a shared network that connects them all.</strong></p>
-        </div>
-      </div>
-
-      <div class="why-item why-left" data-why-idx="2">
-        <div class="why-dot"></div>
-        <div class="why-content">
-          <h3>Now the missing layer is finally here.</h3>
-          <p>Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, we can listen at scale — and those old handshakes can become a network.</p>
-        </div>
-        <div class="why-illustration why-ill-right why-photo-tilt-r">
-          <img src={`${base}/images/why-technology.jpg`} alt="Open-source edge AI sensor devices deployed in a natural setting" loading="lazy" />
-        </div>
-      </div>
-
-      <div class="why-item why-right" data-why-idx="3">
-        <div class="why-dot"></div>
-        <div class="why-illustration why-ill-left why-photo-tilt-l">
-          <img src={`${base}/images/why-tools.jpg`} alt="Open-source hardware being assembled on a workbench" loading="lazy" />
-        </div>
-        <div class="why-content">
-          <h3>We don't speak for animals. We build the tools that let them be heard.</h3>
-          <p>Seeed is not a lab that speaks for animals. We build the open-source hardware that lets researchers and local teams turn those signals into useful knowledge — so any species, any ecosystem, can finally be heard.</p>
-        </div>
-      </div>
-
-    </div>
+    ))}
   </div>
 </section>
 
-<!-- snake-line signal-wave connector from WHY → WHAT -->
+<!-- snake-line connector -->
 <div class="why-connector">
   <svg viewBox="0 0 120 90" preserveAspectRatio="none">
     <defs>
@@ -68,47 +60,58 @@ const base = import.meta.env.BASE_URL;
     </defs>
     <path id="why-signal-path" d="M60,0 C60,18 20,28 60,45 C100,62 20,72 60,90" fill="none" stroke="url(#why-conn-grad)" stroke-width="2" stroke-dasharray="5,4" opacity="0.75"/>
     <circle r="3.5" fill="#8FC31F">
-      <animateMotion dur="2.5s" repeatCount="indefinite">
-        <mpath href="#why-signal-path"/>
-      </animateMotion>
+      <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#why-signal-path"/></animateMotion>
     </circle>
   </svg>
 </div>
 
+<style>
+.why-section{background:linear-gradient(180deg,#ddf0c4 0%,#d8ecda 25%,#cfe5e8 55%,#c8dfe2 80%,#c2dae0 100%);padding:4.5rem 0 2rem;position:relative;overflow:visible}
+.why-top-label{position:absolute;top:1.2rem;left:50%;transform:translateX(-50%);z-index:6}
+.why-top-label span{display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#5a8a16;background:rgba(255,255,255,.75);padding:5px 18px;border-radius:9999px;border:1px solid rgba(143,195,31,.35);box-shadow:0 2px 10px rgba(143,195,31,.18)}
+
+.why-items{max-width:960px;margin:0 auto;padding:2.5rem 2rem 1rem}
+.why-row{display:flex;align-items:center;gap:2.5rem;margin-bottom:4rem;opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.why-row.active{opacity:1;transform:translateY(0)}
+
+.why-photo{flex:0 0 54%;position:relative}
+.why-photo img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.75rem;box-shadow:0 8px 30px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.1);transition:transform 1.2s cubic-bezier(.16,1,.3,1)}
+.why-row.active .why-photo img{transform:scale(1)}
+.why-row:not(.active) .why-photo img{transform:scale(1.06)}
+.why-row-l .why-photo img{transform:rotate(1.5deg)}
+.why-row-r .why-photo img{transform:rotate(-1.5deg)}
+.why-row.active.why-row-l .why-photo img{transform:rotate(1.5deg) scale(1)}
+.why-row.active.why-row-r .why-photo img{transform:rotate(-1.5deg) scale(1)}
+.why-photo-cap{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#5a8a16;margin-top:.4rem;text-align:center}
+
+.why-copy{flex:1;min-width:0;max-width:42%}
+.why-copy h3{font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:1.15rem;color:#2a2f33;margin-bottom:.5rem;line-height:1.35}
+.why-copy p{font-size:.88rem;color:#6d6f70;line-height:1.75}
+
+.why-connector{position:relative;height:90px;background:linear-gradient(180deg,#c2dae0 0%,#cdd9c8 40%,#f3f7ec 100%);overflow:visible;display:flex;justify-content:center;align-items:flex-start}
+.why-connector svg{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:90px;overflow:visible}
+
+@media(max-width:768px){
+  .why-row{flex-direction:column;gap:1.5rem;margin-bottom:3rem}
+  .why-photo{flex:0 0 auto;width:96%}
+  .why-copy{text-align:left}
+  .why-row-l .order-1,.why-row-r .order-1{order:1}
+  .why-row-l .order-2,.why-row-r .order-2{order:2}
+}
+</style>
+
 <script>
-// ===== WHY section scroll animation =====
-(function initWhyScroll(){
-  var whySec=document.getElementById('why');if(!whySec)return;
-  var fill=document.getElementById('why-line-fill');if(!fill)return;
-  var items=document.querySelectorAll('.why-item');
-  var dots=document.querySelectorAll('.why-dot');
-  var contents=document.querySelectorAll('.why-content');
-  var illus=document.querySelectorAll('.why-illustration');
-  var rafId=null;
-  function updateWhy(){
-    rafId=null;
-    var rect=whySec.getBoundingClientRect();
-    var winH=window.innerHeight;
-    var total=rect.height+winH*0.3;
-    var passed=winH*0.5-rect.top;
-    var progress=Math.max(0,Math.min(1,passed/total));
-    fill.style.height=(progress*100)+'%';
-    var itemStep=1/(items.length+0.5);
-    for(var i=0;i<items.length;i++){
-      var threshold=(i+0.5)*itemStep;
-      if(progress>=threshold){
-        if(!dots[i].classList.contains('active')){dots[i].classList.add('active');}
-        if(!contents[i].classList.contains('active')){contents[i].classList.add('active');}
-        if(illus[i]&&!illus[i].classList.contains('active')){illus[i].classList.add('active');}
+(function(){
+  var rows = document.querySelectorAll('.why-row');
+  if (!rows.length) return;
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting) {
+        e.target.classList.add('active');
+        observer.unobserve(e.target);
       }
-    }
-  }
-  function onScroll(){
-    if(rafId)return;
-    rafId=requestAnimationFrame(updateWhy);
-  }
-  window.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('resize',onScroll,{passive:true});
-  setTimeout(updateWhy,100);
+    });
+  }, {threshold: 0.35, rootMargin: '0px 0px -120px 0px'});
+  rows.forEach(function(r){ observer.observe(r); });
 })();
 </script>
