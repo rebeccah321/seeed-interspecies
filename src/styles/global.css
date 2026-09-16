@@ -182,3 +182,10 @@ html{scroll-behavior:smooth} body{-webkit-font-smoothing:antialiased;background:
 /* People & Partners cards — light green / light gray */
 .partner-card{background:linear-gradient(140deg,#eef5e2 0%,#eaeef0 55%,#e6eaec 100%);border:1px solid rgba(143,195,31,.12)}
 .partner-card:hover{background:linear-gradient(140deg,#e8f3d8 0%,#e4e8ec 55%,#e0e4e8 100%)}
+
+/* ===== Language Toggle ===== */
+.lang-toggle{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem}
+.lang-toggle-btn{background:none;border:none;cursor:pointer;font-size:.8rem;font-weight:600;color:#9ca3af;padding:.1rem .2rem;border-radius:.25rem;transition:color .2s,background .2s}
+.lang-toggle-btn.active{color:#8FC31F;font-weight:700}
+.lang-toggle-btn:hover{color:#8FC31F}
+.lang-toggle-divider{color:#d1d5db;font-weight:400;user-select:none}

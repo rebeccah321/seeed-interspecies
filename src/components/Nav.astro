@@ -17,19 +17,19 @@ const base = import.meta.env.BASE_URL;
   <div class="enter-content">
     <div class="enter-title">Interspecies</div>
     <div class="enter-wave-row">
-      <div class="left-text cover-fade">Life has been<br>sending signals for 3.8 billion years.</div>
+      <div class="left-text cover-fade" data-en="Life has been<br>sending signals for 3.8 billion years." data-zh="生命发送信号<br>已有38亿年">Life has been<br>sending signals for 3.8 billion years.</div>
       <div class="wave-area cover-fade" id="wave-area">
         <canvas id="enter-wave-canvas"></canvas>
         <button class="wave-btn" id="enter-btn">
-          Enter the Network
+          <span data-en="Enter the Network" data-zh="进入网络">Enter the Network</span>
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
-      <div class="right-text cover-fade">We're only now<br>learning to receive them.</div>
+      <div class="right-text cover-fade" data-en="We're only now<br>learning to receive them." data-zh="而我们刚刚<br>学会接收它们">We're only now<br>learning to receive them.</div>
     </div>
-    <div class="cover-slogan">Open hardware for animal &amp; ecological research</div>
+    <div class="cover-slogan" data-en="Open hardware for animal &amp; ecological research" data-zh="面向动物与生态研究的开源硬件">Open hardware for animal &amp; ecological research</div>
   </div>
-  <div class="enter-sub">Seeed Studio · Interspecies Initiative</div>
+  <div class="enter-sub" data-en="Seeed Studio · Interspecies Initiative" data-zh="Seeed Studio · 跨物种倡议">Seeed Studio · Interspecies Initiative</div>
 </div>
 
 <!-- ============ NAV ============ -->
@@ -40,19 +40,29 @@ const base = import.meta.env.BASE_URL;
       Seeed<span>·</span>Interspecies
     </a>
     <div class="hidden md:flex items-center gap-7 text-sm">
-      <a href="#why" class="nav-link hover:text-ink"><span class="nav-num">01</span> Why Now</a><a href="#what" class="nav-link hover:text-ink"><span class="nav-num">02</span> What We Do</a>
-      <a href="#cases" class="nav-link hover:text-ink"><span class="nav-num">03</span> Cases</a><a href="#partners" class="nav-link hover:text-ink"><span class="nav-num">04</span> Partners</a>
-      <a href="#join" class="nav-link hover:text-ink"><span class="nav-num">05</span> Join</a>
+      <a href="#why" class="nav-link hover:text-ink"><span class="nav-num">01</span> <span data-en="Why Now" data-zh="为何此刻">Why Now</span></a><a href="#what" class="nav-link hover:text-ink"><span class="nav-num">02</span> <span data-en="What We Do" data-zh="我们在做什么">What We Do</span></a>
+      <a href="#cases" class="nav-link hover:text-ink"><span class="nav-num">03</span> <span data-en="Cases" data-zh="案例">Cases</span></a><a href="#partners" class="nav-link hover:text-ink"><span class="nav-num">04</span> <span data-en="Partners" data-zh="合作伙伴">Partners</span></a>
+      <a href="#join" class="nav-link hover:text-ink"><span class="nav-num">05</span> <span data-en="Join" data-zh="加入">Join</span></a>
     </div>
-    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand">Get in touch</a>
+    <div class="hidden md:flex items-center gap-1 lang-toggle">
+      <button class="lang-toggle-btn active" data-lang="en">EN</button>
+      <span class="lang-toggle-divider">|</span>
+      <button class="lang-toggle-btn" data-lang="zh">中文</button>
+    </div>
+    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand" data-en="Get in touch" data-zh="联系我们">Get in touch</a>
     <button class="md:hidden text-ink" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
   </div>
   <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-line px-6 py-4 space-y-3">
-    <a href="#why" class="block text-sm"><span class="nav-num">01</span> Why Now</a><a href="#what" class="block text-sm"><span class="nav-num">02</span> What We Do</a>
-    <a href="#cases" class="block text-sm"><span class="nav-num">03</span> Cases</a><a href="#partners" class="block text-sm"><span class="nav-num">04</span> Partners</a>
-    <a href="#join" class="block text-sm"><span class="nav-num">05</span> Join</a>
+    <a href="#why" class="block text-sm"><span class="nav-num">01</span> <span data-en="Why Now" data-zh="为何此刻">Why Now</span></a><a href="#what" class="block text-sm"><span class="nav-num">02</span> <span data-en="What We Do" data-zh="我们在做什么">What We Do</span></a>
+    <a href="#cases" class="block text-sm"><span class="nav-num">03</span> <span data-en="Cases" data-zh="案例">Cases</span></a><a href="#partners" class="block text-sm"><span class="nav-num">04</span> <span data-en="Partners" data-zh="合作伙伴">Partners</span></a>
+    <a href="#join" class="block text-sm"><span class="nav-num">05</span> <span data-en="Join" data-zh="加入">Join</span></a>
+    <div class="flex items-center gap-1 lang-toggle pt-2 border-t border-line">
+      <button class="lang-toggle-btn active" data-lang="en">EN</button>
+      <span class="lang-toggle-divider">|</span>
+      <button class="lang-toggle-btn" data-lang="zh">中文</button>
+    </div>
   </div>
 </nav>
 

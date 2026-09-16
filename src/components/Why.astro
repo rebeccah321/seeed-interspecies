@@ -4,45 +4,45 @@ const base = import.meta.env.BASE_URL;
 const items = [
   {
     photo: `${base}/images/why-dolphin.jpg`,
-    photoCap: 'Dolphin — Brazil',
-    title: 'Cross-species collaboration is nothing new.',
-    body: 'Honeyguides lead hunters. Dolphins signal when to cast. Cormorants and hunting eagles have worked under human command for centuries. Homing pigeons carried addressed messages. Each was a real protocol — precise, effective, but hard to scale.',
+    photoCap: 'Dolphin — Brazil', photoCapZh: '海豚 — 巴西',
+    title: 'Cross-species collaboration is nothing new.', titleZh: '跨物种协作并非新鲜事。',
+    body: 'Honeyguides lead hunters. Dolphins signal when to cast. Cormorants and hunting eagles have worked under human command for centuries. Homing pigeons carried addressed messages. Each was a real protocol — precise, effective, but hard to scale.', bodyZh: '响蜜鴷引领猎人。海豚示意何时撒网。鸬鹚和猎鹰在人类指挥下工作了数个世纪。信鸽传递有收件人的信件。每一个都是真实的协议——精准、有效，但难以规模化。',
   },
   {
     photo: `${base}/images/why-cormorant.jpg`,
-    photoCap: 'Cormorant — China',
-    title: 'The signals were never the issue. The network was.',
-    body: 'Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting all of this for millions of years. What has always been missing is just the receiver: a shared network that connects them all.',
+    photoCap: 'Cormorant — China', photoCapZh: '鸬鹚 — 中国',
+    title: 'The signals were never the issue. The network was.', titleZh: '信号从来不是问题。网络才是。',
+    body: 'Calls, gaits, stripe patterns, water quality, temperature — animals and ecosystems have been broadcasting all of this for millions of years. What has always been missing is just the receiver: a shared network that connects them all.', bodyZh: '鸣叫、步态、条纹图案、水质、温度——动物和生态系统已将这些信号广播了数百万年。一直缺失的只是接收端：一个将它们全部连接起来的共享网络。',
   },
   {
     photo: `${base}/images/why-eagle.jpg`,
-    photoCap: 'Golden Eagle — Mongolia',
-    title: 'Now the missing layer is finally here.',
-    body: 'Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, we can listen at scale — and those old handshakes can become a network.',
+    photoCap: 'Golden Eagle — Mongolia', photoCapZh: '金雕 — 蒙古',
+    title: 'Now the missing layer is finally here.', titleZh: '缺失的一层终于到来。',
+    body: 'Edge AI, open-source hardware, and low-power mesh networks have crossed a threshold. For the first time, we can listen at scale — and those old handshakes can become a network.', bodyZh: '边缘 AI、开源硬件和低功耗 Mesh 网络已跨过临界点。我们第一次可以大规模聆听——那些古老的握手协议终将连成网络。',
   },
   {
     photo: `${base}/images/why-pigeon.jpg`,
-    photoCap: 'Homing Pigeon',
-    title: "We don't speak for animals. We build the tools that let them be heard.",
-    body: "Seeed is not a lab that speaks for animals. We build the open-source hardware that lets researchers and local teams turn those signals into useful knowledge — so any species, any ecosystem, can finally be heard.",
+    photoCap: 'Homing Pigeon', photoCapZh: '信鸽',
+    title: "We don't speak for animals. We build the tools that let them be heard.", titleZh: '我们不代表动物发声。我们构建让它们被听见的工具。',
+    body: "Seeed is not a lab that speaks for animals. We build the open-source hardware that lets researchers and local teams turn those signals into useful knowledge — so any species, any ecosystem, can finally be heard.", bodyZh: 'Seeed 不是代表动物发声的实验室。我们构建开源硬件，让研究者和本地团队将这些信号转化为有用知识——使任何物种、任何生态系统终能被听见。',
   },
 ];
 ---
 
 <!-- ============ WHY NOW ============ -->
 <section id="why" class="why-section">
-  <div class="why-top-label"><span>Why Now</span></div>
+  <div class="why-top-label"><span data-en="Why Now" data-zh="为何此刻">Why Now</span></div>
 
   <div class="why-items">
     {items.map((item, i) => (
       <div class={`why-row ${i % 2 === 0 ? 'why-row-l' : 'why-row-r'}`} data-why-idx={i}>
         <div class={`why-photo ${i % 2 === 0 ? 'order-2' : 'order-1'}`}>
-          <img src={item.photo} alt={item.photoCap} loading="lazy" />
-          <span class="why-photo-cap">{item.photoCap}</span>
+          <img src={item.photo} alt={item.photoCap} loading="lazy" data-cap-en={item.photoCap} data-cap-zh={item.photoCapZh} />
+          <span class="why-photo-cap" data-en={item.photoCap} data-zh={item.photoCapZh}>{item.photoCap}</span>
         </div>
         <div class={`why-copy ${i % 2 === 0 ? 'order-1' : 'order-2'}`}>
-          <h3>{item.title}</h3>
-          <p>{item.body}</p>
+          <h3 data-en={item.title} data-zh={item.titleZh}>{item.title}</h3>
+          <p data-en={item.body} data-zh={item.bodyZh}>{item.body}</p>
         </div>
       </div>
     ))}
