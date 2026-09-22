@@ -33,11 +33,11 @@ const items = [
 <section id="why" class="why-section">
   <div class="why-top-label"><span data-en="Why Now" data-zh="为何此刻">Why Now</span></div>
 
-  <div class="why-items">
+  <div class="why-items" id="why-items">
     {items.map((item, i) => (
       <div class={`why-row ${i % 2 === 0 ? 'why-row-l' : 'why-row-r'}`} data-why-idx={i}>
         <div class={`why-photo ${i % 2 === 0 ? 'order-2' : 'order-1'}`}>
-          <img src={item.photo} alt={item.photoCap} loading="lazy" data-cap-en={item.photoCap} data-cap-zh={item.photoCapZh} />
+          <img src={item.photo} alt={item.photoCap} loading="lazy" />
           <span class="why-photo-cap" data-en={item.photoCap} data-zh={item.photoCapZh}>{item.photoCap}</span>
         </div>
         <div class={`why-copy ${i % 2 === 0 ? 'order-1' : 'order-2'}`}>
@@ -49,69 +49,176 @@ const items = [
   </div>
 </section>
 
-<!-- snake-line connector -->
-<div class="why-connector">
-  <svg viewBox="0 0 120 90" preserveAspectRatio="none">
-    <defs>
-      <linearGradient id="why-conn-grad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#8FC31F"/>
-        <stop offset="100%" stop-color="#00936d"/>
-      </linearGradient>
-    </defs>
-    <path id="why-signal-path" d="M60,0 C60,18 20,28 60,45 C100,62 20,72 60,90" fill="none" stroke="url(#why-conn-grad)" stroke-width="2" stroke-dasharray="5,4" opacity="0.75"/>
-    <circle r="3.5" fill="#8FC31F">
-      <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#why-signal-path"/></animateMotion>
-    </circle>
-  </svg>
-</div>
+<style is:global>
+.why-section{
+  background:linear-gradient(180deg,#ddf0c4 0%,#d8ecda 25%,#cfe5e8 55%,#c8dfe2 80%,#c2dae0 100%);
+  padding:2.5rem 0 1.5rem;position:relative;overflow:hidden;
+}
+.why-top-label{position:absolute;top:1rem;left:50%;transform:translateX(-50%);z-index:6}
+.why-top-label span{
+  display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:4px;color:#5a8a16;background:rgba(255,255,255,.75);padding:5px 18px;
+  border-radius:9999px;border:1px solid rgba(143,195,31,.35);box-shadow:0 2px 10px rgba(143,195,31,.18);
+}
 
-<style>
-.why-section{background:linear-gradient(180deg,#ddf0c4 0%,#d8ecda 25%,#cfe5e8 55%,#c8dfe2 80%,#c2dae0 100%);padding:4.5rem 0 2rem;position:relative;overflow:visible}
-.why-top-label{position:absolute;top:1.2rem;left:50%;transform:translateX(-50%);z-index:6}
-.why-top-label span{display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:#5a8a16;background:rgba(255,255,255,.75);padding:5px 18px;border-radius:9999px;border:1px solid rgba(143,195,31,.35);box-shadow:0 2px 10px rgba(143,195,31,.18)}
+.why-items{max-width:860px;margin:0 auto;padding:2.2rem 2rem 0.5rem}
 
-.why-items{max-width:960px;margin:0 auto;padding:2.5rem 2rem 1rem}
-.why-row{display:flex;align-items:center;gap:2.5rem;margin-bottom:4rem;opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
-.why-row.active{opacity:1;transform:translateY(0)}
+.why-row{
+  display:flex;align-items:center;gap:1.5rem;margin-bottom:0.6rem;
+  opacity:0;transform:translateY(20px);
+  transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1);
+}
+.why-row.appeared{opacity:1;transform:translateY(0)}
 
-.why-photo{flex:0 0 54%;position:relative}
-.why-photo img{width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.75rem;box-shadow:0 8px 30px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.1);transition:transform 1.2s cubic-bezier(.16,1,.3,1)}
-.why-row.active .why-photo img{transform:scale(1)}
-.why-row:not(.active) .why-photo img{transform:scale(1.06)}
-.why-row-l .why-photo img{transform:rotate(1.5deg)}
-.why-row-r .why-photo img{transform:rotate(-1.5deg)}
-.why-row.active.why-row-l .why-photo img{transform:rotate(1.5deg) scale(1)}
-.why-row.active.why-row-r .why-photo img{transform:rotate(-1.5deg) scale(1)}
-.why-photo-cap{display:block;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#5a8a16;margin-top:.4rem;text-align:center}
+.why-photo{
+  flex:0 0 38%;position:relative;
+  transition:flex-basis .5s cubic-bezier(.16,1,.3,1);
+}
+.why-row-l .why-photo{transform:translateX(3.5rem)}
+.why-row-r .why-photo{transform:translateX(-3.5rem)}
 
-.why-copy{flex:1;min-width:0;max-width:42%}
-.why-copy h3{font-family:'Playfair Display',Georgia,serif;font-weight:600;font-size:1.15rem;color:#2a2f33;margin-bottom:.5rem;line-height:1.35}
-.why-copy p{font-size:.88rem;color:#6d6f70;line-height:1.75}
+.why-photo img{
+  width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:.5rem;
+  box-shadow:0 6px 22px rgba(0,0,0,.18),0 1px 4px rgba(0,0,0,.1);
+  transform:rotate(2deg) translateX(55px) scale(.92);
+  opacity:0;
+  transition:transform .65s cubic-bezier(.16,1,.3,1),opacity .5s ease;
+}
+.why-row-r .why-photo img{transform:rotate(-2deg) translateX(-55px) scale(.92)}
 
-.why-connector{position:relative;height:90px;background:linear-gradient(180deg,#c2dae0 0%,#cdd9c8 40%,#f3f7ec 100%);overflow:visible;display:flex;justify-content:center;align-items:flex-start}
-.why-connector svg{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:90px;overflow:visible}
+.why-row.appeared.why-row-l .why-photo img{transform:rotate(2deg) translateX(0px) scale(1);opacity:1}
+.why-row.appeared.why-row-r .why-photo img{transform:rotate(-2deg) translateX(0px) scale(1);opacity:1}
+
+.why-row.active.why-row-l .why-photo img{transform:rotate(2deg) translateX(0px) scale(1.03);opacity:1}
+.why-row.active.why-row-r .why-photo img{transform:rotate(-2deg) translateX(0px) scale(1.03);opacity:1}
+
+.why-row.compact.why-row-l .why-photo img{transform:rotate(1deg) translateX(0px) scale(.88);opacity:.55}
+.why-row.compact.why-row-r .why-photo img{transform:rotate(-1deg) translateX(0px) scale(.88);opacity:.55}
+
+.why-section.overview .why-row.why-row-l .why-photo img{transform:rotate(2deg) translateX(0px) scale(1);opacity:.85}
+.why-section.overview .why-row.why-row-r .why-photo img{transform:rotate(-2deg) translateX(0px) scale(1);opacity:.85}
+
+.why-row.appeared.why-row-l:hover .why-photo img{transform:rotate(2deg) translateX(0px) scale(1.1);opacity:1}
+.why-row.appeared.why-row-r:hover .why-photo img{transform:rotate(-2deg) translateX(0px) scale(1.1);opacity:1}
+
+.why-photo-cap{
+  position:absolute;bottom:.35rem;left:.5rem;
+  font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  color:#fff;background:rgba(0,0,0,.4);padding:2px 8px;border-radius:4px;
+  backdrop-filter:blur(4px);opacity:0;transition:opacity .3s ease;
+}
+.why-row.appeared .why-photo-cap{opacity:1}
+
+.why-copy{flex:1;min-width:0}
+.why-copy h3{
+  font-family:'Playfair Display',Georgia,serif;font-weight:600;
+  font-size:.9rem;color:#2a2f33;margin-bottom:.2rem;line-height:1.35;
+  transition:font-size .3s ease,color .3s ease,opacity .3s ease;
+}
+.why-copy p{
+  font-size:.78rem;color:#6d6f70;line-height:1.65;
+  max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .5s cubic-bezier(.16,1,.3,1),opacity .4s ease;
+}
+
+.why-row.active h3{font-size:.95rem;color:#1a231a}
+.why-row.active p{max-height:7rem;opacity:1}
+
+.why-row.compact h3{font-size:.82rem;opacity:.6}
+.why-row.compact p{max-height:0;opacity:0}
+
+.why-section.overview .why-row h3{font-size:.88rem;opacity:1}
+.why-section.overview .why-row p{
+  max-height:2.6rem;opacity:.5;
+  -webkit-mask:linear-gradient(180deg,#000 35%,transparent 100%);
+  mask:linear-gradient(180deg,#000 35%,transparent 100%);
+}
+
+.why-row.appeared:hover h3{font-size:1rem;color:#1a231a}
+.why-row.appeared:hover p{max-height:7rem;opacity:1;-webkit-mask:none;mask:none}
+.why-row.appeared:hover .why-photo{flex-basis:46%}
+
+.why-items:hover .why-row.appeared:not(:hover){opacity:.35}
+
+.why-row.active .why-photo{flex-basis:44%}
+.why-row.compact .why-photo{flex-basis:32%}
+.why-section.overview .why-row .why-photo{flex-basis:38%}
 
 @media(max-width:768px){
-  .why-row{flex-direction:column;gap:1.5rem;margin-bottom:3rem}
-  .why-photo{flex:0 0 auto;width:96%}
-  .why-copy{text-align:left}
+  .why-items{padding:2rem 1.2rem 0.5rem}
+  .why-row{flex-direction:column;gap:.8rem;margin-bottom:1rem}
+  .why-photo{flex:0 0 auto;width:100%}
+  .why-row-l .why-photo,.why-row-r .why-photo{transform:none}
   .why-row-l .order-1,.why-row-r .order-1{order:1}
   .why-row-l .order-2,.why-row-r .order-2{order:2}
+  .why-row.active p,.why-section.overview .why-row p{
+    max-height:5rem;opacity:1;-webkit-mask:none;mask:none;
+  }
 }
 </style>
 
 <script>
 (function(){
-  var rows = document.querySelectorAll('.why-row');
-  if (!rows.length) return;
+  var section = document.getElementById('why');
+  if (!section) return;
+  var rows = section.querySelectorAll('.why-row');
+  var started = false;
+  var perCard = 3000;
+
+  function activate(idx) {
+    if (section.classList.contains('overview')) return;
+    for (var i = 0; i < idx; i++) {
+      if (rows[i]) {
+        rows[i].classList.add('appeared','compact');
+        rows[i].classList.remove('active');
+      }
+    }
+    if (rows[idx]) {
+      rows[idx].classList.add('appeared','active');
+      rows[idx].classList.remove('compact');
+    }
+  }
+
+  function skipToOverview() {
+    section.classList.add('overview');
+    rows.forEach(function(row){
+      row.classList.add('appeared');
+      row.classList.remove('active','compact');
+    });
+  }
+
+  function startSequence() {
+    if (started) return;
+    started = true;
+    activate(0);
+    for (var i = 1; i < rows.length; i++) {
+      (function(idx){
+        setTimeout(function(){ activate(idx); }, idx * perCard);
+      })(i);
+    }
+    setTimeout(function(){
+      if (!section.classList.contains('overview')) {
+        skipToOverview();
+      }
+    }, rows.length * perCard + 600);
+  }
+
+  rows.forEach(function(row){
+    row.addEventListener('mouseenter', function(){
+      if (started && !section.classList.contains('overview')) {
+        skipToOverview();
+      }
+    });
+  });
+
   var observer = new IntersectionObserver(function(entries){
     entries.forEach(function(e){
       if (e.isIntersecting) {
-        e.target.classList.add('active');
+        startSequence();
         observer.unobserve(e.target);
       }
     });
-  }, {threshold: 0.35, rootMargin: '0px 0px -120px 0px'});
-  rows.forEach(function(r){ observer.observe(r); });
+  }, { threshold: 0.25 });
+  observer.observe(section);
 })();
 </script>
