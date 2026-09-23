@@ -1,5 +1,5 @@
 ---
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <!-- ============ EVIDENCE ============ -->
@@ -59,7 +59,7 @@ const tl=(tone)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return TONE_
 const trStats=(p)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return l==='zh'?(p.statsZh||p.stats):p.stats;};
 const trLinkText=(p)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';const dft=l==='zh'?'查看完整案例':'View Full Case';return(l==='zh'?(p.linkTextZh||p.linkText):p.linkText)||dft;};
 
-const base = import.meta.env.BASE_URL;
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 // Map connection canvas
 (function(){
