@@ -39,3 +39,14 @@
 - 新增转化按钮：在元素上加 `data-odl-cta="唯一id"` 即可，无需改 JS。
 - 新增分区：给 `<section>` 加 `id`，并把 id 加进 `analytics.js` 的 `SECTION_IDS`（顺序即 `section_index`）。
 - 看板取数脚本：`fetch_traffic.py`（同一目录的 `traffic-data.json` 供 `index.html` 渲染）。
+
+## 关键事件（转化）
+
+GA4 后台 → 管理 → 数据展示 → 事件 → **Recent events**，点事件名左侧的星标即可标记为「关键事件」。
+建议标记：`cta_click`、`case_view`、`outbound_click`。
+
+- Recent events 只收录 GA4 已处理过的事件，新事件通常要等数小时至 24 小时才出现，出现后再点星标即可。
+- 标记只对标记之后的流量生效，越早标记越好。
+- 目前给看板用的服务账号是「查看者」权限（只读），无法通过 API 建关键事件；这一步需要在后台手动点星标，或把权限提到「编辑者」后改用 Admin API。
+
+标记之后，GA4 自带报表（报告 → 互动 → 事件、实时报告）会直接给出关键事件数与转化率，后续接 Google Ads 做再营销也依赖它。
