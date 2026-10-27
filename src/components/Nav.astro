@@ -20,7 +20,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       <div class="left-text cover-fade" data-en="Life has been<br>sending signals for 3.8 billion years." data-zh="生命发送信号<br>已有38亿年">Life has been<br>sending signals for 3.8 billion years.</div>
       <div class="wave-area cover-fade" id="wave-area">
         <canvas id="enter-wave-canvas"></canvas>
-        <button class="wave-btn" id="enter-btn">
+        <button class="wave-btn" id="enter-btn" data-odl-cta="enter_network">
           <span data-en="Enter the Network" data-zh="进入网络">Enter the Network</span>
           <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
@@ -49,7 +49,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       <span class="lang-toggle-divider">|</span>
       <button class="lang-toggle-btn" data-lang="zh">中文</button>
     </div>
-    <a href="#contact" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand" data-en="Get in touch" data-zh="联系我们">Get in touch</a>
+    <a href="#contact" data-odl-cta="nav_get_in_touch" class="nav-cta hidden md:inline-flex items-center gap-2 pill border border-line px-5 py-2 text-sm text-ink hover:border-brand hover:text-brand" data-en="Get in touch" data-zh="联系我们">Get in touch</a>
     <button class="md:hidden text-ink" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
       <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>

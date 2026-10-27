@@ -30,19 +30,8 @@ const { title, description } = Astro.props;
   <script>
     import '../i18n/i18n.js';
   </script>
-  <script is:inline>
-    function odlPageView(contentGroup) {
-      gtag('event', 'page_view', {
-        page_title: document.title,
-        page_location: location.href,
-        page_path: location.pathname,
-        content_group: contentGroup || 'home'
-      });
-    }
-    document.addEventListener('odl:pageview', function(event) {
-      odlPageView(event.detail && event.detail.content_group);
-    });
-    odlPageView('home');
+  <script>
+    import '../scripts/analytics.js';
   </script>
 </body>
 </html>
