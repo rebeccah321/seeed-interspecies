@@ -2,8 +2,6 @@
 import '../styles/global.css';
 import spaceGrotesk from '../assets/fonts/space-grotesk-latin.woff2?url';
 import playfairDisplay from '../assets/fonts/playfair-display-latin.woff2?url';
-import inter from '../assets/fonts/inter-latin.woff2?url';
-import poppins300 from '../assets/fonts/poppins-300-latin.woff2?url';
 const { title, description } = Astro.props;
 ---
 <!DOCTYPE html>
@@ -20,8 +18,6 @@ const { title, description } = Astro.props;
   <meta property="og:url" content={`${Astro.site}`}>
   <link rel="preload" href={spaceGrotesk} as="font" type="font/woff2" crossorigin>
   <link rel="preload" href={playfairDisplay} as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href={inter} as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href={poppins300} as="font" type="font/woff2" crossorigin>
   <script is:inline>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
