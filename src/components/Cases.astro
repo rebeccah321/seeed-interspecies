@@ -1,5 +1,29 @@
 ---
-const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+import { getImage } from 'astro:assets';
+import { PROJECTS } from '../data/projects.js';
+
+const caseModules = import.meta.glob('../assets/images/case-*.png', { eager: true, import: 'default' });
+const caseSources = Object.fromEntries(
+  Object.entries(caseModules).map(([path, src]) => [`images/${path.split('/').pop()}`, src])
+);
+const caseImages = Object.fromEntries(
+  await Promise.all(
+    PROJECTS.map(async (project) => {
+      const src = caseSources[project.img];
+      if (!src) return [project.id, null];
+      const [small, large] = await Promise.all([
+        getImage({ src, width: 480, format: 'webp', quality: 78 }),
+        getImage({ src, width: 960, format: 'webp', quality: 78 }),
+      ]);
+      return [project.id, {
+        small: small.src,
+        large: large.src,
+        width: large.attributes.width,
+        height: large.attributes.height,
+      }];
+    })
+  )
+);
 ---
 
 <!-- ============ CASES ============ -->
@@ -49,6 +73,8 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
   </div>
 </section>
 
+<script type="application/json" id="case-image-data" set:html={JSON.stringify(caseImages)}></script>
+
 <script>
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -58,8 +84,6 @@ const tr=(p,f)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return l==='z
 const tl=(tone)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return TONE_LABELS[tone]?(TONE_LABELS[tone][l]||TONE_LABELS[tone].en):tone;};
 const trStats=(p)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return l==='zh'?(p.statsZh||p.stats):p.stats;};
 const trLinkText=(p)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';const dft=l==='zh'?'查看完整案例':'View Full Case';return(l==='zh'?(p.linkTextZh||p.linkText):p.linkText)||dft;};
-
-const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 // Map connection canvas
 (function(){
@@ -86,33 +110,44 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
   draw();
 })();
 
-const worldMap = L.map('world-map', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
-window.addEventListener('load',()=>{worldMap.invalidateSize();var b=L.latLngBounds(PROJECTS.map(function(p){return p.coords;}));worldMap.fitBounds(b,{padding:[50,50],maxZoom:3});});
 const toneColor={active:'#8FC31F',open:'#ffab00',planned:'#aab8ab'};
 const floatCard=document.getElementById('map-float-card'),floatCardBody=document.getElementById('map-float-card-body');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
+const CASE_IMAGE_DATA=JSON.parse(document.getElementById('case-image-data').textContent);
 let activeMarker=null;
+let worldMap=null;
+const markers={};
+function caseImageHTML(p,sizes){const im=CASE_IMAGE_DATA[p.id];if(!im)return '';return '<img src="'+im.large+'" srcset="'+im.small+' 480w, '+im.large+' 960w" sizes="'+sizes+'" width="'+im.width+'" height="'+im.height+'" alt="'+esc(tr(p,'name'))+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">';}
+function initMap(){
+  if(worldMap)return worldMap;
+  worldMap=L.map('world-map', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
+  PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:tr(p,'name'),riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id,'map_pin'));});
+  worldMap.fitBounds(L.latLngBounds(PROJECTS.map(p=>p.coords)),{padding:[50,50],maxZoom:3});
+  worldMap.on('move zoom',()=>{if(activeMarker&&floatCard.classList.contains('visible'))pfm(activeMarker);});
+  return worldMap;
+}
 function pfm(marker){const mc=worldMap.getContainer(),mr=mc.getBoundingClientRect(),p=worldMap.latLngToContainerPoint(marker.getLatLng());const cw=floatCard.offsetWidth||300,ch=floatCard.offsetHeight||160,m=18;let l=p.x+28,t=p.y-ch-20;if(t<m)t=p.y+28;if(l+cw>mr.width-m)l=p.x-cw-28;if(l<m)l=m;if(t<m)t=m;if(t+ch>mr.height-m)t=mr.height-ch-m;floatCard.style.left=l+'px';floatCard.style.top=t+'px';}
-function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<div class="project-preview"><img src="'+(base+'/'+(p.img||''))+'" alt="'+esc(tr(p,'name'))+'" onerror="this.style.display=\'none\'"></div><span class="card-status" style="background:'+c+'22;color:'+c+'">'+tl(p.tone)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(tr(p,'name'))+'</h5><p class="text-xs text-brand-deep mb-2">'+esc(tr(p,'location'))+'</p><p class="text-xs text-muted leading-relaxed">'+esc(tr(p,'summary'))+'</p>';floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
+function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<div class="project-preview">'+caseImageHTML(p,'300px')+'</div><span class="card-status" style="background:'+c+'22;color:'+c+'">'+tl(p.tone)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(tr(p,'name'))+'</h5><p class="text-xs text-brand-deep mb-2">'+esc(tr(p,'location'))+'</p><p class="text-xs text-muted leading-relaxed">'+esc(tr(p,'summary'))+'</p>';floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
 function hfc(){floatCard.classList.remove('visible');activeMarker=null;}
 function closeCaseModal(){document.getElementById('case-modal').classList.remove('open');document.body.style.overflow='';}
-function ocm(pid,source){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;const preview=document.getElementById('modal-img');preview.className='modal-img';preview.innerHTML='<img src="'+(base+'/'+(p.img||''))+'" alt="'+esc(tr(p,'name'))+'" style="width:100%;height:100%;object-fit:cover;border-radius:.75rem" onerror="this.style.display=\'none\'">';document.getElementById('modal-title').textContent=tr(p,'name');document.getElementById('modal-meta').textContent=tr(p,'location');document.getElementById('modal-desc').textContent=tr(p,'desc');document.getElementById('modal-tags').innerHTML=p.tags.map(t=>'<span>'+esc(t)+'</span>').join('');const sb=document.getElementById('modal-status-badge');const sc=toneColor[p.tone];sb.style.background=sc+'22';sb.style.color=sc;sb.textContent=tl(p.tone);const se=document.getElementById('modal-stats');const st=trStats(p);if(st&&st.length){se.style.display='grid';se.innerHTML=st.map(s=>'<div class="modal-stat"><div class="val">'+esc(s.val)+'</div><div class="lbl">'+esc(s.lbl)+'</div></div>').join('');}else{se.style.display='none';}const cta=document.getElementById('modal-cta');if(p.link){cta.href=p.link;cta.style.display='inline-flex';cta.innerHTML=trLinkText(p)+'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';}else{cta.style.display='none';}document.getElementById('case-modal').classList.add('open');document.querySelector('.case-modal').scrollTop=0;document.body.style.overflow='hidden';if(window.odlTrack)window.odlTrack('case_view',{case_id:p.id,case_name:tr(p,'name'),case_status:tl(p.tone),case_source:source||'unknown'});}
+function ocm(pid,source){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;const preview=document.getElementById('modal-img');preview.className='modal-img';preview.innerHTML=caseImageHTML(p,'(max-width: 700px) 90vw, 640px');document.getElementById('modal-title').textContent=tr(p,'name');document.getElementById('modal-meta').textContent=tr(p,'location');document.getElementById('modal-desc').textContent=tr(p,'desc');document.getElementById('modal-tags').innerHTML=p.tags.map(t=>'<span>'+esc(t)+'</span>').join('');const sb=document.getElementById('modal-status-badge');const sc=toneColor[p.tone];sb.style.background=sc+'22';sb.style.color=sc;sb.textContent=tl(p.tone);const se=document.getElementById('modal-stats');const st=trStats(p);if(st&&st.length){se.style.display='grid';se.innerHTML=st.map(s=>'<div class="modal-stat"><div class="val">'+esc(s.val)+'</div><div class="lbl">'+esc(s.lbl)+'</div></div>').join('');}else{se.style.display='none';}const cta=document.getElementById('modal-cta');if(p.link){cta.href=p.link;cta.style.display='inline-flex';cta.innerHTML=trLinkText(p)+'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';}else{cta.style.display='none';}document.getElementById('case-modal').classList.add('open');document.querySelector('.case-modal').scrollTop=0;document.body.style.overflow='hidden';if(window.odlTrack)window.odlTrack('case_view',{case_id:p.id,case_name:tr(p,'name'),case_status:tl(p.tone),case_source:source||'unknown'});}
 document.getElementById('case-modal-close-btn').addEventListener('click',function(e){e.stopPropagation();closeCaseModal();});
 document.getElementById('case-modal').addEventListener('click',function(e){if(e.target===this)closeCaseModal();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCaseModal();});
-const markers={};
-PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:tr(p,'name'),riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id,'map_pin'));});
-var allBounds=L.latLngBounds(PROJECTS.map(function(p){return p.coords;}));worldMap.fitBounds(allBounds,{padding:[50,50],maxZoom:3});
 floatCard.addEventListener('mouseenter',()=>{if(activeMarker)floatCard.classList.add('visible');});
 floatCard.addEventListener('mouseleave',()=>hfc());
-worldMap.on('move zoom',()=>{if(activeMarker&&floatCard.classList.contains('visible'))pfm(activeMarker);});
+const mapEl=document.getElementById('world-map');
+if('IntersectionObserver' in window){
+  const mapObserver=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){mapObserver.disconnect();initMap();}},{rootMargin:'500px 0px'});
+  mapObserver.observe(mapEl);
+}else{initMap();}
 const filterBtns=document.querySelectorAll('.filter-btn');
 const tagMap={'tnc':['Environmental','IoT'],'crayfish':['CV','VLM'],'bhutan':['CV','LoRa','Tracker'],'mothbox-panama':['CV','LoRa'],'buzzcam':['STT','Environmental'],'mothbox-peru':['CV','LoRa'],'mothbox-yellowstone':['CV','LoRa'],'olfactory':['Environmental'],'collarid':['CV','LoRa','Tracker'],'lifescience':['CV','Environmental','LoRa']};
-filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;if(window.odlTrack)window.odlTrack('case_filter',{filter_tag:f});Object.keys(markers).forEach(k=>{const tags=tagMap[k]||[];if(f==='all'||tags.includes(f))worldMap.addLayer(markers[k]);else worldMap.removeLayer(markers[k]);});});});
+filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{initMap();filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;if(window.odlTrack)window.odlTrack('case_filter',{filter_tag:f});Object.keys(markers).forEach(k=>{const tags=tagMap[k]||[];if(f==='all'||tags.includes(f))worldMap.addLayer(markers[k]);else worldMap.removeLayer(markers[k]);});});});
 const esc2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
-function bcr(tid,projects){const track=document.getElementById(tid);track.innerHTML='';const items=[...projects,...projects];items.forEach(p=>{const card=document.createElement('div');card.className='carousel-card';card.innerHTML='<span class="c-dot '+p.tone+'"></span><div class="c-body"><h4>'+esc2(tr(p,'name'))+'</h4><p>'+esc2(tr(p,'summary'))+'</p></div><div class="c-right"><span class="c-label '+p.tone+'">'+tl(p.tone)+'</span><span class="c-chev">→</span></div>';card.addEventListener('click',()=>{const m=markers[p.id];if(m){worldMap.setView(m.getLatLng(),worldMap.getZoom()>=4?worldMap.getZoom():4,{animate:true});sfc(p,m);}ocm(p.id,'carousel');});track.appendChild(card);});let drag=false,sx=0,sl=0;track.addEventListener('mousedown',function(e){drag=true;track.classList.add('dragging');sx=e.pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('mouseleave',function(){if(drag){drag=false;track.classList.remove('dragging');}});track.addEventListener('mouseup',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();const x=e.pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});track.addEventListener('touchstart',function(e){drag=true;track.classList.add('dragging');sx=e.touches[0].pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('touchend',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('touchmove',function(e){if(!drag)return;const x=e.touches[0].pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});}
+function bcr(tid,projects){const track=document.getElementById(tid);track.innerHTML='';const items=[...projects,...projects];items.forEach(p=>{const card=document.createElement('div');card.className='carousel-card';card.innerHTML='<span class="c-dot '+p.tone+'"></span><div class="c-body"><h4>'+esc2(tr(p,'name'))+'</h4><p>'+esc2(tr(p,'summary'))+'</p></div><div class="c-right"><span class="c-label '+p.tone+'">'+tl(p.tone)+'</span><span class="c-chev">→</span></div>';card.addEventListener('click',()=>{initMap();const m=markers[p.id];if(m){worldMap.setView(m.getLatLng(),worldMap.getZoom()>=4?worldMap.getZoom():4,{animate:true});sfc(p,m);}ocm(p.id,'carousel');});track.appendChild(card);});let drag=false,sx=0,sl=0;track.addEventListener('mousedown',function(e){drag=true;track.classList.add('dragging');sx=e.pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('mouseleave',function(){if(drag){drag=false;track.classList.remove('dragging');}});track.addEventListener('mouseup',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();const x=e.pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});track.addEventListener('touchstart',function(e){drag=true;track.classList.add('dragging');sx=e.touches[0].pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('touchend',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('touchmove',function(e){if(!drag)return;const x=e.touches[0].pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});}
 bcr('carousel-track-1',PROJECTS.filter(p=>p.tone==='active'));
 bcr('carousel-track-2',PROJECTS.filter(p=>p.tone!=='active'));
 document.addEventListener('lang-change',function(){bcr('carousel-track-1',PROJECTS.filter(p=>p.tone==='active'));bcr('carousel-track-2',PROJECTS.filter(p=>p.tone!=='active'));});

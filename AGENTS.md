@@ -19,12 +19,15 @@ npm run preview    # 预览构建产物
 - `src/data/projects.js` — 地图与轮播的案例数据（改案例内容改这里）
 - `src/styles/global.css` — Tailwind `@theme` 设计令牌 + 自定义 CSS
 - `docs/` — 内容规划文档（blueprint、案例库、playbook 等）
-- `public/` — 图片资产（images/、partner-logos/、sdg-icons/）
+- `src/assets/images/` — 原始照片，构建时由 Astro 生成响应式 WebP
+- `src/assets/logos/`、`src/assets/fonts/` — 位图 logo 与自托管字体
+- `public/` — 仅保留 SVG（`partner-logos/*.svg`、`sdg-icons/`）
 
 ## 边界
 
 **Always**
 - 改文案/案例：先改 `src/data/projects.js` 或对应 section 组件。
+- 加照片：放进 `src/assets/images/`，用 `import` + `astro:assets` 的 `Image`/`Picture` 输出；不要放回 `public/`。
 - 提交前跑 `npm run build` 确认零错误。
 
 **Ask First**
@@ -33,10 +36,11 @@ npm run preview    # 预览构建产物
 
 **Never**
 - 引入运行时 CDN 脚本（Tailwind Play CDN、unpkg 等）——全部走 npm + Vite 构建。
+- 把大图放进 `public/` 或用 CSS `background-image` 引用原图——会绕过构建期压缩与响应式 `srcset`。
 - 直接编辑 `dist/`（构建产物）。
 - 硬编码 base 路径：
 
 ```astro
-❌ <img src="/seeed-interspecies/images/case-tnc.png">
-✅ <img src={`${import.meta.env.BASE_URL}images/case-tnc.png`}>
+❌ <img src="/seeed-interspecies/sdg-icons/sdg-13.svg">
+✅ <img src={`${import.meta.env.BASE_URL}sdg-icons/sdg-13.svg`}>
 ```

@@ -1,5 +1,6 @@
 ---
-const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+import { Image } from 'astro:assets';
+import lucyPhoto from '../assets/images/Lucy.png';
 ---
 
 <div class="honeyguide-cursor" id="honeyguide-cursor">
@@ -11,7 +12,19 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
 <!-- ============ ENTER OVERLAY ============ -->
 <div class="enter-overlay" id="enter-overlay">
-  <div class="enter-bg-img" style={`background-image:url("${base}/images/Lucy.png")`}></div>
+  <div class="enter-bg-img">
+    <Image
+      src={lucyPhoto}
+      alt=""
+      widths={[640, 960, 1280, 1536]}
+      sizes="100vw"
+      format="webp"
+      quality={76}
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+    />
+  </div>
   <div class="enter-bg-tint"></div>
   <canvas class="enter-canvas" id="enter-canvas"></canvas>
   <div class="enter-content">
