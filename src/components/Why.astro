@@ -41,7 +41,7 @@ const items = [
     {items.map((item, i) => (
       <div class={`why-row ${i % 2 === 0 ? 'why-row-l' : 'why-row-r'}`} data-why-idx={i}>
         <div class={`why-photo ${i % 2 === 0 ? 'order-2' : 'order-1'}`}>
-          <Image src={item.photo} alt={item.photoCap} width={720} height={480} widths={[360, 720]} sizes="(min-width: 768px) 330px, 90vw" format="webp" quality={78} loading="lazy" decoding="async" />
+          <Image src={item.photo} alt={item.photoCap} width={720} height={480} widths={[360, 720]} sizes="(min-width: 768px) 330px, 90vw" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" />
           <span class="why-photo-cap" data-en={item.photoCap} data-zh={item.photoCapZh}>{item.photoCap}</span>
         </div>
         <div class={`why-copy ${i % 2 === 0 ? 'order-1' : 'order-2'}`}>

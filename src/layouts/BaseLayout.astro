@@ -1,6 +1,9 @@
 ---
 import '../styles/global.css';
 import spaceGrotesk from '../assets/fonts/space-grotesk-latin.woff2?url';
+import playfairDisplay from '../assets/fonts/playfair-display-latin.woff2?url';
+import inter from '../assets/fonts/inter-latin.woff2?url';
+import poppins300 from '../assets/fonts/poppins-300-latin.woff2?url';
 const { title, description } = Astro.props;
 ---
 <!DOCTYPE html>
@@ -16,12 +19,36 @@ const { title, description } = Astro.props;
   <meta property="og:type" content="website">
   <meta property="og:url" content={`${Astro.site}`}>
   <link rel="preload" href={spaceGrotesk} as="font" type="font/woff2" crossorigin>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DS2CF25J1Y"></script>
+  <link rel="preload" href={playfairDisplay} as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href={inter} as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href={poppins300} as="font" type="font/woff2" crossorigin>
   <script is:inline>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-DS2CF25J1Y', { send_page_view: false });
+
+    (function () {
+      var loaded = false;
+      function loadGtag() {
+        if (loaded) return;
+        loaded = true;
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-DS2CF25J1Y';
+        document.head.appendChild(script);
+      }
+      function schedule() {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(loadGtag, { timeout: 2000 });
+        } else {
+          setTimeout(loadGtag, 1200);
+        }
+      }
+      if (document.readyState === 'complete') schedule();
+      else window.addEventListener('load', schedule, { once: true });
+      setTimeout(loadGtag, 8000);
+    })();
   </script>
 </head>
 <body>

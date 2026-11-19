@@ -26,7 +26,7 @@ const cardImages = [
     </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div id="domain-1" class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
-        <div class="research-card-img"><Image src={cardImages[0]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" format="webp" quality={78} loading="lazy" decoding="async" /></div>
+        <div class="research-card-img"><Image src={cardImages[0]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 357px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 48px)" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" /></div>
         <div class="card-body">
         <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
         <h3 class="font-display font-bold text-sm mb-2" data-en="Individual Identification &amp; Lifecycle Tracking" data-zh="个体识别与生命周期监测">Individual Identification &amp; Lifecycle Tracking</h3>
@@ -36,7 +36,7 @@ const cardImages = [
         </div>
       </div>
       <div id="domain-2" class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
-        <div class="research-card-img"><Image src={cardImages[1]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" format="webp" quality={78} loading="lazy" decoding="async" /></div>
+        <div class="research-card-img"><Image src={cardImages[1]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 357px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 48px)" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" /></div>
         <div class="card-body">
         <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
         <h3 class="font-display font-bold text-sm mb-2" data-en="Population Counting &amp; Dynamics" data-zh="种群调查与动态变化">Population Counting &amp; Dynamics</h3>
@@ -46,7 +46,7 @@ const cardImages = [
         </div>
       </div>
       <div id="domain-3" class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
-        <div class="research-card-img"><Image src={cardImages[2]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" format="webp" quality={78} loading="lazy" decoding="async" /></div>
+        <div class="research-card-img"><Image src={cardImages[2]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 357px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 48px)" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" /></div>
         <div class="card-body">
         <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
         <h3 class="font-display font-bold text-sm mb-2" data-en="Cognitive Decline &amp; Aging Research" data-zh="认知衰退与衰老研究">Cognitive Decline &amp; Aging Research</h3>
@@ -56,7 +56,7 @@ const cardImages = [
         </div>
       </div>
       <div id="domain-4" class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
-        <div class="research-card-img"><Image src={cardImages[3]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" format="webp" quality={78} loading="lazy" decoding="async" /></div>
+        <div class="research-card-img"><Image src={cardImages[3]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 357px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 48px)" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" /></div>
         <div class="card-body">
         <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19 12a4 4 0 0 0-2-3.5"/><path d="M22 12a8 8 0 0 0-4-7"/></svg></div>
         <h3 class="font-display font-bold text-sm mb-2" data-en="Acoustic Monitoring" data-zh="声学监测">Acoustic Monitoring</h3>
@@ -66,7 +66,7 @@ const cardImages = [
         </div>
       </div>
       <div id="domain-5" class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
-        <div class="research-card-img"><Image src={cardImages[4]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" format="webp" quality={78} loading="lazy" decoding="async" /></div>
+        <div class="research-card-img"><Image src={cardImages[4]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 357px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 48px)" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" /></div>
         <div class="card-body">
         <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
         <h3 class="font-display font-bold text-sm mb-2" data-en="Social Behavior &amp; Group Dynamics" data-zh="社会行为与群体动态">Social Behavior &amp; Group Dynamics</h3>
@@ -76,7 +76,7 @@ const cardImages = [
         </div>
       </div>
       <div id="domain-6" class="sdg-card research-card hover-gloss bg-white border border-line rounded-xl reveal">
-        <div class="research-card-img"><Image src={cardImages[5]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" format="webp" quality={78} loading="lazy" decoding="async" /></div>
+        <div class="research-card-img"><Image src={cardImages[5]} alt="" width={720} height={405} widths={[360, 720]} sizes="(min-width: 1024px) 357px, (min-width: 768px) calc(50vw - 32px), calc(100vw - 48px)" format="webp" quality={78} loading="lazy" fetchpriority="low" decoding="async" /></div>
         <div class="card-body">
         <div class="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center mb-3"><svg class="w-5 h-5 text-brand-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 22V8l6-4 6 4v14"/><path d="M2 14h12"/><path d="M10 22V10"/><path d="M18 22V6l4-2v18"/></svg></div>
         <h3 class="font-display font-bold text-sm mb-2" data-en="Habitat &amp; Carrying Capacity Monitoring" data-zh="栖息地与承载力监测">Habitat &amp; Carrying Capacity Monitoring</h3>

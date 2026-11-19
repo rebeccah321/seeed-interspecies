@@ -76,8 +76,6 @@ const caseImages = Object.fromEntries(
 <script type="application/json" id="case-image-data" set:html={JSON.stringify(caseImages)}></script>
 
 <script>
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { PROJECTS, TONE_LABELS } from '../data/projects.js';
 
 const tr=(p,f)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return l==='zh'?(p[f+'Zh']||p[f]):p[f];};
@@ -85,48 +83,57 @@ const tl=(tone)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return TONE_
 const trStats=(p)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';return l==='zh'?(p.statsZh||p.stats):p.stats;};
 const trLinkText=(p)=>{const l=(window.__i18n&&window.__i18n.lang)||'en';const dft=l==='zh'?'查看完整案例':'View Full Case';return(l==='zh'?(p.linkTextZh||p.linkText):p.linkText)||dft;};
 
-// Map connection canvas
-(function(){
+// Map connection canvas (started with the map, not on first paint)
+let mapCanvasStarted=false;
+function startMapCanvas(){
+  if(mapCanvasStarted)return;
+  mapCanvasStarted=true;
   const c=document.getElementById('map-connection-canvas');if(!c)return;
   const ctx=c.getContext('2d');let w,h;
   const COORDS=[{id:'tnc',lat:22.49,lng:114.05},{id:'crayfish',lat:39.08,lng:117.20},{id:'bhutan',lat:27.51,lng:90.43},{id:'mothbox-panama',lat:8.98,lng:-79.52},{id:'buzzcam',lat:-41.04,lng:-71.81},{id:'mothbox-peru',lat:-9.19,lng:-75.02},{id:'mothbox-yellowstone',lat:44.6,lng:-110.5},{id:'olfactory',lat:47.63,lng:-122.33},{id:'collarid',lat:42.36,lng:-71.09},{id:'lifescience',lat:19.08,lng:72.88}];
   function xy(lat,lng){return{x:((lng+180)/360)*w,y:((90-lat)/180)*h};}
-  function resize(){const p=c.parentElement.getBoundingClientRect();w=c.width=p.width;h=c.height=p.height;c.style.width=p.width+'px';c.style.height=p.height+'px';}
-  resize();window.addEventListener('resize',resize);
+  function draw(){ctx.clearRect(0,0,w,h);conns.forEach(c=>{const f=xy(c.from.lat,c.from.lng),t=xy(c.to.lat,c.to.lng);ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(143,195,31,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);});}
+  function resize(){const p=c.parentElement.getBoundingClientRect();w=c.width=p.width;h=c.height=p.height;c.style.width=p.width+'px';c.style.height=p.height+'px';draw();}
   const pairs=[['tnc','crayfish'],['crayfish','bhutan'],['bhutan','mothbox-panama'],['mothbox-panama','buzzcam'],['buzzcam','mothbox-peru'],['mothbox-panama','mothbox-yellowstone'],['mothbox-yellowstone','collarid'],['collarid','olfactory'],['bhutan','lifescience'],['collarid','tnc'],['collarid','buzzcam']];
   const conns=[];
   pairs.forEach(([a,b])=>{const pa=COORDS.find(p=>p.id===a),pb=COORDS.find(p=>p.id===b);if(pa&&pb)conns.push({from:pa,to:pb});});
-  function draw(){ctx.clearRect(0,0,w,h);conns.forEach(c=>{const f=xy(c.from.lat,c.from.lng),t=xy(c.to.lat,c.to.lng);ctx.beginPath();ctx.moveTo(f.x,f.y);ctx.lineTo(t.x,t.y);ctx.strokeStyle='rgba(143,195,31,0.12)';ctx.lineWidth=1;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);});requestAnimationFrame(draw);}
-  draw();
-})();
-
-(function(){
-  const c=document.getElementById('sdg-ring-canvas');if(!c)return;
-  const ctx=c.getContext('2d');let w,h;
-  function resize(){const r=c.getBoundingClientRect();w=c.width=r.width*(window.devicePixelRatio||1);h=c.height=r.height*(window.devicePixelRatio||1);c.style.width=r.width+'px';c.style.height=r.height+'px';}
   resize();window.addEventListener('resize',resize);
-  const cx2=w/2,cy2=h/2,rx=w*0.42,ry=h*0.3;let angle=0;
-  function draw(){ctx.clearRect(0,0,w,h);angle+=0.008;ctx.beginPath();ctx.ellipse(cx2,cy2,rx,ry,0,0,Math.PI*2);ctx.strokeStyle='rgba(0,147,109,0.15)';ctx.lineWidth=1.5;ctx.setLineDash([3,6]);ctx.stroke();ctx.setLineDash([]);const dx=cx2+rx*Math.cos(angle),dy=cy2+ry*Math.sin(angle*0.7);const g=ctx.createRadialGradient(dx,dy,0,dx,dy,20);g.addColorStop(0,'rgba(0,147,109,0.4)');g.addColorStop(0.5,'rgba(0,147,109,0.15)');g.addColorStop(1,'rgba(0,147,109,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(dx,dy,20,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(dx,dy,3,0,Math.PI*2);ctx.fillStyle='#00936d';ctx.fill();for(let i=1;i<=12;i++){const t=angle-i*0.05,tx=cx2+rx*Math.cos(t),ty=cy2+ry*Math.sin(t*0.7),f=1-i/12;ctx.beginPath();ctx.arc(tx,ty,2*f,0,Math.PI*2);ctx.fillStyle=`rgba(0,147,109,${f*0.3})`;ctx.fill();}for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,px=cx2+rx*0.92*Math.cos(a),py=cy2+ry*0.92*Math.sin(a*0.7);ctx.beginPath();ctx.arc(px,py,1.5,0,Math.PI*2);ctx.fillStyle='rgba(0,147,109,0.2)';ctx.fill();}requestAnimationFrame(draw);}
   draw();
-})();
+}
 
 const toneColor={active:'#8FC31F',open:'#ffab00',planned:'#aab8ab'};
 const floatCard=document.getElementById('map-float-card'),floatCardBody=document.getElementById('map-float-card-body');
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
 const CASE_IMAGE_DATA=JSON.parse(document.getElementById('case-image-data').textContent);
 let activeMarker=null;
-let worldMap=null;
+let worldMap=null, mapPromise=null, L=null;
 const markers={};
 function caseImageHTML(p,sizes){const im=CASE_IMAGE_DATA[p.id];if(!im)return '';return '<img src="'+im.large+'" srcset="'+im.small+' 480w, '+im.large+' 960w" sizes="'+sizes+'" width="'+im.width+'" height="'+im.height+'" alt="'+esc(tr(p,'name'))+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">';}
 function initMap(){
-  if(worldMap)return worldMap;
-  worldMap=L.map('world-map', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
-  PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:tr(p,'name'),riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id,'map_pin'));});
-  worldMap.fitBounds(L.latLngBounds(PROJECTS.map(p=>p.coords)),{padding:[50,50],maxZoom:3});
-  worldMap.on('move zoom',()=>{if(activeMarker&&floatCard.classList.contains('visible'))pfm(activeMarker);});
-  return worldMap;
+  if(mapPromise)return mapPromise;
+  mapPromise=(async()=>{
+    const [leaflet,leafletCss]=await Promise.all([import('leaflet'),import('leaflet/dist/leaflet.css?inline')]);
+    if(!document.getElementById('leaflet-css')){
+      const style=document.createElement('style');
+      style.id='leaflet-css';
+      style.textContent=leafletCss.default;
+      document.head.appendChild(style);
+    }
+    L=leaflet.default;
+    worldMap=L.map('world-map', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
+    PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:tr(p,'name'),riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id,'map_pin'));});
+    worldMap.fitBounds(L.latLngBounds(PROJECTS.map(p=>p.coords)),{padding:[50,50],maxZoom:3});
+    worldMap.on('move zoom',()=>{if(activeMarker&&floatCard.classList.contains('visible'))pfm(activeMarker);});
+    startMapCanvas();
+    return worldMap;
+  })().catch(err=>{mapPromise=null;worldMap=null;throw err;});
+  return mapPromise;
+}
+async function ensureMap(){
+  try{return await initMap();}
+  catch(err){console.error('Map failed to load',err);return null;}
 }
 function pfm(marker){const mc=worldMap.getContainer(),mr=mc.getBoundingClientRect(),p=worldMap.latLngToContainerPoint(marker.getLatLng());const cw=floatCard.offsetWidth||300,ch=floatCard.offsetHeight||160,m=18;let l=p.x+28,t=p.y-ch-20;if(t<m)t=p.y+28;if(l+cw>mr.width-m)l=p.x-cw-28;if(l<m)l=m;if(t<m)t=m;if(t+ch>mr.height-m)t=mr.height-ch-m;floatCard.style.left=l+'px';floatCard.style.top=t+'px';}
 function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<div class="project-preview">'+caseImageHTML(p,'300px')+'</div><span class="card-status" style="background:'+c+'22;color:'+c+'">'+tl(p.tone)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(tr(p,'name'))+'</h5><p class="text-xs text-brand-deep mb-2">'+esc(tr(p,'location'))+'</p><p class="text-xs text-muted leading-relaxed">'+esc(tr(p,'summary'))+'</p>';floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
@@ -140,14 +147,14 @@ floatCard.addEventListener('mouseenter',()=>{if(activeMarker)floatCard.classList
 floatCard.addEventListener('mouseleave',()=>hfc());
 const mapEl=document.getElementById('world-map');
 if('IntersectionObserver' in window){
-  const mapObserver=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){mapObserver.disconnect();initMap();}},{rootMargin:'500px 0px'});
+  const mapObserver=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){mapObserver.disconnect();ensureMap();}},{rootMargin:'500px 0px'});
   mapObserver.observe(mapEl);
-}else{initMap();}
+}else{ensureMap();}
 const filterBtns=document.querySelectorAll('.filter-btn');
 const tagMap={'tnc':['Environmental','IoT'],'crayfish':['CV','VLM'],'bhutan':['CV','LoRa','Tracker'],'mothbox-panama':['CV','LoRa'],'buzzcam':['STT','Environmental'],'mothbox-peru':['CV','LoRa'],'mothbox-yellowstone':['CV','LoRa'],'olfactory':['Environmental'],'collarid':['CV','LoRa','Tracker'],'lifescience':['CV','Environmental','LoRa']};
-filterBtns.forEach(btn=>{btn.addEventListener('click',()=>{initMap();filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;if(window.odlTrack)window.odlTrack('case_filter',{filter_tag:f});Object.keys(markers).forEach(k=>{const tags=tagMap[k]||[];if(f==='all'||tags.includes(f))worldMap.addLayer(markers[k]);else worldMap.removeLayer(markers[k]);});});});
+filterBtns.forEach(btn=>{btn.addEventListener('click',async()=>{await ensureMap();if(!worldMap)return;filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const f=btn.dataset.filter;if(window.odlTrack)window.odlTrack('case_filter',{filter_tag:f});Object.keys(markers).forEach(k=>{const tags=tagMap[k]||[];if(f==='all'||tags.includes(f))worldMap.addLayer(markers[k]);else worldMap.removeLayer(markers[k]);});});});
 const esc2=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/>/g,'&gt;');
-function bcr(tid,projects){const track=document.getElementById(tid);track.innerHTML='';const items=[...projects,...projects];items.forEach(p=>{const card=document.createElement('div');card.className='carousel-card';card.innerHTML='<span class="c-dot '+p.tone+'"></span><div class="c-body"><h4>'+esc2(tr(p,'name'))+'</h4><p>'+esc2(tr(p,'summary'))+'</p></div><div class="c-right"><span class="c-label '+p.tone+'">'+tl(p.tone)+'</span><span class="c-chev">→</span></div>';card.addEventListener('click',()=>{initMap();const m=markers[p.id];if(m){worldMap.setView(m.getLatLng(),worldMap.getZoom()>=4?worldMap.getZoom():4,{animate:true});sfc(p,m);}ocm(p.id,'carousel');});track.appendChild(card);});let drag=false,sx=0,sl=0;track.addEventListener('mousedown',function(e){drag=true;track.classList.add('dragging');sx=e.pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('mouseleave',function(){if(drag){drag=false;track.classList.remove('dragging');}});track.addEventListener('mouseup',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();const x=e.pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});track.addEventListener('touchstart',function(e){drag=true;track.classList.add('dragging');sx=e.touches[0].pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('touchend',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('touchmove',function(e){if(!drag)return;const x=e.touches[0].pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});}
+function bcr(tid,projects){const track=document.getElementById(tid);track.innerHTML='';const items=[...projects,...projects];items.forEach(p=>{const card=document.createElement('div');card.className='carousel-card';card.innerHTML='<span class="c-dot '+p.tone+'"></span><div class="c-body"><h4>'+esc2(tr(p,'name'))+'</h4><p>'+esc2(tr(p,'summary'))+'</p></div><div class="c-right"><span class="c-label '+p.tone+'">'+tl(p.tone)+'</span><span class="c-chev">→</span></div>';card.addEventListener('click',async()=>{await ensureMap();const m=markers[p.id];if(m&&worldMap){worldMap.setView(m.getLatLng(),worldMap.getZoom()>=4?worldMap.getZoom():4,{animate:true});sfc(p,m);}ocm(p.id,'carousel');});track.appendChild(card);});let drag=false,sx=0,sl=0;track.addEventListener('mousedown',function(e){drag=true;track.classList.add('dragging');sx=e.pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('mouseleave',function(){if(drag){drag=false;track.classList.remove('dragging');}});track.addEventListener('mouseup',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();const x=e.pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});track.addEventListener('touchstart',function(e){drag=true;track.classList.add('dragging');sx=e.touches[0].pageX-this.offsetLeft;sl=this.offsetLeft;});track.addEventListener('touchend',function(){drag=false;track.classList.remove('dragging');});track.addEventListener('touchmove',function(e){if(!drag)return;const x=e.touches[0].pageX-this.offsetLeft;this.style.transform=`translateX(${sl+(x-sx)*1.5}px)`;});}
 bcr('carousel-track-1',PROJECTS.filter(p=>p.tone==='active'));
 bcr('carousel-track-2',PROJECTS.filter(p=>p.tone!=='active'));
 document.addEventListener('lang-change',function(){bcr('carousel-track-1',PROJECTS.filter(p=>p.tone==='active'));bcr('carousel-track-2',PROJECTS.filter(p=>p.tone!=='active'));});
