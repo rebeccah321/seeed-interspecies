@@ -11,15 +11,19 @@ const caseImages = Object.fromEntries(
     PROJECTS.map(async (project) => {
       const src = caseSources[project.img];
       if (!src) return [project.id, null];
-      const [small, large] = await Promise.all([
+      const [thumbAvif, thumbWebp, modalAvif, modalWebp] = await Promise.all([
+        getImage({ src, width: 480, format: 'avif', quality: 45 }),
         getImage({ src, width: 480, format: 'webp', quality: 78 }),
+        getImage({ src, width: 960, format: 'avif', quality: 45 }),
         getImage({ src, width: 960, format: 'webp', quality: 78 }),
       ]);
       return [project.id, {
-        small: small.src,
-        large: large.src,
-        width: large.attributes.width,
-        height: large.attributes.height,
+        thumbAvif: thumbAvif.src,
+        thumbWebp: thumbWebp.src,
+        modalAvif: modalAvif.src,
+        modalWebp: modalWebp.src,
+        width: modalWebp.attributes.width,
+        height: modalWebp.attributes.height,
       }];
     })
   )
@@ -108,7 +112,9 @@ const CASE_IMAGE_DATA=JSON.parse(document.getElementById('case-image-data').text
 let activeMarker=null;
 let worldMap=null, mapPromise=null, L=null;
 const markers={};
-function caseImageHTML(p,sizes){const im=CASE_IMAGE_DATA[p.id];if(!im)return '';return '<img src="'+im.large+'" srcset="'+im.small+' 480w, '+im.large+' 960w" sizes="'+sizes+'" width="'+im.width+'" height="'+im.height+'" alt="'+esc(tr(p,'name'))+'" loading="lazy" decoding="async" onerror="this.style.display=\'none\'">';}
+function caseImageHTML(p,variant){const im=CASE_IMAGE_DATA[p.id];if(!im)return '';const avif=variant==='modal'?im.modalAvif:im.thumbAvif;const webp=variant==='modal'?im.modalWebp:im.thumbWebp;return '<picture><source srcset="'+avif+'" type="image/avif"><img src="'+webp+'" width="'+im.width+'" height="'+im.height+'" alt="'+esc(tr(p,'name'))+'" loading="eager" decoding="async" fetchpriority="high" onerror="this.style.display=\'none\'"></picture>';}
+function preloadCaseThumbs(){if(!window.matchMedia||!window.matchMedia('(hover: hover)').matches)return;const seen=new Set();PROJECTS.forEach(p=>{const im=CASE_IMAGE_DATA[p.id];if(!im||!im.thumbAvif||seen.has(im.thumbAvif))return;seen.add(im.thumbAvif);const img=new Image();if('fetchPriority'in img)img.fetchPriority='low';img.decoding='async';img.src=im.thumbAvif;});}
+function scheduleThumbPreload(){setTimeout(()=>{if('requestIdleCallback' in window)requestIdleCallback(preloadCaseThumbs,{timeout:2000});else preloadCaseThumbs();},400);}
 function initMap(){
   if(mapPromise)return mapPromise;
   mapPromise=(async()=>{
@@ -121,7 +127,8 @@ function initMap(){
     }
     L=leaflet.default;
     worldMap=L.map('world-map', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, worldCopyJump:true, minZoom:2, maxZoom:16, maxBounds:[[-85,-180],[85,180]], maxBoundsViscosity:0.8 }).setView([15,0],2);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
+    const baseLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', { attribution:'', maxZoom:16 }).addTo(worldMap);
+    baseLayer.once('load',scheduleThumbPreload);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}', { attribution:'&copy; Esri &copy; OSM', maxZoom:16, className:'map-ref-labels' }).addTo(worldMap);
     PROJECTS.forEach(p=>{const icon=L.divIcon({className:'',html:'<div class="pin-marker '+p.tone+'"><div class="wave-ring"></div><div class="wave-ring"></div><div class="wave-ring"></div><div class="dot"></div></div>',iconSize:[40,40],iconAnchor:[20,20]});const marker=L.marker(p.coords,{icon,title:tr(p,'name'),riseOnHover:true,keyboard:true}).addTo(worldMap);markers[p.id]=marker;marker.on('mouseover',()=>sfc(p,marker));marker.on('mouseout',()=>{setTimeout(()=>{if(activeMarker===marker&&!floatCard.matches(':hover'))hfc();},150);});marker.on('click',()=>ocm(p.id,'map_pin'));});
     worldMap.fitBounds(L.latLngBounds(PROJECTS.map(p=>p.coords)),{padding:[50,50],maxZoom:3});
@@ -136,10 +143,10 @@ async function ensureMap(){
   catch(err){console.error('Map failed to load',err);return null;}
 }
 function pfm(marker){const mc=worldMap.getContainer(),mr=mc.getBoundingClientRect(),p=worldMap.latLngToContainerPoint(marker.getLatLng());const cw=floatCard.offsetWidth||300,ch=floatCard.offsetHeight||160,m=18;let l=p.x+28,t=p.y-ch-20;if(t<m)t=p.y+28;if(l+cw>mr.width-m)l=p.x-cw-28;if(l<m)l=m;if(t<m)t=m;if(t+ch>mr.height-m)t=mr.height-ch-m;floatCard.style.left=l+'px';floatCard.style.top=t+'px';}
-function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<div class="project-preview">'+caseImageHTML(p,'300px')+'</div><span class="card-status" style="background:'+c+'22;color:'+c+'">'+tl(p.tone)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(tr(p,'name'))+'</h5><p class="text-xs text-brand-deep mb-2">'+esc(tr(p,'location'))+'</p><p class="text-xs text-muted leading-relaxed">'+esc(tr(p,'summary'))+'</p>';floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
+function sfc(p,marker){const c=toneColor[p.tone];floatCardBody.innerHTML='<div class="project-preview">'+caseImageHTML(p,'thumb')+'</div><span class="card-status" style="background:'+c+'22;color:'+c+'">'+tl(p.tone)+'</span><h5 class="font-display font-bold text-ink text-base mt-3 mb-1">'+esc(tr(p,'name'))+'</h5><p class="text-xs text-brand-deep mb-2">'+esc(tr(p,'location'))+'</p><p class="text-xs text-muted leading-relaxed">'+esc(tr(p,'summary'))+'</p>';floatCard.classList.add('visible');pfm(marker);activeMarker=marker;}
 function hfc(){floatCard.classList.remove('visible');activeMarker=null;}
 function closeCaseModal(){document.getElementById('case-modal').classList.remove('open');document.body.style.overflow='';}
-function ocm(pid,source){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;const preview=document.getElementById('modal-img');preview.className='modal-img';preview.innerHTML=caseImageHTML(p,'(max-width: 700px) 90vw, 640px');document.getElementById('modal-title').textContent=tr(p,'name');document.getElementById('modal-meta').textContent=tr(p,'location');document.getElementById('modal-desc').textContent=tr(p,'desc');document.getElementById('modal-tags').innerHTML=p.tags.map(t=>'<span>'+esc(t)+'</span>').join('');const sb=document.getElementById('modal-status-badge');const sc=toneColor[p.tone];sb.style.background=sc+'22';sb.style.color=sc;sb.textContent=tl(p.tone);const se=document.getElementById('modal-stats');const st=trStats(p);if(st&&st.length){se.style.display='grid';se.innerHTML=st.map(s=>'<div class="modal-stat"><div class="val">'+esc(s.val)+'</div><div class="lbl">'+esc(s.lbl)+'</div></div>').join('');}else{se.style.display='none';}const cta=document.getElementById('modal-cta');if(p.link){cta.href=p.link;cta.style.display='inline-flex';cta.innerHTML=trLinkText(p)+'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';}else{cta.style.display='none';}document.getElementById('case-modal').classList.add('open');document.querySelector('.case-modal').scrollTop=0;document.body.style.overflow='hidden';if(window.odlTrack)window.odlTrack('case_view',{case_id:p.id,case_name:tr(p,'name'),case_status:tl(p.tone),case_source:source||'unknown'});}
+function ocm(pid,source){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;const preview=document.getElementById('modal-img');preview.className='modal-img';preview.innerHTML=caseImageHTML(p,'modal');document.getElementById('modal-title').textContent=tr(p,'name');document.getElementById('modal-meta').textContent=tr(p,'location');document.getElementById('modal-desc').textContent=tr(p,'desc');document.getElementById('modal-tags').innerHTML=p.tags.map(t=>'<span>'+esc(t)+'</span>').join('');const sb=document.getElementById('modal-status-badge');const sc=toneColor[p.tone];sb.style.background=sc+'22';sb.style.color=sc;sb.textContent=tl(p.tone);const se=document.getElementById('modal-stats');const st=trStats(p);if(st&&st.length){se.style.display='grid';se.innerHTML=st.map(s=>'<div class="modal-stat"><div class="val">'+esc(s.val)+'</div><div class="lbl">'+esc(s.lbl)+'</div></div>').join('');}else{se.style.display='none';}const cta=document.getElementById('modal-cta');if(p.link){cta.href=p.link;cta.style.display='inline-flex';cta.innerHTML=trLinkText(p)+'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';}else{cta.style.display='none';}document.getElementById('case-modal').classList.add('open');document.querySelector('.case-modal').scrollTop=0;document.body.style.overflow='hidden';if(window.odlTrack)window.odlTrack('case_view',{case_id:p.id,case_name:tr(p,'name'),case_status:tl(p.tone),case_source:source||'unknown'});}
 document.getElementById('case-modal-close-btn').addEventListener('click',function(e){e.stopPropagation();closeCaseModal();});
 document.getElementById('case-modal').addEventListener('click',function(e){if(e.target===this)closeCaseModal();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCaseModal();});
