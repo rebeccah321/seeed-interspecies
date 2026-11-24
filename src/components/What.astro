@@ -88,15 +88,13 @@ const cardImages = [
     </div>
   </div>
 <script is:inline>
-  window.addEventListener('load', function () {
-    function warmWhatImages() {
-      document.querySelectorAll('#what img').forEach(function (img) {
-        if (img.loading === 'lazy') img.loading = 'eager';
-      });
-    }
-    if ('requestIdleCallback' in window) requestIdleCallback(warmWhatImages, { timeout: 1200 });
-    else setTimeout(warmWhatImages, 500);
-  }, { once: true });
+  setTimeout(function () {
+    document.querySelectorAll('#what img').forEach(function (img) {
+      if (img.loading !== 'lazy') return;
+      if ('fetchPriority' in img) img.fetchPriority = 'low';
+      img.loading = 'eager';
+    });
+  }, 1400);
 </script>
 <style>
 .research-card .card-body > div > p:last-child{min-height:2.5rem;display:flex;align-items:center}
